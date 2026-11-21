@@ -62,10 +62,10 @@
       padding: 8px 11px; border-radius: 9px; font-size: 0.88rem; outline: none;
     }
     .controls input { flex: 1; min-width: 200px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
     .card {
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; overflow-wrap: anywhere;
     }
     .card.claimed { border-color: rgba(16, 185, 129, 0.65); }
     .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -84,6 +84,23 @@
     .metric { background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 14px; }
     .metric .val { font-size: 1.25rem; font-weight: 800; color: var(--cyan); margin: 4px 0; }
     .hidden { display: none !important; }
+    html, body { overflow-x: hidden; max-width: 100%; }
+    .story { overflow-wrap: anywhere; min-width: 0; }
+    @media (max-width: 680px) {
+      .nav-inner { padding: 12px 14px; gap: 10px; }
+      .nav-inner .row { width: 100%; justify-content: space-between; }
+      .container { padding: 16px 12px 44px; }
+      .hero h1 { font-size: 1.38rem; line-height: 1.28; }
+      .hero p { font-size: 0.88rem; }
+      .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .tab { white-space: nowrap; flex-shrink: 0; font-size: 0.82rem; padding: 8px 13px; }
+      .controls { padding: 12px; gap: 8px; }
+      .controls input, .controls select { width: 100%; min-width: 0; flex: 1 1 100%; font-size: 16px; }
+      .grid { grid-template-columns: 1fr; gap: 12px; }
+      .card { padding: 14px; }
+      .calc-card { padding: 16px; }
+      .metrics { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>

@@ -93,11 +93,28 @@
     .badge-press { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; }
     .badge-social { background: rgba(168, 85, 247, 0.18); color: #d8b4fe; }
     .badge-topic { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
-    .story-title { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.38; }
-    .story-desc { font-size: 0.93rem; color: var(--muted); }
+    .story-title { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.38; overflow-wrap: anywhere; }
+    .story-desc { font-size: 0.93rem; color: var(--muted); overflow-wrap: anywhere; }
     .story-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
-    .story-url { font-family: ui-monospace, monospace; font-size: 0.76rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 560px; }
+    .story-url { font-family: ui-monospace, monospace; font-size: 0.76rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 560px; min-width: 0; flex: 1; }
     .empty { text-align: center; padding: 48px 20px; color: var(--muted); background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+    html, body { overflow-x: hidden; max-width: 100%; }
+    @media (max-width: 680px) {
+      .nav-inner { padding: 12px 14px; gap: 10px; }
+      .nav-right { width: 100%; justify-content: space-between; }
+      .nav-right .btn { flex: 1; text-align: center; padding: 9px 10px; font-size: 0.82rem; }
+      .container { padding: 16px 12px 44px; }
+      .hero h1 { font-size: 1.38rem; line-height: 1.28; }
+      .hero p { font-size: 0.88rem; }
+      .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .tab { white-space: nowrap; flex-shrink: 0; font-size: 0.82rem; padding: 8px 12px; }
+      .controls { padding: 12px; gap: 8px; }
+      .controls input, .controls select { width: 100%; min-width: 0; flex: 1 1 100%; font-size: 16px; }
+      .story { padding: 14px; }
+      .story-foot { flex-direction: column; align-items: stretch; gap: 8px; }
+      .story-url { max-width: 100%; width: 100%; }
+      .story-foot .btn { width: 100%; text-align: center; padding: 10px; }
+    }
   </style>
 </head>
 <body class="large-text">

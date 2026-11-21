@@ -153,6 +153,47 @@
       border-left: 1px solid var(--border);
     }
 
+    @media (max-width: 1024px) {
+      body {
+        height: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      header {
+        height: auto !important;
+        padding: 10px 12px !important;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .workspace {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      .viewport-wrap, .viewport, main {
+        order: -1;
+        min-height: 52vh !important;
+        height: 52vh !important;
+        width: 100% !important;
+      }
+      .panel, .panel-right {
+        border-right: none;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        overflow-y: visible;
+        width: 100%;
+        min-width: 0 !important;
+      }
+      .modal-card, .dialog, .hud-card {
+        min-width: 0 !important;
+        max-width: 94vw !important;
+      }
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
