@@ -1,0 +1,2974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAD Case Studio — Mac mini M4 + Acasis M001 &amp; Hagibis MC25 Pro</title>
+  <style>
+    :root {
+      --bg-0: #0b0e14;
+      --bg-1: #121722;
+      --bg-2: #192030;
+      --bg-3: #222c40;
+      --border: #2b364f;
+      --text-0: #f0f4fc;
+      --text-1: #b3c0d9;
+      --text-2: #7a8aa8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-0);
+      color: var(--text-0);
+      font-family: var(--font-sans);
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 54px 1fr;
+      user-select: none;
+    }
+
+    /* Top Header */
+    header {
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: #06101e;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: var(--text-2);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button, .btn {
+      background: var(--bg-2);
+      color: var(--text-0);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--bg-3);
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.12);
+    }
+
+    button.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    button.amber-btn {
+      border-color: rgba(251, 191, 36, 0.45);
+      color: var(--amber);
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px 1fr 355px;
+      height: calc(100vh - 54px);
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--bg-1);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-right {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 3px;
+    }
+
+    /* Cards / Sections */
+    .card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card.selected-card {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-0);
+      color: var(--text-1);
+      border: 1px solid var(--border);
+    }
+
+    /* Controls */
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .control-grid.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--text-1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .field label span.unit {
+      color: var(--text-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    input[type="number"], select {
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      color: var(--text-0);
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      width: 100%;
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-1);
+      padding: 3px 0;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    /* Center Viewport */
+    .viewport-area {
+      position: relative;
+      background: radial-gradient(circle at 50% 35%, #192338 0%, #090d14 75%);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .viewport-toolbar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 5px;
+      background: rgba(18, 23, 34, 0.88);
+      backdrop-filter: blur(8px);
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      pointer-events: auto;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-2);
+      padding: 0 5px;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #canvas-container.dragging-part {
+      cursor: move;
+    }
+
+    #canvas-container.hovering-part {
+      cursor: pointer;
+    }
+
+    #blueprint-container {
+      width: 100%;
+      height: 100%;
+      display: none;
+      padding: 72px 20px 20px 20px;
+      overflow: auto;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        #0a1220;
+      background-size: 20px 20px;
+    }
+
+    /* Interactive Selection HUD Banner */
+    .selection-hud {
+      position: absolute;
+      top: 62px;
+      left: 12px;
+      background: rgba(18, 23, 34, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 8px 12px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
+      flex-wrap: wrap;
+    }
+
+    .selection-hud .part-name {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .selection-hud .part-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-1);
+    }
+
+    /* Right-Click Context Menu */
+    .context-menu {
+      position: fixed;
+      display: none;
+      flex-direction: column;
+      min-width: 245px;
+      background: rgba(15, 21, 33, 0.97);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 6px;
+      z-index: 9999;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    .context-menu.open {
+      display: flex;
+    }
+
+    .ctx-header {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ctx-item {
+      background: transparent;
+      border: none;
+      color: var(--text-0);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .ctx-item:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.16);
+      color: #fff;
+    }
+
+    .ctx-item:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .ctx-item.danger:hover:not(:disabled) {
+      background: rgba(251, 113, 133, 0.2);
+      color: var(--rose);
+    }
+
+    .ctx-shortcut {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-2);
+    }
+
+    .ctx-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 4px 0;
+    }
+
+    .explode-bar {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(18, 23, 34, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+      min-width: 380px;
+      pointer-events: auto;
+    }
+
+    .explode-bar span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-1);
+      white-space: nowrap;
+    }
+
+    .legend-overlay {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(18, 23, 34, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 11px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 9;
+      pointer-events: none;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text-1);
+    }
+
+    /* Tables & Metrics */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+
+    .spec-table th, .spec-table td {
+      padding: 5px 6px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .spec-table tr.clickable-row {
+      cursor: pointer;
+    }
+
+    .spec-table tr.clickable-row:hover {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .spec-table tr.selected-row {
+      background: rgba(56, 189, 248, 0.2);
+    }
+
+    .spec-table th {
+      color: var(--text-2);
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .spec-table td.num {
+      text-align: right;
+      color: var(--accent);
+    }
+
+    .code-box {
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #93c5fd;
+      max-height: 150px;
+      overflow: auto;
+      white-space: pre;
+      user-select: text;
+    }
+
+    .preset-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .preset-pills button {
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--emerald);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .help-tip {
+      font-size: 11px;
+      color: var(--text-1);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 8px 10px;
+      line-height: 1.45;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-badge">CAD</div>
+      <div>
+        <h1>Modular Case Studio: Mac mini M4 + Acasis M001 &amp; Hagibis MC25 Pro</h1>
+        <p>Right-Click Any Part for Copy / Paste / Duplicate / Rotate / Ungroup • Drag Screw Lugs One-by-One</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" id="fit-status">✓ Screw Lugs Ungrouped (Individual)</span>
+      <button id="btn-toggle-lug-group" class="amber-btn" title="Toggle between moving screw-holed lugs individually one-by-one vs as a group">🔓 Lugs: Ungrouped (1-by-1)</button>
+      <button id="btn-add-lug" title="Spawn a new standalone screw-holed mounting lug">+ Add Screw Lug</button>
+      <button id="btn-reset-positions" title="Snap all moved/scaled/custom parts back to aligned positions">↺ Reset All</button>
+      <button id="btn-export-stl-all" class="primary" title="Download 3D printable STL of visible case parts">⬇ Export STL</button>
+      <button id="btn-export-scad" title="Download Parametric OpenSCAD file">⬇ OpenSCAD</button>
+      <button id="btn-export-svg" title="Download 1:1 Millimeter SVG Drill & Laser Template">⬇ SVG Template</button>
+    </div>
+  </header>
+
+  <!-- RIGHT-CLICK CONTEXT MENU -->
+  <div id="context-menu" class="context-menu">
+    <div class="ctx-header">
+      <span id="ctx-title">Part Menu</span>
+      <span class="badge" id="ctx-badge">LUG</span>
+    </div>
+    <button type="button" class="ctx-item" id="ctx-copy">
+      <span>📄 Copy Part</span>
+      <span class="ctx-shortcut">Ctrl+C</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-paste">
+      <span>📋 Paste Part Here</span>
+      <span class="ctx-shortcut">Ctrl+V</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-duplicate">
+      <span>➕ Duplicate Part in Place</span>
+      <span class="ctx-shortcut">Ctrl+D</span>
+    </button>
+    <div class="ctx-divider"></div>
+    <button type="button" class="ctx-item" id="ctx-add-lug-here">
+      <span>🔩 Add New Screw-Holed Lug Here</span>
+      <span class="ctx-shortcut">New</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-add-pocket-here">
+      <span>📦 Add New Side Pocket Here</span>
+      <span class="ctx-shortcut">New</span>
+    </button>
+    <div class="ctx-divider"></div>
+    <button type="button" class="ctx-item" id="ctx-ungroup-lugs">
+      <span id="ctx-ungroup-label">🔓 Ungroup Screw Lugs (Move 1-by-1)</span>
+      <span class="ctx-shortcut">G</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-rotate-90">
+      <span>🔄 Rotate Part 90°</span>
+      <span class="ctx-shortcut">R</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-rotate-45">
+      <span>🔄 Rotate Part 45°</span>
+      <span class="ctx-shortcut">Shift+R</span>
+    </button>
+    <button type="button" class="ctx-item" id="ctx-snap-wall">
+      <span>🧲 Snap Lug to Nearest Main Unit Wall</span>
+      <span class="ctx-shortcut">S</span>
+    </button>
+    <div class="ctx-divider"></div>
+    <button type="button" class="ctx-item danger" id="ctx-delete">
+      <span>🗑️ Delete This Part</span>
+      <span class="ctx-shortcut">Del</span>
+    </button>
+  </div>
+
+  <div class="workspace">
+    <!-- LEFT PANEL: DIMENSIONS & GEOMETRY -->
+    <aside class="panel">
+      <div class="help-tip">
+        <strong>Mouse &amp; Right-Click Controls:</strong><br/>
+        • <strong>Right-Click any part or empty space</strong>: Copy, Paste Here, Duplicate, Rotate 90°/45°, Ungroup/Group Screw Lugs, or Delete!<br/>
+        • <strong>Drag Screw Lugs One-by-One</strong>: Every amber screw-holed lug is ungrouped so you can grab and drag each one individually (hold <code>Shift</code> to drag up/down vertically).<br/>
+        • <strong>Mouse Wheel over any part</strong>: Enlarge / shrink that specific screw lug, pocket, or shell!
+      </div>
+
+      <!-- Layout Preset -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background: var(--accent)"></span>Assembly Configuration</div>
+          <span class="badge">MM UNITS</span>
+        </div>
+        <div class="field full">
+          <label>Main Units Arrangement</label>
+          <select id="arrangement">
+            <option value="stacked_centered" selected>Stacked Centered (M4+M001 on MC25 Pro Base + Ledge Pockets)</option>
+            <option value="stacked_rear">Stacked Rear-Flush (Ports Aligned at Back)</option>
+            <option value="side_by_side">Side-by-Side Dual Bay Workstation</option>
+          </select>
+        </div>
+        <div class="preset-pills">
+          <button type="button" data-preset="default">Standard Desktop</button>
+          <button type="button" data-preset="underdesk">Under-Desk Rig</button>
+          <button type="button" data-preset="heavy_duty">Heavy Duty 4mm</button>
+        </div>
+      </div>
+
+      <!-- Main Component 1: Mac mini M4 + Acasis M001 -->
+      <div class="card" id="card-unit1">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background: #38bdf8"></span>Part 1: Mac mini M4 + Acasis M001</div>
+          <span class="badge" id="badge-unit1">127×127×82.5</span>
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>M4 Width <span class="unit">mm</span></label>
+            <input type="number" id="m4Width" value="127" step="0.5" min="60" max="320" />
+          </div>
+          <div class="field">
+            <label>M4 Depth <span class="unit">mm</span></label>
+            <input type="number" id="m4Depth" value="127" step="0.5" min="60" max="320" />
+          </div>
+          <div class="field">
+            <label>M4 Height <span class="unit">mm</span></label>
+            <input type="number" id="m4Height" value="50" step="0.5" min="15" max="180" />
+          </div>
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>M001 W <span class="unit">mm</span></label>
+            <input type="number" id="m001Width" value="126" step="0.5" min="60" max="320" />
+          </div>
+          <div class="field">
+            <label>M001 D <span class="unit">mm</span></label>
+            <input type="number" id="m001Depth" value="126" step="0.5" min="60" max="320" />
+          </div>
+          <div class="field">
+            <label>M001 H <span class="unit">mm</span></label>
+            <input type="number" id="m001Height" value="32.5" step="0.5" min="10" max="120" />
+          </div>
+        </div>
+        <div class="control-grid">
+          <div class="field">
+            <label>Internal Retainer Lip <span class="unit">mm</span></label>
+            <input type="number" id="unit1Lip" value="2.0" step="0.5" min="0" max="10" />
+          </div>
+          <div class="field">
+            <label>Front/Rear Port Cutout <span class="unit">%</span></label>
+            <input type="number" id="portCutoutPct" value="72" step="2" min="30" max="92" />
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <span>Include Mid-Shelf Cradle between M001 &amp; M4</span>
+          <input type="checkbox" id="includeMidShelf" checked />
+        </div>
+      </div>
+
+      <!-- Main Component 2: Hagibis MC25 Pro -->
+      <div class="card" id="card-unit2">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background: #818cf8"></span>Part 2: Hagibis MC25 Pro Base</div>
+          <span class="badge" id="badge-unit2">197×197×15</span>
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>MC25 Width <span class="unit">mm</span></label>
+            <input type="number" id="mc25Width" value="197" step="0.5" min="80" max="380" />
+          </div>
+          <div class="field">
+            <label>MC25 Depth <span class="unit">mm</span></label>
+            <input type="number" id="mc25Depth" value="197" step="0.5" min="80" max="380" />
+          </div>
+          <div class="field">
+            <label>MC25 Height <span class="unit">mm</span></label>
+            <input type="number" id="mc25Height" value="15" step="0.5" min="6" max="100" />
+          </div>
+        </div>
+        <div class="control-grid">
+          <div class="field">
+            <label>Wall Thickness <span class="unit">mm</span></label>
+            <input type="number" id="wallThickness" value="3.2" step="0.2" min="1.6" max="8.0" />
+          </div>
+          <div class="field">
+            <label>Fit Tolerance / Gap <span class="unit">mm</span></label>
+            <input type="number" id="tolerance" value="0.6" step="0.1" min="0.0" max="3.0" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Side Pockets -->
+      <div class="card" id="card-pockets">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background: #34d399"></span>Side Pockets (Storage &amp; Drives)</div>
+          <span class="badge" id="badge-pockets">MODULAR</span>
+        </div>
+        <div class="checkbox-row">
+          <span>Enable Left Side Pocket (SSD / Cable Bay)</span>
+          <input type="checkbox" id="enableLeftPocket" checked />
+        </div>
+        <div class="checkbox-row">
+          <span>Enable Right Side Pocket (SD / Dongle / Hub Bay)</span>
+          <input type="checkbox" id="enableRightPocket" checked />
+        </div>
+        <div class="checkbox-row">
+          <span>Enable Rear Cable Management Pocket</span>
+          <input type="checkbox" id="enableRearPocket" />
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>Pocket Width <span class="unit">mm</span></label>
+            <input type="number" id="pocketWidth" value="28" step="1" min="10" max="120" />
+          </div>
+          <div class="field">
+            <label>Pocket Depth <span class="unit">mm</span></label>
+            <input type="number" id="pocketDepth" value="120" step="2" min="30" max="260" />
+          </div>
+          <div class="field">
+            <label>Pocket Height <span class="unit">mm</span></label>
+            <input type="number" id="pocketHeight" value="68" step="2" min="15" max="180" />
+          </div>
+        </div>
+        <div class="control-grid">
+          <div class="field">
+            <label>Pocket Placement</label>
+            <select id="pocketPlacement">
+              <option value="ledge" selected>On MC25 Ledge (Flanking Part 1)</option>
+              <option value="outer">Outer Wings (Attached to Part 2 Sides)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Internal Dividers</label>
+            <input type="number" id="pocketDividers" value="1" step="1" min="0" max="4" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Attaching Screw-Holed Parts & Mounting Ears -->
+      <div class="card" id="card-brackets">
+        <div class="card-header">
+          <div class="card-title"><span class="dot" style="background: #fbbf24"></span>Screw-Holed Mounting Parts</div>
+          <span class="badge" id="badge-screws">M4 + M3</span>
+        </div>
+        <div class="field full">
+          <label>Fastener Standard (Maintains Coaxial Mounting Points)</label>
+          <select id="screwSpec">
+            <option value="M3">M3 Metric (3.2mm Through / 5.6mm Counterbore / 4.0mm Heat-Set)</option>
+            <option value="M4" selected>M4 Metric (4.3mm Through / 7.5mm Counterbore / 5.6mm Heat-Set)</option>
+            <option value="M5">M5 Heavy (5.3mm Through / 9.0mm Counterbore)</option>
+            <option value="UNC6">#6-32 UNC Rack/Case (3.8mm Through / 6.8mm Counterbore)</option>
+          </select>
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>Lug Reach <span class="unit">mm</span></label>
+            <input type="number" id="lugProjection" value="18" step="1" min="8" max="60" />
+          </div>
+          <div class="field">
+            <label>Lug Width <span class="unit">mm</span></label>
+            <input type="number" id="lugWidth" value="22" step="1" min="10" max="60" />
+          </div>
+          <div class="field">
+            <label>Flange Thick <span class="unit">mm</span></label>
+            <input type="number" id="lugThickness" value="6" step="0.5" min="2" max="20" />
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <span>Inter-Unit Locking Bosses (Part 1 ↔ Part 2)</span>
+          <input type="checkbox" id="enableInterLock" checked />
+        </div>
+        <div class="checkbox-row">
+          <span>Pocket Screw Tabs (Pockets ↔ Main Shells)</span>
+          <input type="checkbox" id="enablePocketTabs" checked />
+        </div>
+        <div class="checkbox-row">
+          <span>External Base Mounting Ears (Desk / Wall Mount)</span>
+          <input type="checkbox" id="enableBaseEars" checked />
+        </div>
+        <div class="checkbox-row">
+          <span>Top Under-Desk Suspension Brackets</span>
+          <input type="checkbox" id="enableTopBrackets" />
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: 3D VIEWPORT & 2D BLUEPRINT -->
+    <main class="viewport-area">
+      <div class="viewport-toolbar">
+        <div class="toolbar-group">
+          <button id="view-3d" class="active">3D Interactive CAD</button>
+          <button id="view-2d">2D Drill Blueprint</button>
+        </div>
+
+        <div class="toolbar-group">
+          <span class="toolbar-label">Left-Drag:</span>
+          <button id="mode-drag-part" class="active" title="Click and drag any part or individual screw lug to move it">Move Parts</button>
+          <button id="mode-gizmo-translate" title="Show 3D XYZ Move Arrows on selected part">XYZ Gizmo</button>
+          <button id="mode-gizmo-scale" title="Show 3D XYZ Scale Handles on selected part">Scale Gizmo</button>
+          <button id="mode-orbit-only" title="Left-click drag orbits camera only">Orbit Only</button>
+        </div>
+
+        <div class="toolbar-group">
+          <span class="toolbar-label">Wheel:</span>
+          <button id="wheel-smart" class="active" title="Scroll wheel over a part to enlarge/shrink it; scroll on background to zoom camera">Resize Part / Zoom BG</button>
+          <button id="wheel-resize-selected" title="Scroll wheel always enlarges/shrinks the currently selected part">Always Resize Part</button>
+          <button id="wheel-zoom-only" title="Scroll wheel always zooms camera in/out">Camera Zoom Only</button>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="cam-zoom-in" title="Zoom Camera In">🔍+</button>
+          <button id="cam-zoom-out" title="Zoom Camera Out">🔍−</button>
+          <button id="cam-iso" title="Isometric Camera">Iso</button>
+          <button id="cam-top" title="Top Camera">Top</button>
+          <button id="cam-front" title="Front Camera">Front</button>
+          <button id="cam-side" title="Side Camera">Side</button>
+          <button id="toggle-ghost" class="active" title="Show hardware units inside case">Ghosts</button>
+          <button id="toggle-axes" class="active" title="Show coaxial screw centerlines">Axes</button>
+        </div>
+      </div>
+
+      <!-- Selected / Hovered Part Live HUD -->
+      <div class="selection-hud" id="selection-hud">
+        <div>
+          <div class="part-name" id="hud-part-name">Selected: Screw Lug BASE-L1</div>
+          <div class="part-meta" id="hud-part-meta">Drag any screw lug one-by-one • Right-click for Copy / Paste / Rotate / Ungroup</div>
+        </div>
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+          <button type="button" id="btn-hud-copy" title="Copy selected part (Ctrl+C)">Copy</button>
+          <button type="button" id="btn-hud-paste" title="Paste copied part (Ctrl+V)">Paste</button>
+          <button type="button" id="btn-hud-rotate" title="Rotate selected part 90° (R)">↻ 90°</button>
+          <button type="button" id="btn-part-smaller" title="Make selected part smaller">− Smaller</button>
+          <button type="button" id="btn-part-larger" title="Make selected part larger">+ Larger</button>
+          <select id="wheel-axis-select" title="Which dimension the mouse wheel resizes" style="width:auto; padding:4px 6px; font-size:11px;">
+            <option value="all" selected>Wheel: Uniform</option>
+            <option value="w">Wheel: Width (X)</option>
+            <option value="d">Wheel: Depth/Reach (Z)</option>
+            <option value="h">Wheel: Height/Thick (Y)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="canvas-container"></div>
+      <div id="blueprint-container"></div>
+
+      <div class="legend-overlay">
+        <div class="legend-item"><span class="dot" style="background:#38bdf8"></span>Part 1: Mac mini M4 + Acasis M001 Upper Shell</div>
+        <div class="legend-item"><span class="dot" style="background:#818cf8"></span>Part 2: Hagibis MC25 Pro Lower Base Shell</div>
+        <div class="legend-item"><span class="dot" style="background:#34d399"></span>Side Pockets (Individual Movable &amp; Copyable Bays)</div>
+        <div class="legend-item"><span class="dot" style="background:#fbbf24"></span>Screw-Holed Mounting Lugs (Ungrouped — Drag 1-by-1!)</div>
+        <div class="legend-item"><span class="dot" style="background:#fb7185"></span>Coaxial Fastener Alignment Axis</div>
+      </div>
+
+      <div class="explode-bar">
+        <span>Exploded View</span>
+        <input type="range" id="explodeRange" min="0" max="100" value="18" />
+        <span id="explodeVal" style="font-family: var(--font-mono); color: var(--accent)">18%</span>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: SELECTED PART TRANSFORM, BOM, MOUNTING POINT COORDINATES & EXPORT -->
+    <aside class="panel panel-right">
+      <!-- Selected Part Inspector (Move, Rotate & Scale Sliders) -->
+      <div class="card selected-card">
+        <div class="card-header">
+          <div class="card-title">Selected Part Manipulator</div>
+          <span class="badge" id="active-part-badge">UNIT1</span>
+        </div>
+        <div class="field full">
+          <label>Select Individual Part / Screw Lug</label>
+          <select id="selectPartDropdown"></select>
+        </div>
+        <div class="control-grid three">
+          <div class="field">
+            <label>Move X <span class="unit">mm</span></label>
+            <input type="number" id="partOffsetX" value="0" step="1" />
+          </div>
+          <div class="field">
+            <label>Move Y <span class="unit">mm</span></label>
+            <input type="number" id="partOffsetY" value="0" step="1" />
+          </div>
+          <div class="field">
+            <label>Move Z <span class="unit">mm</span></label>
+            <input type="number" id="partOffsetZ" value="0" step="1" />
+          </div>
+        </div>
+        <div class="control-grid">
+          <div class="field">
+            <label>Rotate Y <span class="unit">deg</span></label>
+            <input type="number" id="partRotY" value="0" step="15" />
+          </div>
+          <div class="field">
+            <label>Scale <span class="unit" id="partScaleLabel">100%</span></label>
+            <input type="range" id="partScaleSlider" min="40" max="240" value="100" />
+          </div>
+        </div>
+        <div class="preset-pills">
+          <button type="button" id="btn-panel-duplicate">➕ Duplicate</button>
+          <button type="button" id="btn-panel-rot90">🔄 Rotate 90°</button>
+          <button type="button" id="btn-panel-snap">🧲 Snap to Wall</button>
+          <button type="button" id="btn-panel-delete" style="color:var(--rose);">🗑️ Delete</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Part Visibility &amp; STL Export</div>
+          <span class="badge">MODULAR</span>
+        </div>
+        <div class="checkbox-row">
+          <span>1. Upper Shell (M4 + Acasis M001)</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="btn-stl-part" data-part="unit1">STL</button>
+            <input type="checkbox" class="vis-toggle" data-part="unit1" checked />
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <span>2. Lower Base (Hagibis MC25 Pro)</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="btn-stl-part" data-part="unit2">STL</button>
+            <input type="checkbox" class="vis-toggle" data-part="unit2" checked />
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <span>3. Side Pockets (All Active)</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="btn-stl-part" data-part="pockets">STL</button>
+            <input type="checkbox" class="vis-toggle" data-part="pockets" checked />
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <span>4. Screw-Holed Mounting Lugs</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="btn-stl-part" data-part="brackets">STL</button>
+            <input type="checkbox" class="vis-toggle" data-part="brackets" checked />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Computed Outer Envelope</div>
+          <span class="badge">LIVE</span>
+        </div>
+        <table class="spec-table" id="envelope-table">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Individual Screw Lugs (Click to Select)</div>
+          <span class="badge" id="hole-count-badge">14 HOLES</span>
+        </div>
+        <div style="max-height: 185px; overflow-y: auto;">
+          <table class="spec-table" id="holes-table">
+            <thead>
+              <tr>
+                <th>ID / Group</th>
+                <th>X (mm)</th>
+                <th>Z (mm)</th>
+                <th>Ø Hole</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Live OpenSCAD Snippet</div>
+          <button type="button" id="btn-copy-scad" style="padding:2px 8px; font-size:10px;">Copy</button>
+        </div>
+        <div class="code-box" id="scad-preview"></div>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { TransformControls } from 'three/addons/controls/TransformControls.js';
+    import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+    import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+    // --- Fastener Lookup Table ---
+    const FASTENERS = {
+      M3:   { name: 'M3',      throughDia: 3.2, cboreDia: 5.6, cboreDepth: 3.0, insertDia: 4.0 },
+      M4:   { name: 'M4',      throughDia: 4.3, cboreDia: 7.5, cboreDepth: 4.0, insertDia: 5.6 },
+      M5:   { name: 'M5',      throughDia: 5.3, cboreDia: 9.0, cboreDepth: 5.0, insertDia: 6.4 },
+      UNC6: { name: '#6-32',   throughDia: 3.8, cboreDia: 6.8, cboreDepth: 3.5, insertDia: 4.8 }
+    };
+
+    // --- State & Individual Part Registry ---
+    // Every movable object (unit1, unit2, pockets, and every individual screw lug!) gets an entry in `partTransforms`
+    const partTransforms = {};
+    const deletedPartKeys = new Set();
+    const customParts = []; // User copy-pasted or newly added screw lugs & pockets
+    let customCounter = 1;
+
+    // By default, screw-holed lugs are UNGROUPED so user can drag/copy/paste them one by one!
+    let lugsUngrouped = true;
+    let clipboardPart = null;
+    let lastRightClickWorldPt = new THREE.Vector3(0, 0, 0);
+
+    let selectedPartKey = 'lug:BASE-L1';
+    let hoveredPartKey = null;
+    let dragMode = 'drag-part'; // 'drag-part' | 'gizmo-translate' | 'gizmo-scale' | 'orbit-only'
+    let wheelMode = 'smart';    // 'smart' | 'resize-selected' | 'zoom-only'
+
+    function ensureTransform(key) {
+      if (!partTransforms[key]) {
+        partTransforms[key] = {
+          offset: new THREE.Vector3(0, 0, 0),
+          rotYDelta: 0, // radians
+          scale: 1.0,
+          scaleVec: new THREE.Vector3(1, 1, 1)
+        };
+      }
+      return partTransforms[key];
+    }
+
+    function getParams() {
+      const num = (id) => parseFloat(document.getElementById(id).value) || 0;
+      const chk = (id) => document.getElementById(id).checked;
+      const val = (id) => document.getElementById(id).value;
+
+      const screwKey = val('screwSpec');
+      const fastener = FASTENERS[screwKey] || FASTENERS.M4;
+
+      return {
+        arrangement: val('arrangement'),
+        m4Width: num('m4Width'),
+        m4Depth: num('m4Depth'),
+        m4Height: num('m4Height'),
+        m001Width: num('m001Width'),
+        m001Depth: num('m001Depth'),
+        m001Height: num('m001Height'),
+        unit1Lip: num('unit1Lip'),
+        portCutoutPct: num('portCutoutPct') / 100,
+        includeMidShelf: chk('includeMidShelf'),
+
+        mc25Width: num('mc25Width'),
+        mc25Depth: num('mc25Depth'),
+        mc25Height: num('mc25Height'),
+        wallThickness: num('wallThickness'),
+        tolerance: num('tolerance'),
+
+        enableLeftPocket: chk('enableLeftPocket'),
+        enableRightPocket: chk('enableRightPocket'),
+        enableRearPocket: chk('enableRearPocket'),
+        pocketWidth: num('pocketWidth'),
+        pocketDepth: num('pocketDepth'),
+        pocketHeight: num('pocketHeight'),
+        pocketPlacement: val('pocketPlacement'),
+        pocketDividers: Math.max(0, Math.min(4, Math.round(num('pocketDividers')))),
+
+        screwKey,
+        fastener,
+        lugProjection: num('lugProjection'),
+        lugWidth: num('lugWidth'),
+        lugThickness: num('lugThickness'),
+        enableInterLock: chk('enableInterLock'),
+        enablePocketTabs: chk('enablePocketTabs'),
+        enableBaseEars: chk('enableBaseEars'),
+        enableTopBrackets: chk('enableTopBrackets'),
+
+        explode: num('explodeRange') / 100
+      };
+    }
+
+    // --- Three.js Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 1, 4000);
+    camera.position.set(270, 220, 290);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enableZoom = false;
+    controls.target.set(0, 45, 0);
+
+    const transformControl = new TransformControls(camera, renderer.domElement);
+    transformControl.setSize(0.8);
+    transformControl.visible = false;
+    transformControl.enabled = false;
+    scene.add(transformControl);
+
+    transformControl.addEventListener('dragging-changed', (event) => {
+      controls.enabled = !event.value;
+    });
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xdbeafe, 0.78));
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.15);
+    dirLight1.position.set(200, 350, 250);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x60a5fa, 0.55);
+    dirLight2.position.set(-220, 140, -200);
+    scene.add(dirLight2);
+
+    // Reference Grid
+    const grid = new THREE.GridHelper(480, 48, 0x38bdf8, 0x1e293b);
+    grid.position.y = -0.2;
+    scene.add(grid);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const axesGroup = new THREE.Group();
+    scene.add(axesGroup);
+
+    // Map of active Three.js Group for each selectable `partKey`
+    let partNodes = {};
+    let partMetadata = {}; // key -> { label, category, basePos, baseRotY, holeLocalOffset, lugGroupName, holeId }
+    let currentHoles = [];
+    let currentMetrics = {};
+
+    let showGhosts = true;
+    let showAxes = true;
+    const partVisibility = { unit1: true, unit2: true, pockets: true, brackets: true };
+
+    // Base material templates
+    const mats = {
+      ghostM4: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.34, roughness: 0.2, metalness: 0.7 }),
+      ghostM001: new THREE.MeshStandardMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.38, roughness: 0.25, metalness: 0.6 }),
+      ghostMC25: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.32, roughness: 0.3, metalness: 0.5 }),
+      edgeLine: new THREE.LineBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.45 }),
+      edgeSelected: new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.98 }),
+      axisLine: new THREE.LineDashedMaterial({ color: 0xfb7185, dashSize: 4, gapSize: 2.5 })
+    };
+
+    function createPartMaterial(hexColor, metalness = 0.2) {
+      return new THREE.MeshStandardMaterial({ color: hexColor, roughness: 0.35, metalness });
+    }
+
+    // --- Geometry Builders ---
+    function mergeGeomsSafe(geoms) {
+      const normalized = geoms.map(g => {
+        const nonIdx = g.index ? g.toNonIndexed() : g.clone();
+        for (const key of Object.keys(nonIdx.attributes)) {
+          if (key !== 'position' && key !== 'normal') {
+            nonIdx.deleteAttribute(key);
+          }
+        }
+        nonIdx.computeVertexNormals();
+        return nonIdx;
+      });
+      return BufferGeometryUtils.mergeGeometries(normalized, false);
+    }
+
+    function addMeshWithEdges(group, geom, material, pos = [0, 0, 0], rot = [0, 0, 0], isGhost = false) {
+      const mesh = new THREE.Mesh(geom, material);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.rotation.set(rot[0], rot[1], rot[2]);
+      mesh.userData.partKey = group.userData.partKey;
+      mesh.userData.isGhost = isGhost;
+      mesh.updateMatrix();
+      group.add(mesh);
+
+      const edges = new THREE.EdgesGeometry(geom, 28);
+      const line = new THREE.LineSegments(edges, mats.edgeLine);
+      line.position.copy(mesh.position);
+      line.rotation.copy(mesh.rotation);
+      line.userData.isHelper = true;
+      line.userData.isGhost = isGhost;
+      group.add(line);
+      return mesh;
+    }
+
+    function createShellWalls(outerW, outerD, height, wall, cutoutRatio, bottomPlateThickness = 0) {
+      const hw = outerW / 2;
+      const hd = outerD / 2;
+      const iw = hw - wall;
+      const id = hd - wall;
+      const cutW = (outerW - wall * 2) * cutoutRatio;
+      const geoms = [];
+
+      if (bottomPlateThickness > 0) {
+        const bShape = new THREE.Shape();
+        bShape.moveTo(-hw, -hd);
+        bShape.lineTo(hw, -hd);
+        bShape.lineTo(hw, hd);
+        bShape.lineTo(-hw, hd);
+        bShape.closePath();
+
+        const vRad = Math.min(iw, id) * 0.42;
+        if (vRad > 2) {
+          const hole = new THREE.Path();
+          hole.absarc(0, 0, vRad, 0, Math.PI * 2, true);
+          bShape.holes.push(hole);
+        }
+
+        const bGeom = new THREE.ExtrudeGeometry(bShape, { depth: bottomPlateThickness, bevelEnabled: false });
+        bGeom.rotateX(-Math.PI / 2);
+        bGeom.translate(0, bottomPlateThickness / 2, 0);
+        geoms.push(bGeom);
+      }
+
+      const wallH = Math.max(2, height - bottomPlateThickness);
+      const yCenter = bottomPlateThickness + wallH / 2;
+
+      const leftWall = new THREE.BoxGeometry(wall, wallH, outerD);
+      leftWall.translate(-hw + wall / 2, yCenter, 0);
+      geoms.push(leftWall);
+
+      const rightWall = new THREE.BoxGeometry(wall, wallH, outerD);
+      rightWall.translate(hw - wall / 2, yCenter, 0);
+      geoms.push(rightWall);
+
+      const pillarW = Math.max(wall, (outerW - cutW) / 2);
+      const pillarPositions = [
+        [-hw + pillarW / 2, -hd + wall / 2],
+        [ hw - pillarW / 2, -hd + wall / 2],
+        [-hw + pillarW / 2,  hd - wall / 2],
+        [ hw - pillarW / 2,  hd - wall / 2]
+      ];
+      for (const [px, pz] of pillarPositions) {
+        const pGeom = new THREE.BoxGeometry(pillarW, wallH, wall);
+        pGeom.translate(px, yCenter, pz);
+        geoms.push(pGeom);
+      }
+
+      const bridgeH = Math.min(5, wallH * 0.16);
+      for (const pz of [-hd + wall / 2, hd - wall / 2]) {
+        const br = new THREE.BoxGeometry(cutW, bridgeH, wall);
+        br.translate(0, height - bridgeH / 2, pz);
+        geoms.push(br);
+      }
+
+      return mergeGeomsSafe(geoms);
+    }
+
+    function createScrewLugGeometry(width, length, thickness, throughDia, cboreDia, cboreDepth) {
+      const hw = width / 2;
+      const r = Math.min(hw, length * 0.45);
+
+      const baseShape = new THREE.Shape();
+      baseShape.moveTo(-hw, 0);
+      baseShape.lineTo(hw, 0);
+      baseShape.lineTo(hw, length - r);
+      baseShape.absarc(0, length - r, r, 0, Math.PI, false);
+      baseShape.lineTo(-hw, 0);
+
+      const holeCenterZ = length - r;
+      const throughHole = new THREE.Path();
+      throughHole.absarc(0, holeCenterZ, throughDia / 2, 0, Math.PI * 2, true);
+      baseShape.holes.push(throughHole);
+
+      const lowerH = Math.max(1.2, thickness - cboreDepth);
+      const lowerGeom = new THREE.ExtrudeGeometry(baseShape, { depth: lowerH, bevelEnabled: false, curveSegments: 24 });
+      lowerGeom.rotateX(Math.PI / 2);
+      lowerGeom.translate(0, lowerH, 0);
+
+      const geoms = [lowerGeom];
+
+      if (cboreDepth > 0.2 && cboreDia > throughDia) {
+        const upperShape = new THREE.Shape();
+        upperShape.moveTo(-hw, 0);
+        upperShape.lineTo(hw, 0);
+        upperShape.lineTo(hw, length - r);
+        upperShape.absarc(0, length - r, r, 0, Math.PI, false);
+        upperShape.lineTo(-hw, 0);
+
+        const cbHole = new THREE.Path();
+        cbHole.absarc(0, holeCenterZ, cboreDia / 2, 0, Math.PI * 2, true);
+        upperShape.holes.push(cbHole);
+
+        const upperGeom = new THREE.ExtrudeGeometry(upperShape, { depth: cboreDepth, bevelEnabled: false, curveSegments: 24 });
+        upperGeom.rotateX(Math.PI / 2);
+        upperGeom.translate(0, thickness, 0);
+        geoms.push(upperGeom);
+      }
+
+      const merged = mergeGeomsSafe(geoms);
+      return { geometry: merged, holeOffset: holeCenterZ };
+    }
+
+    function createPocketGeometry(width, depth, height, wall, dividers) {
+      const geoms = [];
+      const hw = width / 2;
+      const hd = depth / 2;
+
+      const floor = new THREE.BoxGeometry(width, wall, depth);
+      floor.translate(0, wall / 2, 0);
+      geoms.push(floor);
+
+      const lw = new THREE.BoxGeometry(wall, height - wall, depth);
+      lw.translate(-hw + wall / 2, wall + (height - wall) / 2, 0);
+      geoms.push(lw);
+
+      const rw = new THREE.BoxGeometry(wall, height - wall, depth);
+      rw.translate(hw - wall / 2, wall + (height - wall) / 2, 0);
+      geoms.push(rw);
+
+      const bw = new THREE.BoxGeometry(width - wall * 2, height - wall, wall);
+      bw.translate(0, wall + (height - wall) / 2, -hd + wall / 2);
+      geoms.push(bw);
+
+      const fw = new THREE.BoxGeometry(width - wall * 2, (height - wall) * 0.65, wall);
+      fw.translate(0, wall + ((height - wall) * 0.65) / 2, hd - wall / 2);
+      geoms.push(fw);
+
+      if (dividers > 0) {
+        const innerD = depth - wall * 2;
+        const step = innerD / (dividers + 1);
+        for (let i = 1; i <= dividers; i++) {
+          const zPos = -hd + wall + step * i;
+          const div = new THREE.BoxGeometry(width - wall * 2, (height - wall) * 0.85, wall * 0.8);
+          div.translate(0, wall + ((height - wall) * 0.85) / 2, zPos);
+          geoms.push(div);
+        }
+      }
+
+      return mergeGeomsSafe(geoms);
+    }
+
+    function clearGroup(group) {
+      while (group.children.length > 0) {
+        const child = group.children.pop();
+        if (child.children && child.children.length > 0) clearGroup(child);
+        if (child.geometry) child.geometry.dispose();
+      }
+    }
+
+    function registerMovableNode(key, meta) {
+      ensureTransform(key);
+      const grp = new THREE.Group();
+      grp.userData.partKey = key;
+      partNodes[key] = grp;
+      partMetadata[key] = meta;
+      rootGroup.add(grp);
+      return grp;
+    }
+
+    // --- Rebuild Entire Parametric + Custom Scene ---
+    function rebuildModel() {
+      const p = getParams();
+      transformControl.detach();
+      clearGroup(rootGroup);
+      clearGroup(axesGroup);
+      partNodes = {};
+      partMetadata = {};
+
+      const w = p.wallThickness;
+      const tol = p.tolerance;
+
+      // Component 1 sizes (Mac mini M4 + Acasis M001)
+      const u1InnerW = Math.max(p.m4Width, p.m001Width) + tol * 2;
+      const u1InnerD = Math.max(p.m4Depth, p.m001Depth) + tol * 2;
+      const u1InnerH = p.m4Height + p.m001Height + tol * 2 + (p.includeMidShelf ? p.unit1Lip : 0);
+
+      const u1OuterW = u1InnerW + w * 2;
+      const u1OuterD = u1InnerD + w * 2;
+      const u1OuterH = u1InnerH + w;
+
+      // Component 2 sizes (Hagibis MC25 Pro)
+      const u2InnerW = p.mc25Width + tol * 2;
+      const u2InnerD = p.mc25Depth + tol * 2;
+      const u2InnerH = p.mc25Height + tol;
+
+      const u2OuterW = u2InnerW + w * 2;
+      const u2OuterD = u2InnerD + w * 2;
+      const u2OuterH = u2InnerH + w;
+
+      document.getElementById('badge-unit1').textContent =
+        `${u1OuterW.toFixed(1)}×${u1OuterD.toFixed(1)}×${u1OuterH.toFixed(1)}`;
+      document.getElementById('badge-unit2').textContent =
+        `${u2OuterW.toFixed(1)}×${u2OuterD.toFixed(1)}×${u2OuterH.toFixed(1)}`;
+      document.getElementById('badge-screws').textContent =
+        `${p.fastener.name} (Ø${p.fastener.throughDia}mm)`;
+      document.getElementById('explodeVal').textContent = `${Math.round(p.explode * 100)}%`;
+
+      let u1Base = new THREE.Vector3(0, u2OuterH, 0);
+      let u2Base = new THREE.Vector3(0, 0, 0);
+
+      if (p.arrangement === 'stacked_rear') {
+        const zShift = -(u2OuterD - u1OuterD) / 2;
+        u1Base.set(0, u2OuterH, zShift);
+      } else if (p.arrangement === 'side_by_side') {
+        const xGap = 14;
+        u2Base.set(-(u2OuterW / 2 + xGap / 2), 0, 0);
+        u1Base.set( (u1OuterW / 2 + xGap / 2), 0, 0);
+      }
+
+      const expY1 = p.explode * 55;
+      const expY2 = -p.explode * 18;
+      const expPocket = p.explode * 45;
+      const expBracket = p.explode * 36;
+
+      // 1. Build Part 2: Hagibis MC25 Pro Lower Shell
+      const u2Node = registerMovableNode('unit2', {
+        label: 'Part 2 — Hagibis MC25 Pro Lower Base Shell',
+        category: 'unit2',
+        canDelete: false,
+        basePos: new THREE.Vector3(u2Base.x, u2Base.y + expY2, u2Base.z),
+        baseRotY: 0
+      });
+      const u2Geom = createShellWalls(u2OuterW, u2OuterD, u2OuterH, w, p.portCutoutPct, w);
+      addMeshWithEdges(u2Node, u2Geom, createPartMaterial(0x6366f1, 0.15), [0, 0, 0]);
+      if (showGhosts) {
+        const mc25Ghost = new THREE.BoxGeometry(p.mc25Width, p.mc25Height, p.mc25Depth);
+        addMeshWithEdges(u2Node, mc25Ghost, mats.ghostMC25, [0, w + p.mc25Height / 2, 0], [0, 0, 0], true);
+      }
+      u2Node.visible = partVisibility.unit2;
+
+      // 2. Build Part 1: Mac mini M4 + Acasis M001 Upper Shell
+      const u1Node = registerMovableNode('unit1', {
+        label: 'Part 1 — Mac mini M4 + Acasis M001 Upper Shell',
+        category: 'unit1',
+        canDelete: false,
+        basePos: new THREE.Vector3(u1Base.x, u1Base.y + expY1, u1Base.z),
+        baseRotY: 0
+      });
+      const u1BottomPlate = p.arrangement === 'side_by_side' ? w : w * 0.85;
+      const u1Geom = createShellWalls(u1OuterW, u1OuterD, u1OuterH, w, p.portCutoutPct, u1BottomPlate);
+      const u1Geoms = [u1Geom];
+      if (p.includeMidShelf) {
+        const shelfY = u1BottomPlate + p.m001Height + tol;
+        const lipW = Math.max(2.0, p.unit1Lip + 2.0);
+        const shelfL = new THREE.BoxGeometry(lipW, p.unit1Lip, u1InnerD * 0.8);
+        shelfL.translate(-u1InnerW / 2 + lipW / 2, shelfY, 0);
+        const shelfR = new THREE.BoxGeometry(lipW, p.unit1Lip, u1InnerD * 0.8);
+        shelfR.translate(u1InnerW / 2 - lipW / 2, shelfY, 0);
+        u1Geoms.push(shelfL, shelfR);
+      }
+      const u1FinalGeom = mergeGeomsSafe(u1Geoms);
+      addMeshWithEdges(u1Node, u1FinalGeom, createPartMaterial(0x0ea5e9, 0.15), [0, 0, 0]);
+
+      if (showGhosts) {
+        const m001Ghost = new THREE.BoxGeometry(p.m001Width, p.m001Height, p.m001Depth);
+        const m001Y = u1BottomPlate + p.m001Height / 2;
+        addMeshWithEdges(u1Node, m001Ghost, mats.ghostM001, [0, m001Y, 0], [0, 0, 0], true);
+
+        const m4Ghost = new THREE.BoxGeometry(p.m4Width, p.m4Height, p.m4Depth);
+        const m4Y = u1BottomPlate + p.m001Height + (p.includeMidShelf ? p.unit1Lip : 0) + tol + p.m4Height / 2;
+        addMeshWithEdges(u1Node, m4Ghost, mats.ghostM4, [0, m4Y, 0], [0, 0, 0], true);
+      }
+      u1Node.visible = partVisibility.unit1;
+
+      // 3. Build Side Pockets
+      const pW = p.pocketWidth;
+      const pD = p.pocketDepth;
+      const pH = p.pocketHeight;
+      const pocketBaseGeom = createPocketGeometry(pW, pD, pH, w * 0.85, p.pocketDividers);
+
+      const useLedge = p.pocketPlacement === 'ledge' && p.arrangement !== 'side_by_side';
+      const pocketBaseY = useLedge ? u2OuterH : 0;
+
+      const leftPocketX = useLedge
+        ? (u1Base.x - u1OuterW / 2 - pW / 2)
+        : (u2Base.x - u2OuterW / 2 - pW / 2);
+
+      const rightPocketX = useLedge
+        ? (u1Base.x + u1OuterW / 2 + pW / 2)
+        : (u2Base.x + u2OuterW / 2 + pW / 2);
+
+      if (p.enableLeftPocket && !deletedPartKeys.has('pocketLeft')) {
+        const pkL = registerMovableNode('pocketLeft', {
+          label: 'Left Side Pocket (SSD / Cable Bay)',
+          category: 'pockets',
+          canDelete: true,
+          basePos: new THREE.Vector3(leftPocketX - expPocket, pocketBaseY + expY1 * 0.4, u1Base.z),
+          baseRotY: 0
+        });
+        addMeshWithEdges(pkL, pocketBaseGeom.clone(), createPartMaterial(0x10b981, 0.12), [0, 0, 0]);
+        pkL.visible = partVisibility.pockets;
+      }
+
+      if (p.enableRightPocket && !deletedPartKeys.has('pocketRight')) {
+        const pkR = registerMovableNode('pocketRight', {
+          label: 'Right Side Pocket (SD / Dongle Bay)',
+          category: 'pockets',
+          canDelete: true,
+          basePos: new THREE.Vector3(rightPocketX + expPocket, pocketBaseY + expY1 * 0.4, u1Base.z),
+          baseRotY: 0
+        });
+        addMeshWithEdges(pkR, pocketBaseGeom.clone(), createPartMaterial(0x10b981, 0.12), [0, 0, 0]);
+        pkR.visible = partVisibility.pockets;
+      }
+
+      if (p.enableRearPocket && !deletedPartKeys.has('pocketRear')) {
+        const rearZ = u2Base.z - u2OuterD / 2 - pW / 2;
+        const pkRear = registerMovableNode('pocketRear', {
+          label: 'Rear Cable Management Pocket',
+          category: 'pockets',
+          canDelete: true,
+          basePos: new THREE.Vector3(u2Base.x, 0, rearZ - expPocket),
+          baseRotY: 0
+        });
+        const rearGeom = createPocketGeometry(u1OuterW * 0.75, pW, pH * 0.75, w * 0.85, 1);
+        addMeshWithEdges(pkRear, rearGeom, createPartMaterial(0x059669, 0.12), [0, 0, 0]);
+        pkRear.visible = partVisibility.pockets;
+      }
+
+      // 4. Build Screw-Holed Mounting Lugs (Individually Ungrouped OR Grouped)
+      const { throughDia, cboreDia, cboreDepth } = p.fastener;
+      const lugInfo = createScrewLugGeometry(
+        p.lugWidth,
+        p.lugProjection,
+        p.lugThickness,
+        throughDia,
+        cboreDia,
+        Math.min(cboreDepth, p.lugThickness * 0.55)
+      );
+
+      let groupedBracketNode = null;
+      if (!lugsUngrouped) {
+        groupedBracketNode = registerMovableNode('bracketsGroup', {
+          label: 'All Screw-Holed Mounting Lugs (Grouped)',
+          category: 'brackets',
+          canDelete: false,
+          basePos: new THREE.Vector3(0, 0, 0),
+          baseRotY: 0
+        });
+        groupedBracketNode.visible = partVisibility.brackets;
+      }
+
+      function spawnScrewLug({ id, groupName, basePos, rotY, yLevel, explodeVec = [0, 0, 0], colorHex = 0xf59e0b, registerHole = true }) {
+        const partKey = `lug:${id}`;
+        if (deletedPartKeys.has(partKey)) return;
+
+        const worldStart = new THREE.Vector3(
+          basePos[0] + explodeVec[0],
+          yLevel + explodeVec[1],
+          basePos[2] + explodeVec[2]
+        );
+
+        if (lugsUngrouped) {
+          const lugNode = registerMovableNode(partKey, {
+            label: `Screw Lug ${id} (${groupName})`,
+            category: 'brackets',
+            canDelete: true,
+            basePos: worldStart,
+            baseRotY: rotY,
+            holeId: registerHole ? id : null,
+            lugGroupName: groupName,
+            holeLocalOffset: lugInfo.holeOffset,
+            throughDia,
+            cboreDia
+          });
+          addMeshWithEdges(lugNode, lugInfo.geometry.clone(), createPartMaterial(colorHex, 0.3), [0, 0, 0], [0, 0, 0]);
+          lugNode.visible = partVisibility.brackets;
+        } else {
+          // Grouped inside `bracketsGroup`
+          addMeshWithEdges(
+            groupedBracketNode,
+            lugInfo.geometry.clone(),
+            createPartMaterial(colorHex, 0.3),
+            [worldStart.x, worldStart.y, worldStart.z],
+            [0, rotY, 0]
+          );
+          // Still store metadata so holes compute cleanly
+          partMetadata[partKey] = {
+            label: `Screw Lug ${id} (${groupName})`,
+            category: 'brackets',
+            basePos: worldStart,
+            baseRotY: rotY,
+            holeId: registerHole ? id : null,
+            lugGroupName: groupName,
+            holeLocalOffset: lugInfo.holeOffset,
+            throughDia,
+            cboreDia,
+            inGroup: true
+          };
+          ensureTransform(partKey);
+        }
+      }
+
+      // 4A. Inter-Unit Locking Bosses (Upper flange + Lower mating boss, both individually movable!)
+      if (p.enableInterLock) {
+        const zOffsets = [-u1OuterD * 0.32, u1OuterD * 0.32];
+        for (let i = 0; i < zOffsets.length; i++) {
+          const z = u1Base.z + zOffsets[i];
+          spawnScrewLug({
+            id: `U1-L${i + 1}`,
+            groupName: 'Unit1↔Unit2 Upper Lock',
+            basePos: [u1Base.x - u1OuterW / 2, 0, z],
+            rotY: -Math.PI / 2,
+            yLevel: u1Base.y,
+            explodeVec: [0, expY1, 0],
+            colorHex: 0xf59e0b,
+            registerHole: true
+          });
+          spawnScrewLug({
+            id: `U2-L${i + 1}`,
+            groupName: 'Unit1↔Unit2 Lower Boss',
+            basePos: [u1Base.x - u1OuterW / 2, 0, z],
+            rotY: -Math.PI / 2,
+            yLevel: u1Base.y - p.lugThickness,
+            explodeVec: [0, expY2, 0],
+            colorHex: 0x818cf8,
+            registerHole: false
+          });
+
+          spawnScrewLug({
+            id: `U1-R${i + 1}`,
+            groupName: 'Unit1↔Unit2 Upper Lock',
+            basePos: [u1Base.x + u1OuterW / 2, 0, z],
+            rotY: Math.PI / 2,
+            yLevel: u1Base.y,
+            explodeVec: [0, expY1, 0],
+            colorHex: 0xf59e0b,
+            registerHole: true
+          });
+          spawnScrewLug({
+            id: `U2-R${i + 1}`,
+            groupName: 'Unit1↔Unit2 Lower Boss',
+            basePos: [u1Base.x + u1OuterW / 2, 0, z],
+            rotY: Math.PI / 2,
+            yLevel: u1Base.y - p.lugThickness,
+            explodeVec: [0, expY2, 0],
+            colorHex: 0x818cf8,
+            registerHole: false
+          });
+        }
+      }
+
+      // 4B. Pocket Screw Tabs
+      if (p.enablePocketTabs) {
+        const pZOffsets = [-pD * 0.32, pD * 0.32];
+        if (p.enableLeftPocket) {
+          pZOffsets.forEach((zo, idx) => {
+            spawnScrewLug({
+              id: `PKL-${idx + 1}`,
+              groupName: 'Left Pocket Tab',
+              basePos: [leftPocketX, 0, u1Base.z + zo + (idx === 0 ? -pD / 2 : pD / 2)],
+              rotY: idx === 0 ? Math.PI : 0,
+              yLevel: pocketBaseY,
+              explodeVec: [-expPocket, expY1 * 0.4, 0]
+            });
+          });
+        }
+        if (p.enableRightPocket) {
+          pZOffsets.forEach((zo, idx) => {
+            spawnScrewLug({
+              id: `PKR-${idx + 1}`,
+              groupName: 'Right Pocket Tab',
+              basePos: [rightPocketX, 0, u1Base.z + zo + (idx === 0 ? -pD / 2 : pD / 2)],
+              rotY: idx === 0 ? Math.PI : 0,
+              yLevel: pocketBaseY,
+              explodeVec: [expPocket, expY1 * 0.4, 0]
+            });
+          });
+        }
+      }
+
+      // 4C. External Base Mounting Ears
+      if (p.enableBaseEars) {
+        const earZ = [-u2OuterD * 0.36, u2OuterD * 0.36];
+        earZ.forEach((z, idx) => {
+          spawnScrewLug({
+            id: `BASE-L${idx + 1}`,
+            groupName: 'Base Mount Ear',
+            basePos: [u2Base.x - u2OuterW / 2, 0, u2Base.z + z],
+            rotY: -Math.PI / 2,
+            yLevel: 0,
+            explodeVec: [-expBracket, expY2, 0]
+          });
+          spawnScrewLug({
+            id: `BASE-R${idx + 1}`,
+            groupName: 'Base Mount Ear',
+            basePos: [u2Base.x + u2OuterW / 2, 0, u2Base.z + z],
+            rotY: Math.PI / 2,
+            yLevel: 0,
+            explodeVec: [expBracket, expY2, 0]
+          });
+        });
+
+        [-u2OuterW * 0.34, u2OuterW * 0.34].forEach((x, idx) => {
+          spawnScrewLug({
+            id: `BASE-B${idx + 1}`,
+            groupName: 'Rear Mount Ear',
+            basePos: [u2Base.x + x, 0, u2Base.z - u2OuterD / 2],
+            rotY: Math.PI,
+            yLevel: 0,
+            explodeVec: [0, expY2, -expBracket]
+          });
+        });
+      }
+
+      // 4D. Top Under-Desk Suspension Brackets
+      if (p.enableTopBrackets) {
+        const topY = u1Base.y + u1OuterH - p.lugThickness;
+        [-u1OuterD * 0.3, u1OuterD * 0.3].forEach((z, idx) => {
+          spawnScrewLug({
+            id: `TOP-L${idx + 1}`,
+            groupName: 'Under-Desk Top Ear',
+            basePos: [u1Base.x - u1OuterW / 2, 0, u1Base.z + z],
+            rotY: -Math.PI / 2,
+            yLevel: topY,
+            explodeVec: [-expBracket * 0.6, expY1 + 12 * p.explode, 0]
+          });
+          spawnScrewLug({
+            id: `TOP-R${idx + 1}`,
+            groupName: 'Under-Desk Top Ear',
+            basePos: [u1Base.x + u1OuterW / 2, 0, u1Base.z + z],
+            rotY: Math.PI / 2,
+            yLevel: topY,
+            explodeVec: [expBracket * 0.6, expY1 + 12 * p.explode, 0]
+          });
+        });
+      }
+
+      // 5. Spawn User Custom (Copy-Pasted / Added) Screw Lugs & Side Pockets
+      customParts.forEach(cp => {
+        if (deletedPartKeys.has(cp.key)) return;
+        if (cp.type === 'lug') {
+          spawnScrewLug({
+            id: cp.id,
+            groupName: cp.groupName || 'Custom Lug',
+            basePos: [cp.basePos.x, 0, cp.basePos.z],
+            rotY: cp.baseRotY || 0,
+            yLevel: cp.basePos.y,
+            explodeVec: [0, 0, 0],
+            colorHex: 0xfbbf24,
+            registerHole: true
+          });
+        } else if (cp.type === 'pocket') {
+          const pkNode = registerMovableNode(cp.key, {
+            label: `Custom Pocket ${cp.id}`,
+            category: 'pockets',
+            canDelete: true,
+            basePos: cp.basePos.clone(),
+            baseRotY: cp.baseRotY || 0
+          });
+          addMeshWithEdges(pkNode, pocketBaseGeom.clone(), createPartMaterial(0x10b981, 0.12), [0, 0, 0]);
+          pkNode.visible = partVisibility.pockets;
+        }
+      });
+
+      // Apply transforms, compute live hole coordinates & axes
+      applyPartTransforms();
+      populatePartDropdown();
+
+      // Ensure selectedPartKey is valid
+      if (!partNodes[selectedPartKey]) {
+        const firstKey = Object.keys(partNodes)[0] || 'unit1';
+        selectedPartKey = firstKey;
+      }
+
+      const totalWidth = Math.max(
+        u2OuterW + (!useLedge && p.enableLeftPocket ? pW : 0) + (!useLedge && p.enableRightPocket ? pW : 0),
+        u1OuterW + (p.enableLeftPocket ? pW : 0) + (p.enableRightPocket ? pW : 0)
+      ) + (p.enableBaseEars ? p.lugProjection * 2 : 0);
+
+      const totalDepth = Math.max(u2OuterD, u1OuterD) +
+        (p.enableRearPocket ? pW : 0) +
+        (p.enableBaseEars ? p.lugProjection : 0);
+
+      const totalHeight = p.arrangement === 'side_by_side'
+        ? Math.max(u1OuterH, u2OuterH, pH)
+        : (u2OuterH + Math.max(u1OuterH, useLedge ? pH : 0));
+
+      currentMetrics = {
+        u1OuterW, u1OuterD, u1OuterH,
+        u2OuterW, u2OuterD, u2OuterH,
+        totalWidth, totalDepth, totalHeight,
+        ledgePerSide: (u2OuterW - u1OuterW) / 2,
+        u1Base, u2Base
+      };
+
+      updateSelectionVisuals();
+      updateTablesAndCode(p);
+      renderBlueprintSVG(p);
+    }
+
+    /**
+     * Applies user position offsets, rotations, and scales to all nodes,
+     * and recomputes exact world coordinates for every screw hole + red coaxial axis line!
+     */
+    function applyPartTransforms() {
+      for (const [key, grp] of Object.entries(partNodes)) {
+        const meta = partMetadata[key];
+        const t = ensureTransform(key);
+        if (meta && grp) {
+          grp.position.set(
+            meta.basePos.x + t.offset.x,
+            meta.basePos.y + t.offset.y,
+            meta.basePos.z + t.offset.z
+          );
+          grp.rotation.set(0, (meta.baseRotY || 0) + t.rotYDelta, 0);
+          grp.scale.set(
+            t.scale * t.scaleVec.x,
+            t.scale * t.scaleVec.y,
+            t.scale * t.scaleVec.z
+          );
+        }
+      }
+
+      // Rebuild red coaxial screw centerlines & currentHoles array from live lug positions!
+      clearGroup(axesGroup);
+      currentHoles = [];
+
+      const groupT = ensureTransform('bracketsGroup');
+
+      for (const [key, meta] of Object.entries(partMetadata)) {
+        if (!meta.holeId || deletedPartKeys.has(key)) continue;
+
+        const t = ensureTransform(key);
+        const totalRotY = (meta.baseRotY || 0) + t.rotYDelta + (meta.inGroup ? groupT.rotYDelta : 0);
+        const effScaleZ = meta.inGroup ? groupT.scale : (t.scale * t.scaleVec.z);
+
+        const baseX = meta.basePos.x + t.offset.x + (meta.inGroup ? groupT.offset.x : 0);
+        const baseY = meta.basePos.y + t.offset.y + (meta.inGroup ? groupT.offset.y : 0);
+        const baseZ = meta.basePos.z + t.offset.z + (meta.inGroup ? groupT.offset.z : 0);
+
+        const reach = meta.holeLocalOffset * effScaleZ;
+        const holeX = baseX + Math.sin(totalRotY) * reach;
+        const holeZ = baseZ + Math.cos(totalRotY) * reach;
+
+        currentHoles.push({
+          partKey: key,
+          id: meta.holeId,
+          group: meta.lugGroupName,
+          x: holeX,
+          y: baseY,
+          z: holeZ,
+          dia: meta.throughDia,
+          cbore: meta.cboreDia
+        });
+
+        const pts = [
+          new THREE.Vector3(holeX, baseY - 18, holeZ),
+          new THREE.Vector3(holeX, baseY + 34, holeZ)
+        ];
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.Line(lineGeom, mats.axisLine);
+        line.computeLineDistances();
+        axesGroup.add(line);
+      }
+
+      axesGroup.visible = showAxes;
+    }
+
+    function populatePartDropdown() {
+      const sel = document.getElementById('selectPartDropdown');
+      const entries = Object.entries(partMetadata).filter(([k]) => !!partNodes[k]);
+      sel.innerHTML = entries.map(([k, m]) =>
+        `<option value="${k}" ${k === selectedPartKey ? 'selected' : ''}>${m.label}</option>`
+      ).join('');
+    }
+
+    // --- Interactive Selection, Hover, Copy, Paste, Duplicate, Rotate, Ungroup & Delete ---
+    function selectPart(partKey) {
+      if (!partKey || !partNodes[partKey]) return;
+      selectedPartKey = partKey;
+
+      const sel = document.getElementById('selectPartDropdown');
+      if (sel.value !== partKey) sel.value = partKey;
+
+      const meta = partMetadata[partKey];
+      document.getElementById('active-part-badge').textContent =
+        partKey.startsWith('lug:') ? partKey.replace('lug:', '') : partKey.toUpperCase();
+
+      const t = ensureTransform(partKey);
+      document.getElementById('partOffsetX').value = Math.round(t.offset.x);
+      document.getElementById('partOffsetY').value = Math.round(t.offset.y);
+      document.getElementById('partOffsetZ').value = Math.round(t.offset.z);
+      document.getElementById('partRotY').value = Math.round(THREE.MathUtils.radToDeg(t.rotYDelta));
+      document.getElementById('partScaleSlider').value = Math.round(t.scale * 100);
+      document.getElementById('partScaleLabel').textContent = `${Math.round(t.scale * 100)}%`;
+
+      ['unit1', 'unit2', 'pockets', 'brackets'].forEach(id => {
+        const el = document.getElementById(`card-${id}`);
+        if (el) el.classList.remove('selected-card');
+      });
+      if (meta) {
+        const activeCard = document.getElementById(`card-${meta.category}`);
+        if (activeCard) activeCard.classList.add('selected-card');
+      }
+
+      if (dragMode === 'gizmo-translate' || dragMode === 'gizmo-scale') {
+        transformControl.attach(partNodes[partKey]);
+        transformControl.setMode(dragMode === 'gizmo-scale' ? 'scale' : 'translate');
+        transformControl.visible = true;
+        transformControl.enabled = true;
+      } else {
+        transformControl.detach();
+        transformControl.visible = false;
+        transformControl.enabled = false;
+      }
+
+      updateSelectionVisuals();
+      highlightSelectedHoleRow();
+    }
+
+    function highlightSelectedHoleRow() {
+      document.querySelectorAll('#holes-table tbody tr').forEach(tr => {
+        tr.classList.toggle('selected-row', tr.dataset.partKey === selectedPartKey);
+      });
+    }
+
+    function updateSelectionVisuals() {
+      const m = currentMetrics;
+      const p = getParams();
+      const activeKey = hoveredPartKey || selectedPartKey;
+
+      Object.entries(partNodes).forEach(([key, grp]) => {
+        const isSel = key === selectedPartKey;
+        const isHov = key === hoveredPartKey;
+        grp.children.forEach(ch => {
+          if (ch.isMesh && !ch.userData.isGhost && ch.material && ch.material.emissive) {
+            ch.material.emissive.setHex(isHov ? 0x1e40af : (isSel ? 0x172554 : 0x000000));
+          }
+          if (ch.isLineSegments && !ch.userData.isGhost) {
+            ch.material = (isSel || isHov) ? mats.edgeSelected : mats.edgeLine;
+          }
+        });
+      });
+
+      const meta = partMetadata[activeKey];
+      const hudName = document.getElementById('hud-part-name');
+      const hudMeta = document.getElementById('hud-part-meta');
+      hudName.textContent = `${hoveredPartKey ? 'Hovering' : 'Selected'}: ${meta ? meta.label : activeKey}`;
+
+      const t = ensureTransform(activeKey);
+      const grp = partNodes[activeKey];
+      const worldPos = grp ? grp.position : new THREE.Vector3();
+      const rotDeg = Math.round(THREE.MathUtils.radToDeg((meta ? meta.baseRotY : 0) + t.rotYDelta));
+
+      hudMeta.textContent =
+        `World Pos: (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)}, ${worldPos.z.toFixed(1)}) mm • Rot: ${rotDeg}° • Scale: ${Math.round(t.scale * 100)}%`;
+    }
+
+    // --- Copy / Paste / Duplicate / Add Lug / Rotate / Snap / Delete Actions ---
+    function copyPart(partKey) {
+      const meta = partMetadata[partKey];
+      if (!meta) return;
+      const t = ensureTransform(partKey);
+      const grp = partNodes[partKey];
+      clipboardPart = {
+        sourceKey: partKey,
+        type: meta.category === 'brackets' ? 'lug' : (meta.category === 'pockets' ? 'pocket' : 'lug'),
+        worldPos: grp ? grp.position.clone() : meta.basePos.clone(),
+        rotY: (meta.baseRotY || 0) + t.rotYDelta,
+        scale: t.scale,
+        scaleVec: t.scaleVec.clone(),
+        groupName: meta.lugGroupName || 'Copied Lug'
+      };
+      const statusEl = document.getElementById('fit-status');
+      statusEl.textContent = `📋 Copied "${meta.label}" — Right-click anywhere to Paste`;
+    }
+
+    function pastePartAt(targetWorldPt = null) {
+      if (!lugsUngrouped) {
+        lugsUngrouped = true;
+        updateLugGroupButtonUI();
+      }
+      const src = clipboardPart || {
+        type: 'lug',
+        worldPos: new THREE.Vector3(0, 0, 0),
+        rotY: 0,
+        scale: 1.0,
+        scaleVec: new THREE.Vector3(1, 1, 1),
+        groupName: 'Custom Lug'
+      };
+
+      const id = `CUST-${customCounter++}`;
+      const key = src.type === 'lug' ? `lug:${id}` : `pocket:${id}`;
+      const spawnPos = targetWorldPt
+        ? targetWorldPt.clone()
+        : src.worldPos.clone().add(new THREE.Vector3(18, 0, 18));
+
+      customParts.push({
+        key,
+        id,
+        type: src.type,
+        groupName: src.groupName,
+        basePos: spawnPos,
+        baseRotY: src.rotY
+      });
+
+      const t = ensureTransform(key);
+      t.offset.set(0, 0, 0);
+      t.rotYDelta = 0;
+      t.scale = src.scale;
+      t.scaleVec.copy(src.scaleVec);
+
+      rebuildModel();
+      selectPart(key);
+    }
+
+    function duplicatePartInPlace(partKey) {
+      copyPart(partKey);
+      const grp = partNodes[partKey];
+      const basePt = grp ? grp.position.clone().add(new THREE.Vector3(16, 0, 16)) : null;
+      pastePartAt(basePt);
+    }
+
+    function addNewLugAt(worldPt) {
+      if (!lugsUngrouped) {
+        lugsUngrouped = true;
+        updateLugGroupButtonUI();
+      }
+      const id = `LUG-${customCounter++}`;
+      const key = `lug:${id}`;
+      customParts.push({
+        key,
+        id,
+        type: 'lug',
+        groupName: 'Custom Mount Lug',
+        basePos: worldPt.clone(),
+        baseRotY: 0
+      });
+      ensureTransform(key);
+      rebuildModel();
+      selectPart(key);
+    }
+
+    function addNewPocketAt(worldPt) {
+      const id = `PKT-${customCounter++}`;
+      const key = `pocket:${id}`;
+      customParts.push({
+        key,
+        id,
+        type: 'pocket',
+        groupName: 'Custom Side Pocket',
+        basePos: worldPt.clone(),
+        baseRotY: 0
+      });
+      ensureTransform(key);
+      rebuildModel();
+      selectPart(key);
+    }
+
+    function rotatePartByDeg(partKey, deg) {
+      const t = ensureTransform(partKey);
+      t.rotYDelta += THREE.MathUtils.degToRad(deg);
+      applyPartTransforms();
+      selectPart(partKey);
+      updateTablesAndCode(getParams());
+      renderBlueprintSVG(getParams());
+    }
+
+    function snapLugToNearestWall(partKey) {
+      const grp = partNodes[partKey];
+      const meta = partMetadata[partKey];
+      if (!grp || !meta) return;
+
+      const m = currentMetrics;
+      const pos = grp.position.clone();
+      // Decide whether closer to Unit 1 (upper) or Unit 2 (lower)
+      const isUpper = pos.y > m.u2OuterH * 0.75;
+      const center = isUpper ? m.u1Base : m.u2Base;
+      const halfW = (isUpper ? m.u1OuterW : m.u2OuterW) / 2;
+      const halfD = (isUpper ? m.u1OuterD : m.u2OuterD) / 2;
+
+      const dx = pos.x - center.x;
+      const dz = pos.z - center.z;
+
+      const distLeft = Math.abs(dx - (-halfW));
+      const distRight = Math.abs(dx - halfW);
+      const distBack = Math.abs(dz - (-halfD));
+      const distFront = Math.abs(dz - halfD);
+      const minDist = Math.min(distLeft, distRight, distBack, distFront);
+
+      const t = ensureTransform(partKey);
+      if (minDist === distLeft) {
+        pos.x = center.x - halfW;
+        t.rotYDelta = -Math.PI / 2 - (meta.baseRotY || 0);
+      } else if (minDist === distRight) {
+        pos.x = center.x + halfW;
+        t.rotYDelta = Math.PI / 2 - (meta.baseRotY || 0);
+      } else if (minDist === distBack) {
+        pos.z = center.z - halfD;
+        t.rotYDelta = Math.PI - (meta.baseRotY || 0);
+      } else {
+        pos.z = center.z + halfD;
+        t.rotYDelta = 0 - (meta.baseRotY || 0);
+      }
+
+      t.offset.copy(pos).sub(meta.basePos);
+      applyPartTransforms();
+      selectPart(partKey);
+      updateTablesAndCode(getParams());
+      renderBlueprintSVG(getParams());
+    }
+
+    function deletePart(partKey) {
+      const meta = partMetadata[partKey];
+      if (!meta || !meta.canDelete) return;
+      deletedPartKeys.add(partKey);
+      rebuildModel();
+    }
+
+    function toggleLugGrouping() {
+      lugsUngrouped = !lugsUngrouped;
+      updateLugGroupButtonUI();
+      rebuildModel();
+      if (!lugsUngrouped) {
+        selectPart('bracketsGroup');
+      } else {
+        const firstLug = Object.keys(partNodes).find(k => k.startsWith('lug:')) || 'unit1';
+        selectPart(firstLug);
+      }
+    }
+
+    function updateLugGroupButtonUI() {
+      const btn = document.getElementById('btn-toggle-lug-group');
+      const ctxLabel = document.getElementById('ctx-ungroup-label');
+      if (lugsUngrouped) {
+        btn.textContent = '🔓 Lugs: Ungrouped (1-by-1)';
+        ctxLabel.textContent = '🔗 Group All Screw Lugs Together';
+      } else {
+        btn.textContent = '🔗 Lugs: Grouped (Click to Ungroup)';
+        ctxLabel.textContent = '🔓 Ungroup Screw Lugs (Move 1-by-1)';
+      }
+    }
+
+    /**
+     * Resize a specific part (either an individual screw lug/pocket or main unit)
+     */
+    function resizePartByDelta(partKey, factorDelta) {
+      const axis = document.getElementById('wheel-axis-select').value; // 'all' | 'w' | 'd' | 'h'
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, Math.round(v * 2) / 2));
+      const scaleInput = (id, min, max) => {
+        const el = document.getElementById(id);
+        const cur = parseFloat(el.value) || 10;
+        el.value = clamp(cur * (1 + factorDelta), min, max);
+      };
+
+      // If it's an individual ungrouped screw lug, scale just THIS lug so you can customize individual lugs!
+      if (partKey && partKey.startsWith('lug:')) {
+        const t = ensureTransform(partKey);
+        if (axis === 'all') {
+          t.scale = Math.max(0.35, Math.min(2.8, t.scale * (1 + factorDelta)));
+        } else if (axis === 'w') {
+          t.scaleVec.x = Math.max(0.35, Math.min(2.8, t.scaleVec.x * (1 + factorDelta)));
+        } else if (axis === 'd') {
+          t.scaleVec.z = Math.max(0.35, Math.min(2.8, t.scaleVec.z * (1 + factorDelta)));
+        } else if (axis === 'h') {
+          t.scaleVec.y = Math.max(0.35, Math.min(2.8, t.scaleVec.y * (1 + factorDelta)));
+        }
+        applyPartTransforms();
+        selectPart(partKey);
+        updateTablesAndCode(getParams());
+        renderBlueprintSVG(getParams());
+        return;
+      }
+
+      if (partKey === 'unit1') {
+        if (axis === 'all' || axis === 'w') {
+          scaleInput('m4Width', 60, 320);
+          scaleInput('m001Width', 60, 320);
+        }
+        if (axis === 'all' || axis === 'd') {
+          scaleInput('m4Depth', 60, 320);
+          scaleInput('m001Depth', 60, 320);
+        }
+        if (axis === 'all' || axis === 'h') {
+          scaleInput('m4Height', 15, 180);
+          scaleInput('m001Height', 10, 120);
+        }
+      } else if (partKey === 'unit2') {
+        if (axis === 'all' || axis === 'w') scaleInput('mc25Width', 80, 380);
+        if (axis === 'all' || axis === 'd') scaleInput('mc25Depth', 80, 380);
+        if (axis === 'all' || axis === 'h') scaleInput('mc25Height', 6, 100);
+      } else if (partKey && partKey.startsWith('pocket')) {
+        if (axis === 'all' || axis === 'w') scaleInput('pocketWidth', 10, 120);
+        if (axis === 'all' || axis === 'd') scaleInput('pocketDepth', 30, 260);
+        if (axis === 'all' || axis === 'h') scaleInput('pocketHeight', 15, 180);
+      } else if (partKey === 'bracketsGroup') {
+        if (axis === 'all' || axis === 'd') scaleInput('lugProjection', 8, 60);
+        if (axis === 'all' || axis === 'w') scaleInput('lugWidth', 10, 60);
+        if (axis === 'all' || axis === 'h') scaleInput('lugThickness', 2, 20);
+      }
+
+      rebuildModel();
+    }
+
+    // --- Raycasting for Direct Mouse Drag, Wheel & Right-Click Context Menu ---
+    const raycaster = new THREE.Raycaster();
+    const pointerNDC = new THREE.Vector2();
+    const dragPlane = new THREE.Plane();
+    const dragIntersect = new THREE.Vector3();
+    const dragStartOffset = new THREE.Vector3();
+    let isDraggingPart = false;
+    let draggedPartKey = null;
+    let rightDownPos = new THREE.Vector2();
+
+    function updatePointerNDC(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function pickPartUnderMouse(e) {
+      updatePointerNDC(e);
+      raycaster.setFromCamera(pointerNDC, camera);
+      const pickables = [];
+      for (const grp of Object.values(partNodes)) {
+        if (grp && grp.visible) {
+          grp.children.forEach(ch => {
+            if (ch.isMesh && !ch.userData.isGhost) pickables.push(ch);
+          });
+        }
+      }
+      const hits = raycaster.intersectObjects(pickables, false);
+      return hits.length > 0 ? { partKey: hits[0].object.userData.partKey, point: hits[0].point } : null;
+    }
+
+    function getGroundPointUnderMouse(e, yHeight = 0) {
+      updatePointerNDC(e);
+      raycaster.setFromCamera(pointerNDC, camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -yHeight);
+      const target = new THREE.Vector3();
+      return raycaster.ray.intersectPlane(plane, target) || new THREE.Vector3(0, yHeight, 0);
+    }
+
+    const ctxMenu = document.getElementById('context-menu');
+    function closeContextMenu() {
+      ctxMenu.classList.remove('open');
+    }
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      closeContextMenu();
+      if (e.button === 2) {
+        rightDownPos.set(e.clientX, e.clientY);
+        return;
+      }
+      if (e.button !== 0) return;
+
+      const hit = pickPartUnderMouse(e);
+      if (hit) {
+        selectPart(hit.partKey);
+        if (dragMode === 'drag-part') {
+          isDraggingPart = true;
+          draggedPartKey = hit.partKey;
+          controls.enabled = false;
+          container.classList.add('dragging-part');
+
+          if (e.shiftKey) {
+            const camDir = new THREE.Vector3();
+            camera.getWorldDirection(camDir);
+            camDir.y = 0;
+            camDir.normalize();
+            dragPlane.setFromNormalAndCoplanarPoint(camDir, hit.point);
+          } else {
+            dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), hit.point);
+          }
+
+          raycaster.ray.intersectPlane(dragPlane, dragIntersect);
+          const grp = partNodes[draggedPartKey];
+          dragStartOffset.copy(grp.position).sub(dragIntersect);
+        }
+      }
+    });
+
+    // Right-Click Context Menu Handler
+    renderer.domElement.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      // Only open context menu if user didn't drag-pan the camera with right-click
+      const moveDist = rightDownPos.distanceTo(new THREE.Vector2(e.clientX, e.clientY));
+      if (moveDist > 7) return;
+
+      const hit = pickPartUnderMouse(e);
+      if (hit) {
+        selectPart(hit.partKey);
+        lastRightClickWorldPt.copy(hit.point);
+      } else {
+        lastRightClickWorldPt.copy(getGroundPointUnderMouse(e, 0));
+      }
+
+      const meta = partMetadata[selectedPartKey];
+      document.getElementById('ctx-title').textContent = hit
+        ? (meta ? meta.label : selectedPartKey)
+        : 'Workspace Canvas Menu';
+      document.getElementById('ctx-badge').textContent = hit
+        ? (selectedPartKey.startsWith('lug:') ? 'SCREW LUG' : meta.category.toUpperCase())
+        : 'CANVAS';
+
+      document.getElementById('ctx-delete').disabled = !(meta && meta.canDelete);
+      document.getElementById('ctx-snap-wall').disabled = !(selectedPartKey && selectedPartKey.startsWith('lug:'));
+
+      const menuW = 255;
+      const menuH = 340;
+      const left = Math.min(e.clientX, window.innerWidth - menuW - 10);
+      const top = Math.min(e.clientY, window.innerHeight - menuH - 10);
+      ctxMenu.style.left = `${left}px`;
+      ctxMenu.style.top = `${top}px`;
+      ctxMenu.classList.add('open');
+    });
+
+    window.addEventListener('pointerdown', (e) => {
+      if (!ctxMenu.contains(e.target) && e.target !== renderer.domElement) {
+        closeContextMenu();
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (isDraggingPart && draggedPartKey) {
+        updatePointerNDC(e);
+        raycaster.setFromCamera(pointerNDC, camera);
+        if (raycaster.ray.intersectPlane(dragPlane, dragIntersect)) {
+          const newWorldPos = dragIntersect.clone().add(dragStartOffset);
+          const meta = partMetadata[draggedPartKey];
+          const t = ensureTransform(draggedPartKey);
+          if (meta) {
+            t.offset.copy(newWorldPos).sub(meta.basePos);
+            applyPartTransforms();
+            selectPart(draggedPartKey);
+            updateTablesAndCode(getParams());
+            renderBlueprintSVG(getParams());
+          }
+        }
+        return;
+      }
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom
+      ) {
+        const hit = pickPartUnderMouse(e);
+        const newHover = hit ? hit.partKey : null;
+        if (newHover !== hoveredPartKey) {
+          hoveredPartKey = newHover;
+          container.classList.toggle('hovering-part', !!hoveredPartKey);
+          updateSelectionVisuals();
+        }
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (isDraggingPart) {
+        isDraggingPart = false;
+        draggedPartKey = null;
+        controls.enabled = true;
+        container.classList.remove('dragging-part');
+      }
+    });
+
+    transformControl.addEventListener('objectChange', () => {
+      if (!selectedPartKey) return;
+      const grp = partNodes[selectedPartKey];
+      const meta = partMetadata[selectedPartKey];
+      const t = ensureTransform(selectedPartKey);
+      if (grp && meta) {
+        t.offset.copy(grp.position).sub(meta.basePos);
+        t.scale = grp.scale.x;
+        applyPartTransforms();
+        selectPart(selectedPartKey);
+        updateTablesAndCode(getParams());
+        renderBlueprintSVG(getParams());
+      }
+    });
+
+    // --- Context Menu Item Click Listeners ---
+    document.getElementById('ctx-copy').addEventListener('click', () => {
+      copyPart(selectedPartKey);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-paste').addEventListener('click', () => {
+      pastePartAt(lastRightClickWorldPt);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-duplicate').addEventListener('click', () => {
+      duplicatePartInPlace(selectedPartKey);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-add-lug-here').addEventListener('click', () => {
+      addNewLugAt(lastRightClickWorldPt);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-add-pocket-here').addEventListener('click', () => {
+      addNewPocketAt(lastRightClickWorldPt);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-ungroup-lugs').addEventListener('click', () => {
+      toggleLugGrouping();
+      closeContextMenu();
+    });
+    document.getElementById('ctx-rotate-90').addEventListener('click', () => {
+      rotatePartByDeg(selectedPartKey, 90);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-rotate-45').addEventListener('click', () => {
+      rotatePartByDeg(selectedPartKey, 45);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-snap-wall').addEventListener('click', () => {
+      snapLugToNearestWall(selectedPartKey);
+      closeContextMenu();
+    });
+    document.getElementById('ctx-delete').addEventListener('click', () => {
+      deletePart(selectedPartKey);
+      closeContextMenu();
+    });
+
+    // Keyboard Shortcuts (Ctrl+C, Ctrl+V, Ctrl+D, R, G, S, Delete)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        copyPart(selectedPartKey);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        pastePartAt(null);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        duplicatePartInPlace(selectedPartKey);
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        rotatePartByDeg(selectedPartKey, e.shiftKey ? 45 : 90);
+      } else if (e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        toggleLugGrouping();
+      } else if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        snapLugToNearestWall(selectedPartKey);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        deletePart(selectedPartKey);
+      }
+    });
+
+    // --- Custom Mouse Wheel Handler ---
+    function zoomCameraByFactor(factor) {
+      const offset = camera.position.clone().sub(controls.target);
+      offset.multiplyScalar(factor);
+      const dist = offset.length();
+      if (dist > 45 && dist < 1800) {
+        camera.position.copy(controls.target).add(offset);
+      }
+    }
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const direction = e.deltaY < 0 ? 1 : -1;
+      const hit = pickPartUnderMouse(e);
+
+      if (wheelMode === 'zoom-only') {
+        zoomCameraByFactor(direction > 0 ? 0.9 : 1.11);
+        return;
+      }
+
+      if (wheelMode === 'resize-selected') {
+        resizePartByDelta(selectedPartKey, direction * 0.04);
+        return;
+      }
+
+      if (hit) {
+        selectPart(hit.partKey);
+        resizePartByDelta(hit.partKey, direction * 0.04);
+      } else {
+        zoomCameraByFactor(direction > 0 ? 0.9 : 1.11);
+      }
+    }, { passive: false });
+
+    // --- Table & Code Updates ---
+    function updateTablesAndCode(p) {
+      const m = currentMetrics;
+      if (!m.u1OuterW) return;
+
+      const envBody = document.querySelector('#envelope-table tbody');
+      envBody.innerHTML = `
+        <tr><td>Part 1 Shell (M4+M001)</td><td class="num">${m.u1OuterW.toFixed(1)} × ${m.u1OuterD.toFixed(1)} × ${m.u1OuterH.toFixed(1)} mm</td></tr>
+        <tr><td>Part 2 Shell (MC25 Pro)</td><td class="num">${m.u2OuterW.toFixed(1)} × ${m.u2OuterD.toFixed(1)} × ${m.u2OuterH.toFixed(1)} mm</td></tr>
+        <tr><td>MC25 Side Ledge (Each)</td><td class="num">${m.ledgePerSide.toFixed(1)} mm</td></tr>
+        <tr><td>Side Pocket Internal</td><td class="num">${(p.pocketWidth - p.wallThickness*1.7).toFixed(1)} × ${(p.pocketDepth - p.wallThickness*1.7).toFixed(1)} mm</td></tr>
+        <tr><td>Active Screw Lugs</td><td class="num">${currentHoles.length} Individual Lugs</td></tr>
+      `;
+
+      document.getElementById('hole-count-badge').textContent = `${currentHoles.length} HOLES`;
+      const holesBody = document.querySelector('#holes-table tbody');
+      holesBody.innerHTML = currentHoles.map(h => `
+        <tr class="clickable-row ${h.partKey === selectedPartKey ? 'selected-row' : ''}" data-part-key="${h.partKey}">
+          <td><strong>${h.id}</strong> <span style="color:var(--text-2)">(${h.group})</span></td>
+          <td class="num">${h.x.toFixed(1)}</td>
+          <td class="num">${h.z.toFixed(1)}</td>
+          <td class="num">Ø${h.dia.toFixed(1)}</td>
+        </tr>
+      `).join('');
+
+      holesBody.querySelectorAll('tr.clickable-row').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const pk = tr.dataset.partKey;
+          if (partNodes[pk]) selectPart(pk);
+        });
+      });
+
+      document.getElementById('scad-preview').textContent = generateOpenSCAD(p);
+    }
+
+    function generateOpenSCAD(p) {
+      const m = currentMetrics;
+      const holeLines = currentHoles.map(
+        h => `  [${h.x.toFixed(2)}, ${h.z.toFixed(2)}, ${h.y.toFixed(2)}, ${h.dia.toFixed(2)}] // ${h.id} (${h.group})`
+      ).join(',\n');
+
+      return `// Parametric Case: Mac mini M4 + Acasis M001 & Hagibis MC25 Pro
+// Generated by CAD Case Studio (all units in mm)
+$fn = 48;
+
+m4_size    = [${p.m4Width}, ${p.m4Depth}, ${p.m4Height}];
+m001_size  = [${p.m001Width}, ${p.m001Depth}, ${p.m001Height}];
+mc25_size  = [${p.mc25Width}, ${p.mc25Depth}, ${p.mc25Height}];
+wall       = ${p.wallThickness};
+tol        = ${p.tolerance};
+screw_d    = ${p.fastener.throughDia};
+cbore_d    = ${p.fastener.cboreDia};
+
+unit1_outer = [${m.u1OuterW.toFixed(2)}, ${m.u1OuterD.toFixed(2)}, ${m.u1OuterH.toFixed(2)}];
+unit2_outer = [${m.u2OuterW.toFixed(2)}, ${m.u2OuterD.toFixed(2)}, ${m.u2OuterH.toFixed(2)}];
+pocket_size = [${p.pocketWidth}, ${p.pocketDepth}, ${p.pocketHeight}];
+
+// Live Screw Hole Coordinates (Includes Moved & Copy-Pasted Lugs) [X, Z, Y_Elev, Dia]
+mounting_holes = [
+${holeLines}
+];
+
+module hollow_bay(outer, w, cutout_ratio) {
+  difference() {
+    cube(outer, center=true);
+    translate([0, 0, w/2])
+      cube([outer[0]-w*2, outer[1]-w*2, outer[2]], center=true);
+    cube([(outer[0]-w*2)*cutout_ratio, outer[1]+2, outer[2]-w*2], center=true);
+  }
+}
+
+translate([0, 0, unit2_outer[2]/2])
+  hollow_bay(unit2_outer, wall, ${p.portCutoutPct.toFixed(2)});
+
+translate([0, 0, unit2_outer[2] + unit1_outer[2]/2])
+  hollow_bay(unit1_outer, wall, ${p.portCutoutPct.toFixed(2)});
+`;
+    }
+
+    function renderBlueprintSVG(p) {
+      const m = currentMetrics;
+      if (!m.u1OuterW) return;
+      const bp = document.getElementById('blueprint-container');
+      const pad = 80;
+      const vw = Math.ceil(m.totalWidth + pad * 2);
+      const vd = Math.ceil(m.totalDepth + pad * 2);
+
+      const holesSvg = currentHoles.map(h => `
+        <g transform="translate(${h.x.toFixed(2)}, ${h.z.toFixed(2)})">
+          <circle r="${(h.cbore / 2).toFixed(2)}" fill="none" stroke="#fbbf24" stroke-width="0.6" stroke-dasharray="2 1" />
+          <circle r="${(h.dia / 2).toFixed(2)}" fill="rgba(251, 113, 133, 0.25)" stroke="#fb7185" stroke-width="0.8" />
+          <line x1="-5" y1="0" x2="5" y2="0" stroke="#fb7185" stroke-width="0.4" />
+          <line x1="0" y1="-5" x2="0" y2="5" stroke="#fb7185" stroke-width="0.4" />
+          <text x="5" y="-4" fill="#f8fafc" font-size="4.2" font-family="monospace">${h.id}</text>
+        </g>
+      `).join('');
+
+      const useLedge = p.pocketPlacement === 'ledge' && p.arrangement !== 'side_by_side';
+      const pX = useLedge ? (m.u1OuterW / 2 + p.pocketWidth / 2) : (m.u2OuterW / 2 + p.pocketWidth / 2);
+
+      bp.innerHTML = `
+        <div style="max-width: 920px; margin: 0 auto; display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font-size:15px;">1:1 Orthographic Top View &amp; Live Screw-Hole Drill Template</h2>
+              <p style="font-size:12px; color:var(--text-2);">Updates automatically as you drag, rotate, or copy-paste individual screw lugs.</p>
+            </div>
+            <span class="badge">SCALE 1:1 MM</span>
+          </div>
+          <div style="background:#070d19; border:1px solid var(--border); border-radius:10px; padding:16px; display:grid; place-items:center;">
+            <svg id="drill-svg" xmlns="http://www.w3.org/2000/svg"
+                  width="${vw}mm" height="${vd}mm"
+                  viewBox="${-vw/2} ${-vd/2} ${vw} ${vd}"
+                  style="max-width:100%; height:auto; max-height:68vh;">
+              <line x1="${-vw/2}" y1="0" x2="${vw/2}" y2="0" stroke="#1e293b" stroke-width="0.6" />
+              <line x1="0" y1="${-vd/2}" x2="0" y2="${vd/2}" stroke="#1e293b" stroke-width="0.6" />
+
+              <rect x="${-m.u2OuterW/2}" y="${-m.u2OuterD/2}" width="${m.u2OuterW}" height="${m.u2OuterD}"
+                    fill="rgba(99, 102, 241, 0.12)" stroke="#818cf8" stroke-width="1.2" rx="8" />
+              <rect x="${-p.mc25Width/2}" y="${-p.mc25Depth/2}" width="${p.mc25Width}" height="${p.mc25Depth}"
+                    fill="none" stroke="#818cf8" stroke-width="0.5" stroke-dasharray="3 2" rx="6" />
+
+              <rect x="${-m.u1OuterW/2}" y="${-m.u1OuterD/2}" width="${m.u1OuterW}" height="${m.u1OuterD}"
+                    fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="1.2" rx="6" />
+              <rect x="${-p.m4Width/2}" y="${-p.m4Depth/2}" width="${p.m4Width}" height="${p.m4Depth}"
+                    fill="none" stroke="#38bdf8" stroke-width="0.5" stroke-dasharray="3 2" rx="5" />
+
+              ${p.enableLeftPocket && !deletedPartKeys.has('pocketLeft') ? `
+                <rect x="${-pX - p.pocketWidth/2}" y="${-p.pocketDepth/2}" width="${p.pocketWidth}" height="${p.pocketDepth}"
+                      fill="rgba(16, 185, 129, 0.16)" stroke="#34d399" stroke-width="1.0" rx="2" />
+              ` : ''}
+              ${p.enableRightPocket && !deletedPartKeys.has('pocketRight') ? `
+                <rect x="${pX - p.pocketWidth/2}" y="${-p.pocketDepth/2}" width="${p.pocketWidth}" height="${p.pocketDepth}"
+                      fill="rgba(16, 185, 129, 0.16)" stroke="#34d399" stroke-width="1.0" rx="2" />
+              ` : ''}
+
+              ${holesSvg}
+            </svg>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Export Functions ---
+    const stlExporter = new STLExporter();
+
+    function downloadBlob(content, filename, mime = 'application/octet-stream') {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportByCategoryToSTL(categories, filename) {
+      const exportRoot = new THREE.Group();
+      for (const [key, grp] of Object.entries(partNodes)) {
+        const meta = partMetadata[key];
+        if (!meta || !grp.visible || !categories.includes(meta.category)) continue;
+        grp.updateMatrixWorld(true);
+        grp.children.forEach(child => {
+          if (child.isMesh && !child.userData.isHelper && !child.userData.isGhost) {
+            const geom = child.geometry.clone();
+            geom.applyMatrix4(child.matrixWorld);
+            geom.rotateX(Math.PI / 2);
+            exportRoot.add(new THREE.Mesh(geom));
+          }
+        });
+      }
+      const result = stlExporter.parse(exportRoot, { binary: true });
+      downloadBlob(result, filename, 'application/sla');
+    }
+
+    document.getElementById('btn-export-stl-all').addEventListener('click', () => {
+      exportByCategoryToSTL(['unit1', 'unit2', 'pockets', 'brackets'], 'mac_mini_m4_m001_mc25pro_case_assembly.stl');
+    });
+
+    document.querySelectorAll('.btn-stl-part').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.part;
+        exportByCategoryToSTL([cat], `case_${cat}.stl`);
+      });
+    });
+
+    document.getElementById('btn-export-scad').addEventListener('click', () => {
+      downloadBlob(generateOpenSCAD(getParams()), 'mac_mini_m4_m001_mc25pro_case.scad', 'text/plain');
+    });
+
+    document.getElementById('btn-export-svg').addEventListener('click', () => {
+      const svgEl = document.getElementById('drill-svg');
+      if (svgEl) downloadBlob(svgEl.outerHTML, 'mounting_holes_template_1to1_mm.svg', 'image/svg+xml');
+    });
+
+    document.getElementById('btn-copy-scad').addEventListener('click', (e) => {
+      navigator.clipboard.writeText(document.getElementById('scad-preview').textContent);
+      e.target.textContent = 'Copied!';
+      setTimeout(() => (e.target.textContent = 'Copy'), 1400);
+    });
+
+    // --- Header & Panel Manipulator Buttons ---
+    document.getElementById('btn-toggle-lug-group').addEventListener('click', toggleLugGrouping);
+    document.getElementById('btn-add-lug').addEventListener('click', () => {
+      addNewLugAt(new THREE.Vector3(0, 0, 125));
+    });
+
+    document.getElementById('selectPartDropdown').addEventListener('change', (e) => {
+      selectPart(e.target.value);
+    });
+
+    ['partOffsetX', 'partOffsetY', 'partOffsetZ'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const t = ensureTransform(selectedPartKey);
+        t.offset.set(
+          parseFloat(document.getElementById('partOffsetX').value) || 0,
+          parseFloat(document.getElementById('partOffsetY').value) || 0,
+          parseFloat(document.getElementById('partOffsetZ').value) || 0
+        );
+        applyPartTransforms();
+        updateSelectionVisuals();
+        updateTablesAndCode(getParams());
+        renderBlueprintSVG(getParams());
+      });
+    });
+
+    document.getElementById('partRotY').addEventListener('input', (e) => {
+      const t = ensureTransform(selectedPartKey);
+      t.rotYDelta = THREE.MathUtils.degToRad(parseFloat(e.target.value) || 0);
+      applyPartTransforms();
+      updateSelectionVisuals();
+      updateTablesAndCode(getParams());
+      renderBlueprintSVG(getParams());
+    });
+
+    document.getElementById('partScaleSlider').addEventListener('input', (e) => {
+      const t = ensureTransform(selectedPartKey);
+      t.scale = (parseFloat(e.target.value) || 100) / 100;
+      document.getElementById('partScaleLabel').textContent = `${Math.round(t.scale * 100)}%`;
+      applyPartTransforms();
+      updateSelectionVisuals();
+    });
+
+    // HUD & Right Panel Quick Action Buttons
+    document.getElementById('btn-hud-copy').addEventListener('click', () => copyPart(selectedPartKey));
+    document.getElementById('btn-hud-paste').addEventListener('click', () => pastePartAt(null));
+    document.getElementById('btn-hud-rotate').addEventListener('click', () => rotatePartByDeg(selectedPartKey, 90));
+    document.getElementById('btn-part-smaller').addEventListener('click', () => resizePartByDelta(selectedPartKey, -0.06));
+    document.getElementById('btn-part-larger').addEventListener('click', () => resizePartByDelta(selectedPartKey, 0.06));
+
+    document.getElementById('btn-panel-duplicate').addEventListener('click', () => duplicatePartInPlace(selectedPartKey));
+    document.getElementById('btn-panel-rot90').addEventListener('click', () => rotatePartByDeg(selectedPartKey, 90));
+    document.getElementById('btn-panel-snap').addEventListener('click', () => snapLugToNearestWall(selectedPartKey));
+    document.getElementById('btn-panel-delete').addEventListener('click', () => deletePart(selectedPartKey));
+
+    document.getElementById('btn-reset-positions').addEventListener('click', () => {
+      Object.keys(partTransforms).forEach(k => delete partTransforms[k]);
+      deletedPartKeys.clear();
+      customParts.length = 0;
+      rebuildModel();
+      selectPart('lug:BASE-L1');
+    });
+
+    // Drag Mode Buttons
+    const dragButtons = {
+      'drag-part': document.getElementById('mode-drag-part'),
+      'gizmo-translate': document.getElementById('mode-gizmo-translate'),
+      'gizmo-scale': document.getElementById('mode-gizmo-scale'),
+      'orbit-only': document.getElementById('mode-orbit-only')
+    };
+    Object.entries(dragButtons).forEach(([mode, btn]) => {
+      btn.addEventListener('click', () => {
+        dragMode = mode;
+        Object.values(dragButtons).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectPart(selectedPartKey);
+      });
+    });
+
+    // Wheel Mode Buttons
+    const wheelButtons = {
+      'smart': document.getElementById('wheel-smart'),
+      'resize-selected': document.getElementById('wheel-resize-selected'),
+      'zoom-only': document.getElementById('wheel-zoom-only')
+    };
+    Object.entries(wheelButtons).forEach(([mode, btn]) => {
+      btn.addEventListener('click', () => {
+        wheelMode = mode;
+        Object.values(wheelButtons).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    document.getElementById('cam-zoom-in').addEventListener('click', () => zoomCameraByFactor(0.84));
+    document.getElementById('cam-zoom-out').addEventListener('click', () => zoomCameraByFactor(1.18));
+
+    document.querySelectorAll('aside.panel:first-of-type input, aside.panel:first-of-type select, #explodeRange').forEach(el => {
+      el.addEventListener('input', rebuildModel);
+      el.addEventListener('change', rebuildModel);
+    });
+
+    document.querySelectorAll('.vis-toggle').forEach(chk => {
+      chk.addEventListener('change', () => {
+        partVisibility[chk.dataset.part] = chk.checked;
+        rebuildModel();
+      });
+    });
+
+    // View Switcher
+    const btn3d = document.getElementById('view-3d');
+    const btn2d = document.getElementById('view-2d');
+    const bpContainer = document.getElementById('blueprint-container');
+    const selHud = document.getElementById('selection-hud');
+
+    btn3d.addEventListener('click', () => {
+      btn3d.classList.add('active');
+      btn2d.classList.remove('active');
+      container.style.display = 'block';
+      selHud.style.display = 'flex';
+      bpContainer.style.display = 'none';
+    });
+
+    btn2d.addEventListener('click', () => {
+      btn2d.classList.add('active');
+      btn3d.classList.remove('active');
+      container.style.display = 'none';
+      selHud.style.display = 'none';
+      bpContainer.style.display = 'block';
+    });
+
+    // Camera Presets
+    document.getElementById('cam-iso').addEventListener('click', () => {
+      camera.position.set(270, 220, 290);
+      controls.target.set(0, 45, 0);
+    });
+    document.getElementById('cam-top').addEventListener('click', () => {
+      camera.position.set(0, 390, 0.1);
+      controls.target.set(0, 0, 0);
+    });
+    document.getElementById('cam-front').addEventListener('click', () => {
+      camera.position.set(0, 55, 360);
+      controls.target.set(0, 45, 0);
+    });
+    document.getElementById('cam-side').addEventListener('click', () => {
+      camera.position.set(360, 55, 0);
+      controls.target.set(0, 45, 0);
+    });
+
+    document.getElementById('toggle-ghost').addEventListener('click', (e) => {
+      showGhosts = !showGhosts;
+      e.currentTarget.classList.toggle('active', showGhosts);
+      rebuildModel();
+    });
+
+    document.getElementById('toggle-axes').addEventListener('click', (e) => {
+      showAxes = !showAxes;
+      e.currentTarget.classList.toggle('active', showAxes);
+      axesGroup.visible = showAxes;
+    });
+
+    // Configuration Presets
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = btn.dataset.preset;
+        if (p === 'default') {
+          document.getElementById('arrangement').value = 'stacked_centered';
+          document.getElementById('wallThickness').value = 3.2;
+          document.getElementById('pocketPlacement').value = 'ledge';
+          document.getElementById('enableTopBrackets').checked = false;
+          document.getElementById('enableBaseEars').checked = true;
+        } else if (p === 'underdesk') {
+          document.getElementById('arrangement').value = 'stacked_rear';
+          document.getElementById('wallThickness').value = 3.6;
+          document.getElementById('enableTopBrackets').checked = true;
+          document.getElementById('enableBaseEars').checked = true;
+          document.getElementById('screwSpec').value = 'M4';
+        } else if (p === 'heavy_duty') {
+          document.getElementById('wallThickness').value = 4.2;
+          document.getElementById('lugThickness').value = 8;
+          document.getElementById('screwSpec').value = 'M5';
+          document.getElementById('enableRearPocket').checked = true;
+        }
+        rebuildModel();
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      }
+    });
+
+    rebuildModel();
+    selectPart('lug:BASE-L1');
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

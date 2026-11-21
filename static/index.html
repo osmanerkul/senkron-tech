@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oyun Bulucu — Rust Çok Kaynaklı Oyun Tarayıcı</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --surface: #131823;
+      --surface-2: #1b2232;
+      --border: #273146;
+      --text: #e6edf7;
+      --muted: #8c9bb3;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --cyan: #06b6d4;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #111827 0%, #171c33 50%, #101624 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .header-inner {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .search-bar {
+      flex: 1;
+      min-width: 260px;
+      display: flex;
+      gap: 10px;
+    }
+    .search-bar input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 0.96rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: #fff;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.94rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .1s, filter .15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { filter: brightness(1.12); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+    .btn-ghost {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 13px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: var(--accent); }
+
+    .layout {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 22px;
+      padding: 22px 24px 48px;
+    }
+    .mobile-filter-toggle {
+      display: none;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 14px 14px 48px;
+        gap: 14px;
+      }
+      .mobile-filter-toggle { display: flex; }
+      .sidebar { display: none; }
+      .sidebar.mobile-open { display: flex; }
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 12px 14px; }
+      .header-inner { gap: 10px; }
+      .logo { font-size: 1.08rem; }
+      .search-bar { width: 100%; min-width: 0; }
+      .search-bar input { padding: 10px 12px; font-size: 0.92rem; }
+      .btn-primary { padding: 10px 14px; font-size: 0.88rem; }
+      .grid { grid-template-columns: 1fr; gap: 12px; }
+      .chip { padding: 7px 11px; font-size: 0.82rem; }
+      .similar-dock {
+        padding: 12px 12px 14px;
+        max-height: 70vh;
+      }
+      .ribbon-nav { display: none; }
+      .ribbon-scroll {
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+      }
+      .shot-item {
+        width: 170px;
+        height: 96px;
+        scroll-snap-align: start;
+      }
+      .sim-card {
+        flex: 0 0 190px;
+        scroll-snap-align: start;
+      }
+      body.dock-open { padding-bottom: 420px; }
+    }
+
+    /* Sidebar Filters */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+    }
+    .panel-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all .14s;
+    }
+    .chip:hover { border-color: var(--accent); color: #fff; }
+    .chip.active {
+      background: rgba(99, 102, 241, 0.22);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .chip.active-green {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--green);
+      color: #a7f3d0;
+      font-weight: 600;
+    }
+    .tag-input-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .tag-input-row input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      outline: none;
+    }
+    .tag-input-row input:focus { border-color: var(--accent); }
+    .selected-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .tag-pill {
+      background: rgba(6, 182, 212, 0.18);
+      border: 1px solid var(--cyan);
+      color: #cffafe;
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .tag-pill button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .price-row input[type="number"] {
+      width: 90px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.83rem;
+      color: #cbd5e1;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .feed-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .feed-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .feed-item button {
+      background: none;
+      border: none;
+      color: var(--rose);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* Main Content */
+    .main-area {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+    }
+    .stats-text {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .stats-text strong { color: var(--text); }
+    .sort-select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .source-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .source-pill {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .source-pill.ok { border-color: rgba(16, 185, 129, 0.45); color: #a7f3d0; }
+    .source-pill.err { border-color: rgba(244, 63, 94, 0.45); color: #fda4af; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .source-pill.err .dot { background: var(--rose); }
+
+    /* Game Cards Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform .15s, border-color .15s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+    }
+    .card { cursor: pointer; }
+    .card.selected {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.35), 0 8px 24px rgba(6, 182, 212, 0.18);
+    }
+
+    /* Bottom Docked Ribbon ("Bant Şeklinde") for Screenshots & Similar Games */
+    .similar-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 90;
+      background: rgba(13, 18, 28, 0.96);
+      backdrop-filter: blur(14px);
+      border-top: 2px solid var(--accent);
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.65);
+      padding: 14px 22px 16px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 54vh;
+      overflow-y: auto;
+    }
+    .similar-dock.open { display: flex; }
+    body.dock-open { padding-bottom: 360px; }
+
+    .dock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .dock-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .dock-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .riot-btn {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: #fff;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .riot-btn:hover { filter: brightness(1.12); }
+    .close-dock-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .close-dock-btn:hover { border-color: var(--rose); color: var(--rose); }
+
+    .ribbon-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ribbon-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ribbon-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ribbon-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 2px 2px 6px;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .ribbon-nav {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 28px;
+      height: 54px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .ribbon-nav:hover { border-color: var(--accent); color: #fff; }
+
+    /* Screenshot strip items */
+    .shot-item {
+      flex: 0 0 auto;
+      width: 205px;
+      height: 115px;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #0f1420;
+      position: relative;
+      cursor: zoom-in;
+      transition: transform .14s, border-color .14s;
+    }
+    .shot-item:hover {
+      transform: scale(1.03);
+      border-color: var(--cyan);
+    }
+    .shot-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .shot-src {
+      position: absolute;
+      bottom: 4px;
+      right: 5px;
+      background: rgba(11, 14, 20, 0.8);
+      color: #cbd5e1;
+      font-size: 0.64rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* Compact Similar Game strip cards */
+    .sim-card {
+      flex: 0 0 228px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform .14s, border-color .14s;
+    }
+    .sim-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .sim-img {
+      height: 102px;
+      background: #0f1420;
+      position: relative;
+      overflow: hidden;
+    }
+    .sim-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .sim-body {
+      padding: 8px 10px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+    .sim-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sim-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: auto;
+      font-size: 0.76rem;
+    }
+
+    /* Lightbox for zoomed screenshots */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(5, 8, 14, 0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 94vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+    .card-img-wrap {
+      position: relative;
+      height: 152px;
+      background: linear-gradient(135deg, #161d2e, #0f1420);
+      overflow: hidden;
+    }
+    .card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: #334155;
+    }
+    .store-badge {
+      position: absolute;
+      top: 9px;
+      left: 9px;
+      background: rgba(11, 14, 20, 0.86);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .niche-badge {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      background: rgba(245, 158, 11, 0.9);
+      color: #111827;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .discount-badge {
+      position: absolute;
+      bottom: 9px;
+      right: 9px;
+      background: var(--green);
+      color: #052e16;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .card-body {
+      padding: 13px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.3;
+    }
+    .card-desc {
+      font-size: 0.81rem;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .badge {
+      font-size: 0.71rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+    }
+    .badge-en {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #6ee7b7;
+      font-weight: 600;
+    }
+    .badge-tr {
+      background: rgba(244, 63, 94, 0.16);
+      border-color: rgba(244, 63, 94, 0.5);
+      color: #fda4af;
+      font-weight: 600;
+    }
+    .badge-no-en {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fcd34d;
+    }
+    .card-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .price-box {
+      display: flex;
+      flex-direction: column;
+    }
+    .price-main {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .price-main.free { color: var(--green); }
+    .price-orig {
+      font-size: 0.74rem;
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+    .open-btn {
+      background: var(--surface-2);
+      color: #e2e8f0;
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    .open-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="/" class="btn-ghost" style="text-decoration:none;white-space:nowrap;">← Ana Sayfa</a>
+      <div class="logo">
+        🎮 Oyun Bulucu <span class="logo-badge">Rust</span>
+      </div>
+      <div class="search-bar">
+        <input id="queryInput" type="text" placeholder="Oyun adı, tür veya konu yaz... (örn: Hades, roguelike, zombie, pixel, survival)" />
+        <button id="searchBtn" class="btn-primary" onclick="runSearch()">🔍 Oyunları Tara</button>
+      </div>
+      <button class="btn-ghost" onclick="resetFilters()">Filtreleri Sıfırla</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <button id="mobileFilterBtn" class="mobile-filter-toggle" onclick="toggleMobileFilters()">
+      <span>🎛️ Filtreler (Platform, Mağaza, Dil, Tag)</span>
+      <span id="mobileFilterArrow">▼</span>
+    </button>
+    <!-- SIDEBAR FILTERS -->
+    <aside class="sidebar" id="filterSidebar">
+      <!-- Platform -->
+      <div class="panel">
+        <div class="panel-title">💻 Platform</div>
+        <div class="chip-grid" id="platformChips">
+          <div class="chip" data-val="PC">PC</div>
+          <div class="chip" data-val="Windows">Windows</div>
+          <div class="chip" data-val="macOS">macOS</div>
+          <div class="chip" data-val="Linux">Linux</div>
+          <div class="chip" data-val="Mobile">Mobil</div>
+          <div class="chip" data-val="Android">Android</div>
+          <div class="chip" data-val="iOS">iOS</div>
+          <div class="chip" data-val="Web">Web / Tarayıcı</div>
+          <div class="chip" data-val="Konsol">Konsol</div>
+        </div>
+      </div>
+
+      <!-- Download Stores -->
+      <div class="panel">
+        <div class="panel-title">🏪 İndirme Platformları</div>
+        <div class="chip-grid" id="storeChips">
+          <div class="chip" data-val="steam">Steam</div>
+          <div class="chip" data-val="epic">Epic Games</div>
+          <div class="chip" data-val="appstore">App Store</div>
+          <div class="chip" data-val="googleplay">Google Play</div>
+          <div class="chip" data-val="gog">GOG</div>
+          <div class="chip" data-val="itchio">itch.io</div>
+          <div class="chip" data-val="gamejolt">GameJolt</div>
+          <div class="chip" data-val="archive">Archive.org</div>
+          <div class="chip" data-val="taptap">TapTap</div>
+          <div class="chip" data-val="vndb">VNDB</div>
+          <div class="chip" data-val="steamdb">SteamDB</div>
+          <div class="chip" data-val="website">Resmi Websitesi</div>
+          <div class="chip" data-val="fdroid">F-Droid</div>
+          <div class="chip" data-val="other_pc">Humble / Fanatical</div>
+          <div class="chip" data-val="news">Haber & Kıyı Kenar</div>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div class="panel">
+        <div class="panel-title">💰 Ücret / Fiyat</div>
+        <div class="chip-grid" id="priceChips">
+          <div class="chip active" data-val="all">Tümü</div>
+          <div class="chip" data-val="free">Ücretsiz</div>
+          <div class="chip" data-val="sale">İndirimde</div>
+          <div class="chip" data-val="paid">Ücretli</div>
+        </div>
+        <div class="price-row">
+          <label for="maxPrice" style="font-size:0.82rem;color:var(--muted);">Maks. Fiyat ($):</label>
+          <input id="maxPrice" type="number" min="0" step="1" placeholder="Sınırsız" />
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="panel">
+        <div class="panel-title">🌐 Dil Uygunluğu</div>
+        <div class="chip-grid" id="langChips">
+          <div class="chip" data-val="EN">🇬🇧 İngilizce (EN)</div>
+          <div class="chip" data-val="TR">🇹🇷 Türkçe (TR)</div>
+          <div class="chip" data-val="JA">🇯🇵 Japonca (JA)</div>
+          <div class="chip" data-val="DE">🇩🇪 Almanca (DE)</div>
+          <div class="chip" data-val="FR">🇫🇷 Fransızca (FR)</div>
+          <div class="chip" data-val="ES">🇪🇸 İspanyolca (ES)</div>
+          <div class="chip" data-val="RU">🇷🇺 Rusça (RU)</div>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="includeUnknownLang" checked />
+          Dil bilgisi kaynakta belirtilmemişse de göster
+        </label>
+      </div>
+
+      <!-- Tag Search -->
+      <div class="panel">
+        <div class="panel-title">🏷️ Tag Search & Özellikler</div>
+        <div class="tag-input-row">
+          <input id="customTagInput" type="text" placeholder="Özel tag ekle (Enter)..." />
+          <button class="btn-ghost" onclick="addCustomTag()">Ekle</button>
+        </div>
+        <div class="selected-tags" id="selectedTagsBox"></div>
+        <div class="chip-grid" id="presetTags">
+          <div class="chip" data-tag="roguelike">roguelike</div>
+          <div class="chip" data-tag="rpg">rpg</div>
+          <div class="chip" data-tag="indie">indie</div>
+          <div class="chip" data-tag="co-op">co-op</div>
+          <div class="chip" data-tag="multiplayer">multiplayer</div>
+          <div class="chip" data-tag="singleplayer">singleplayer</div>
+          <div class="chip" data-tag="pixel">pixel-art</div>
+          <div class="chip" data-tag="horror">horror</div>
+          <div class="chip" data-tag="survival">survival</div>
+          <div class="chip" data-tag="craft">craft</div>
+          <div class="chip" data-tag="strategy">strategy</div>
+          <div class="chip" data-tag="open world">open-world</div>
+          <div class="chip" data-tag="puzzle">puzzle</div>
+          <div class="chip" data-tag="anime">anime</div>
+          <div class="chip" data-tag="metroidvania">metroidvania</div>
+        </div>
+      </div>
+
+      <!-- Obscure / News & Custom RSS Scanner -->
+      <div class="panel">
+        <div class="panel-title">🛰️ Kıyı Kenar & Haber Siteleri</div>
+        <label class="checkbox-row" style="margin-top:0;margin-bottom:10px;">
+          <input type="checkbox" id="includeNicheNews" checked />
+          Kıyı kenar & haber taramasını aç (GameJolt, IndieDB, TapTap, VNDB, SteamDB, Alpha Beta Gamer, Gematsu, Siliconera, GamingOnLinux, PocketGamer, RPS, PC Gamer, Reddit)
+        </label>
+        <div class="tag-input-row">
+          <input id="customFeedInput" type="url" placeholder="Özel RSS veya haber sitesi URL..." />
+          <button class="btn-ghost" onclick="addCustomFeed()">Ekle</button>
+        </div>
+        <div class="feed-list" id="customFeedList"></div>
+      </div>
+    </aside>
+
+    <!-- RESULTS AREA -->
+    <main class="main-area">
+      <div class="toolbar">
+        <div class="stats-text" id="statsText">
+          Arama yapmak için yukarıya bir oyun adı veya soldan tag/platform seçip <strong>Oyunları Tara</strong>'ya bas.
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label for="sortBy" style="font-size:0.82rem;color:var(--muted);">Sırala:</label>
+          <select id="sortBy" class="sort-select" onchange="runSearch()">
+            <option value="relevance">En Alakalı</option>
+            <option value="price_asc">Fiyat: Artan</option>
+            <option value="price_desc">Fiyat: Azalan</option>
+            <option value="discount">En Yüksek İndirim</option>
+            <option value="rating">En Yüksek Puan</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="source-bar" id="sourceBar"></div>
+
+      <div class="grid" id="resultsGrid">
+        <div class="empty-state" style="grid-column:1/-1;">
+          <h2 style="color:#e2e8f0;margin-bottom:8px;">🚀 Çok Kaynaklı Rust Oyun Bulucu Hazır</h2>
+          <p>Steam, Epic Games, App Store, Google Play, GOG, itch.io, GameJolt, Archive.org, TapTap, VNDB, SteamDB ve haber siteleri aynı anda paralel taranır. Herhangi bir oyuna tıklayarak altta <strong>ekran görüntüleri</strong> ve <strong>benzer oyunlar bandını</strong> açabilirsin.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- BOTTOM RIBBON DOCK: SCREENSHOTS + SIMILAR GAMES -->
+  <section id="similarDock" class="similar-dock" aria-label="Seçilen Oyun Ekran Görüntüleri ve Benzer Oyunlar">
+    <div class="dock-header">
+      <div class="dock-title-row">
+        <span class="dock-title" id="dockGameTitle">✨ Seçilen Oyun</span>
+        <div class="meta-row" id="dockTags"></div>
+      </div>
+      <div class="dock-actions">
+        <a id="dockRiotBtn" class="riot-btn" href="https://en.riotpixels.com/" target="_blank" rel="noopener noreferrer">🖼️ Riot Pixels (EN) ↗</a>
+        <a id="dockStoreBtn" class="open-btn" href="#" target="_blank" rel="noopener noreferrer">Mağaza ↗</a>
+        <button class="close-dock-btn" onclick="closeDock()" title="Kapat">×</button>
+      </div>
+    </div>
+
+    <!-- Screenshots Strip -->
+    <div class="ribbon-section" id="shotsSection">
+      <div class="ribbon-label">
+        <span>📸 Ekran Görüntüleri (İngilizce Kaynaklar • Büyütmek için tıkla)</span>
+        <span id="shotsMeta"></span>
+      </div>
+      <div class="ribbon-wrap">
+        <button class="ribbon-nav" onclick="scrollRibbon('shotsRibbon', -420)">‹</button>
+        <div class="ribbon-scroll" id="shotsRibbon"></div>
+        <button class="ribbon-nav" onclick="scrollRibbon('shotsRibbon', 420)">›</button>
+      </div>
+    </div>
+
+    <!-- Similar Games Strip -->
+    <div class="ribbon-section">
+      <div class="ribbon-label">
+        <span>✨ Benzer Oyunlar Bandı (Birine tıklayarak zincirleme keşfet)</span>
+        <span id="similarMeta"></span>
+      </div>
+      <div class="ribbon-wrap">
+        <button class="ribbon-nav" onclick="scrollRibbon('similarRibbon', -460)">‹</button>
+        <div class="ribbon-scroll" id="similarRibbon"></div>
+        <button class="ribbon-nav" onclick="scrollRibbon('similarRibbon', 460)">›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOT LIGHTBOX -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="Screenshot" />
+  </div>
+
+  <script>
+    const state = {
+      platforms: new Set(),
+      stores: new Set(),
+      priceMode: 'all',
+      languages: new Set(),
+      tags: [],
+      customFeeds: JSON.parse(localStorage.getItem('oyun_bulucu_feeds') || '[]'),
+      selectedGameId: null
+    };
+    const gameRegistry = new Map();
+
+    // Wire multi-select chip groups
+    function bindMultiChips(containerId, targetSet) {
+      document.querySelectorAll(`#${containerId} .chip`).forEach(el => {
+        el.addEventListener('click', () => {
+          const val = el.dataset.val;
+          if (targetSet.has(val)) {
+            targetSet.delete(val);
+            el.classList.remove('active');
+          } else {
+            targetSet.add(val);
+            el.classList.add('active');
+          }
+        });
+      });
+    }
+    bindMultiChips('platformChips', state.platforms);
+    bindMultiChips('storeChips', state.stores);
+    bindMultiChips('langChips', state.languages);
+
+    // Price mode single-select
+    document.querySelectorAll('#priceChips .chip').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('#priceChips .chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        state.priceMode = el.dataset.val;
+      });
+    });
+
+    // Preset tags
+    document.querySelectorAll('#presetTags .chip').forEach(el => {
+      el.addEventListener('click', () => {
+        const tag = el.dataset.tag;
+        if (state.tags.includes(tag)) {
+          state.tags = state.tags.filter(t => t !== tag);
+          el.classList.remove('active-green');
+        } else {
+          state.tags.push(tag);
+          el.classList.add('active-green');
+        }
+        renderTags();
+      });
+    });
+
+    function addCustomTag() {
+      const inp = document.getElementById('customTagInput');
+      const val = inp.value.trim();
+      if (val && !state.tags.includes(val)) {
+        state.tags.push(val);
+        renderTags();
+      }
+      inp.value = '';
+    }
+    document.getElementById('customTagInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); }
+    });
+    document.getElementById('queryInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+    });
+
+    function removeTag(tag) {
+      state.tags = state.tags.filter(t => t !== tag);
+      document.querySelectorAll('#presetTags .chip').forEach(el => {
+        if (el.dataset.tag === tag) el.classList.remove('active-green');
+      });
+      renderTags();
+    }
+
+    function renderTags() {
+      const box = document.getElementById('selectedTagsBox');
+      box.innerHTML = state.tags.map(t =>
+        `<span class="tag-pill">#${escapeHtml(t)} <button onclick="removeTag('${escapeJs(t)}')">×</button></span>`
+      ).join('');
+    }
+
+    function addCustomFeed() {
+      const inp = document.getElementById('customFeedInput');
+      const val = inp.value.trim();
+      if (val && (val.startsWith('http://') || val.startsWith('https://')) && !state.customFeeds.includes(val)) {
+        state.customFeeds.push(val);
+        localStorage.setItem('oyun_bulucu_feeds', JSON.stringify(state.customFeeds));
+        renderFeeds();
+      }
+      inp.value = '';
+    }
+
+    function removeFeed(url) {
+      state.customFeeds = state.customFeeds.filter(u => u !== url);
+      localStorage.setItem('oyun_bulucu_feeds', JSON.stringify(state.customFeeds));
+      renderFeeds();
+    }
+
+    function renderFeeds() {
+      const box = document.getElementById('customFeedList');
+      if (state.customFeeds.length === 0) {
+        box.innerHTML = `<div style="font-size:0.75rem;color:var(--muted);">Örnek: https://www.indiedb.com/rss/games/</div>`;
+        return;
+      }
+      box.innerHTML = state.customFeeds.map(u =>
+        `<div class="feed-item"><span title="${escapeHtml(u)}">${escapeHtml(u)}</span><button onclick="removeFeed('${escapeJs(u)}')">×</button></div>`
+      ).join('');
+    }
+    renderFeeds();
+
+    function resetFilters() {
+      state.platforms.clear();
+      state.stores.clear();
+      state.languages.clear();
+      state.tags = [];
+      state.priceMode = 'all';
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active', 'active-green'));
+      document.querySelector('#priceChips .chip[data-val="all"]').classList.add('active');
+      document.getElementById('queryInput').value = '';
+      document.getElementById('maxPrice').value = '';
+      document.getElementById('includeUnknownLang').checked = true;
+      document.getElementById('includeNicheNews').checked = true;
+      renderTags();
+    }
+
+    function toggleMobileFilters() {
+      const sb = document.getElementById('filterSidebar');
+      const arrow = document.getElementById('mobileFilterArrow');
+      const isOpen = sb.classList.toggle('mobile-open');
+      if (arrow) arrow.textContent = isOpen ? '▲' : '▼';
+    }
+
+    async function runSearch() {
+      // Collapse mobile filter drawer on search so results are immediately visible
+      const sb = document.getElementById('filterSidebar');
+      if (sb && sb.classList.contains('mobile-open')) {
+        sb.classList.remove('mobile-open');
+        const arrow = document.getElementById('mobileFilterArrow');
+        if (arrow) arrow.textContent = '▼';
+      }
+      const btn = document.getElementById('searchBtn');
+      const grid = document.getElementById('resultsGrid');
+      const stats = document.getElementById('statsText');
+      const sourceBar = document.getElementById('sourceBar');
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Taranıyor...`;
+      stats.innerHTML = `Tüm seçili mağazalar, kıyı kenar platformlar ve haber siteleri paralel taranıyor...`;
+      sourceBar.innerHTML = '';
+
+      const maxPriceRaw = document.getElementById('maxPrice').value.trim();
+      const payload = {
+        query: document.getElementById('queryInput').value.trim(),
+        tags: state.tags,
+        platforms: Array.from(state.platforms),
+        stores: Array.from(state.stores),
+        price_mode: state.priceMode,
+        max_price_usd: maxPriceRaw !== '' ? parseFloat(maxPriceRaw) : null,
+        languages: Array.from(state.languages),
+        include_unknown_lang: document.getElementById('includeUnknownLang').checked,
+        include_niche_news: document.getElementById('includeNicheNews').checked,
+        custom_feeds: state.customFeeds,
+        sort_by: document.getElementById('sortBy').value
+      };
+
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        stats.innerHTML = `<strong>${data.filtered_count}</strong> oyun gösteriliyor (toplam <strong>${data.total_found}</strong> ham sonuç • <strong>${(data.elapsed_ms / 1000).toFixed(2)} sn</strong>)`;
+
+        sourceBar.innerHTML = data.sources.map(s => `
+          <div class="source-pill ${s.ok ? 'ok' : 'err'}" title="${s.error ? escapeHtml(s.error) : 'Başarılı'}">
+            <span class="dot"></span>
+            ${escapeHtml(s.name)}: <strong>${s.count}</strong> (${s.elapsed_ms}ms)
+          </div>
+        `).join('');
+
+        if (!data.results || data.results.length === 0) {
+          grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+            <h3 style="color:#e2e8f0;margin-bottom:6px;">Sonuç bulunamadı</h3>
+            <p>Filtreleri biraz genişletmeyi veya farklı bir anahtar kelime / tag denemeyi deneyebilirsin.</p>
+          </div>`;
+        } else {
+          data.results.forEach(g => gameRegistry.set(g.id, g));
+          grid.innerHTML = data.results.map(renderCard).join('');
+        }
+      } catch (err) {
+        stats.innerHTML = `<span style="color:var(--rose);">Hata: ${escapeHtml(err.message)}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `🔍 Oyunları Tara`;
+      }
+    }
+
+    function renderCard(g) {
+      const isSel = state.selectedGameId === g.id ? 'selected' : '';
+      const imgHtml = g.image_url
+        ? `<img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.title)}" loading="lazy" onerror="this.style.display='none'" />`
+        : `<div class="card-img-placeholder">🎮</div>`;
+
+      // Language badges
+      let langBadges = '';
+      if (g.has_english === true) {
+        langBadges += `<span class="badge badge-en">🇬🇧 EN ✓</span>`;
+      } else if (g.has_english === false) {
+        langBadges += `<span class="badge badge-no-en">🇬🇧 EN Yok</span>`;
+      }
+      if (g.has_turkish === true) {
+        langBadges += `<span class="badge badge-tr">🇹🇷 TR ✓</span>`;
+      }
+      if (g.languages && g.languages.length > 0) {
+        const extra = g.languages.filter(l => l !== 'EN' && l !== 'TR').slice(0, 3);
+        extra.forEach(l => { langBadges += `<span class="badge">${escapeHtml(l)}</span>`; });
+      } else {
+        langBadges += `<span class="badge" title="Kaynak dil verisi sunmadı">Dil: Belirtilmemiş</span>`;
+      }
+
+      const platBadges = (g.platforms || []).slice(0, 4).map(p => `<span class="badge">${escapeHtml(p)}</span>`).join('');
+      const tagBadges = (g.tags || []).slice(0, 4).map(t => `<span class="badge" style="color:#93c5fd;">#${escapeHtml(t)}</span>`).join('');
+
+      const ratingHtml = g.rating ? `<span class="badge" style="color:#fde047;">★ ${Math.round(g.rating)}%</span>` : '';
+      const origPriceHtml = (g.original_price_usd && g.price_usd !== null && g.original_price_usd > g.price_usd)
+        ? `<span class="price-orig">$${g.original_price_usd.toFixed(2)}</span>` : '';
+
+      return `
+        <article class="card ${isSel}" data-game-id="${escapeHtml(g.id)}" onclick="selectGame('${escapeJs(g.id)}')">
+          <div class="card-img-wrap">
+            ${imgHtml}
+            <span class="store-badge">${escapeHtml(g.store)}</span>
+            ${g.is_niche_or_news ? `<span class="niche-badge">Kıyı Kenar / Haber</span>` : ''}
+            ${g.discount_percent ? `<span class="discount-badge">-${g.discount_percent}%</span>` : ''}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(g.title)}</div>
+            <div class="card-desc">${escapeHtml(g.description || g.source_name)}</div>
+            <div class="meta-row">${langBadges}${ratingHtml}</div>
+            <div class="meta-row">${platBadges}</div>
+            <div class="meta-row">${tagBadges}</div>
+            <div class="card-footer">
+              <div class="price-box">
+                <span class="price-main ${g.is_free ? 'free' : ''}">${escapeHtml(g.price_display)}</span>
+                ${origPriceHtml}
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="open-btn" style="cursor:pointer;" onclick="event.stopPropagation();selectGame('${escapeJs(g.id)}')">✨ Benzerler</button>
+                <a class="open-btn" href="${escapeHtml(g.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">İndir ↗</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    async function selectGame(gameId) {
+      const g = gameRegistry.get(gameId);
+      if (!g) return;
+
+      state.selectedGameId = gameId;
+      document.querySelectorAll('.card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.gameId === gameId);
+      });
+
+      const dock = document.getElementById('similarDock');
+      const titleEl = document.getElementById('dockGameTitle');
+      const tagsEl = document.getElementById('dockTags');
+      const riotBtn = document.getElementById('dockRiotBtn');
+      const storeBtn = document.getElementById('dockStoreBtn');
+      const shotsRibbon = document.getElementById('shotsRibbon');
+      const shotsMeta = document.getElementById('shotsMeta');
+      const simRibbon = document.getElementById('similarRibbon');
+      const simMeta = document.getElementById('similarMeta');
+
+      dock.classList.add('open');
+      document.body.classList.add('dock-open');
+
+      titleEl.textContent = `🎮 ${g.title} (${g.store})`;
+      storeBtn.href = g.url;
+      riotBtn.href = `https://en.riotpixels.com/search/${encodeURIComponent(g.title)}/`;
+      tagsEl.innerHTML = `<span class="badge">Yükleniyor...</span>`;
+
+      shotsMeta.textContent = 'Ekran görüntüleri aranıyor...';
+      shotsRibbon.innerHTML = `<div style="padding:18px;color:var(--muted);font-size:0.84rem;"><span class="spinner"></span> İngilizce ekran görüntüleri getiriliyor...</div>`;
+
+      simMeta.textContent = 'Benzer oyunlar taranıyor...';
+      simRibbon.innerHTML = `<div style="padding:18px;color:var(--muted);font-size:0.84rem;"><span class="spinner"></span> Tüm mağazalardan benzer oyunlar bulunuyor...</div>`;
+
+      try {
+        const res = await fetch('/api/similar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: g.id,
+            title: g.title,
+            description: g.description || '',
+            tags: g.tags || [],
+            platforms: g.platforms || [],
+            store_category: g.store_category || ''
+          })
+        });
+        const data = await res.json();
+
+        // Guard against stale response if user clicked another game meanwhile
+        if (state.selectedGameId !== gameId) return;
+
+        riotBtn.href = data.riotpixels_url || riotBtn.href;
+        tagsEl.innerHTML = (data.used_tags || [])
+          .map(t => `<span class="badge" style="color:#67e8f9;border-color:rgba(6,182,212,0.45);">#${escapeHtml(t)}</span>`)
+          .join('');
+
+        // Render Screenshots Strip
+        if (data.screenshots && data.screenshots.length > 0) {
+          shotsMeta.textContent = `${data.screenshots.length} ekran görüntüsü (${data.screenshots[0].source})`;
+          shotsRibbon.innerHTML = data.screenshots.map(s => `
+            <div class="shot-item" onclick="openLightbox('${escapeJs(s.full_url)}')">
+              <img src="${escapeHtml(s.thumb_url)}" alt="${escapeHtml(g.title)} screenshot" loading="lazy" />
+              <span class="shot-src">${escapeHtml(s.source)}</span>
+            </div>
+          `).join('');
+        } else {
+          shotsMeta.textContent = 'Otomatik görsel bulunamadı — Riot Pixels (EN) butonunu kullanabilirsin';
+          shotsRibbon.innerHTML = `<div style="padding:12px 14px;color:var(--muted);font-size:0.82rem;">Bu oyun için doğrudan API görseli bulunamadı. Sağ üstteki <strong>Riot Pixels (EN) ↗</strong> butonundan İngilizce ekran görüntülerine bakabilirsin.</div>`;
+        }
+
+        // Render Similar Games Strip
+        if (data.results && data.results.length > 0) {
+          data.results.forEach(sg => gameRegistry.set(sg.id, sg));
+          simMeta.textContent = `${data.results.length} benzer oyun • ${(data.elapsed_ms / 1000).toFixed(2)} sn`;
+          simRibbon.innerHTML = data.results.map(renderSimilarCard).join('');
+        } else {
+          simMeta.textContent = 'Benzer oyun bulunamadı';
+          simRibbon.innerHTML = `<div style="padding:12px;color:var(--muted);font-size:0.82rem;">Benzer oyun bulunamadı.</div>`;
+        }
+      } catch (err) {
+        simRibbon.innerHTML = `<div style="padding:12px;color:var(--rose);">Hata: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderSimilarCard(g) {
+      const imgHtml = g.image_url
+        ? `<img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.title)}" loading="lazy" onerror="this.style.display='none'" />`
+        : `<div class="card-img-placeholder" style="font-size:1.4rem;">🎮</div>`;
+      const enBadge = g.has_english === true ? `<span class="badge badge-en">EN ✓</span>` : '';
+      return `
+        <div class="sim-card" onclick="selectGame('${escapeJs(g.id)}')" title="${escapeHtml(g.title)} — Tıklayıp bunun benzerlerini gör">
+          <div class="sim-img">
+            ${imgHtml}
+            <span class="store-badge" style="font-size:0.65rem;padding:2px 6px;">${escapeHtml(g.store)}</span>
+            ${g.discount_percent ? `<span class="discount-badge" style="font-size:0.66rem;">-${g.discount_percent}%</span>` : ''}
+          </div>
+          <div class="sim-body">
+            <div class="sim-title">${escapeHtml(g.title)}</div>
+            <div class="meta-row">${enBadge}${g.rating ? `<span class="badge" style="color:#fde047;">★ ${Math.round(g.rating)}%</span>` : ''}</div>
+            <div class="sim-foot">
+              <span class="price-main ${g.is_free ? 'free' : ''}" style="font-size:0.8rem;">${escapeHtml(g.price_display)}</span>
+              <a class="open-btn" style="padding:3px 8px;font-size:0.72rem;" href="${escapeHtml(g.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Aç ↗</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function scrollRibbon(id, delta) {
+      const el = document.getElementById(id);
+      if (el) el.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+
+    function openLightbox(url) {
+      document.getElementById('lightboxImg').src = url;
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.getElementById('lightboxImg').src = '';
+    }
+
+    function closeDock() {
+      document.getElementById('similarDock').classList.remove('open');
+      document.body.classList.remove('dock-open');
+      state.selectedGameId = null;
+      document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('lightbox').classList.contains('open')) {
+          closeLightbox();
+        } else if (document.getElementById('similarDock').classList.contains('open')) {
+          closeDock();
+        }
+      }
+    });
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    function escapeJs(str) {
+      return String(str ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>
