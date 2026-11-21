@@ -1,14 +1,19 @@
+mod ai_promo_radar;
 mod models;
+mod outside_lens;
 mod sources;
 
+use ai_promo_radar::{AiPromoCache, AiPromoResponse};
 use axum::{
-    extract::State,
+    extract::{Query, State},
     response::Html,
     routing::{get, post},
     Json, Router,
 };
 use models::{SearchQuery, SearchResponse, SimilarRequest, SimilarResponse};
+use outside_lens::{OutsideLensCache, OutsideLensResponse};
 use reqwest::Client;
+use serde::Deserialize;
 use std::net::SocketAddr;
 use std::time::Duration;
 use tower_http::cors::CorsLayer;
@@ -16,10 +21,19 @@ use tower_http::cors::CorsLayer;
 const PORTFOLIO_HTML: &str = include_str!("../static/portfolio.html");
 const OYUN_BULUCU_HTML: &str = include_str!("../static/index.html");
 const CAD_STUDIO_HTML: &str = include_str!("../static/cad_studio.html");
+const OUTSIDE_LENS_HTML: &str = include_str!("../static/outside_lens.html");
+const AI_PROMO_RADAR_HTML: &str = include_str!("../static/ai_promo_radar.html");
 
 #[derive(Clone)]
 struct AppState {
     client: Client,
+    outside_lens_cache: OutsideLensCache,
+    ai_promo_cache: AiPromoCache,
+}
+
+#[derive(Deserialize)]
+struct RefreshParams {
+    refresh: Option<u8>,
 }
 
 #[tokio::main]
@@ -89,7 +103,11 @@ async fn main() {
         return;
     }
 
-    let state = AppState { client };
+    let state = AppState {
+        client,
+        outside_lens_cache: OutsideLensCache::new(),
+        ai_promo_cache: AiPromoCache::new(),
+    };
 
     let app = Router::new()
         .route("/", get(serve_portfolio))
@@ -97,8 +115,14 @@ async fn main() {
         .route("/oyun-bulucu/", get(serve_oyun_bulucu))
         .route("/cad-studio", get(serve_cad_studio))
         .route("/cad-studio/", get(serve_cad_studio))
+        .route("/outside-lens", get(serve_outside_lens))
+        .route("/outside-lens/", get(serve_outside_lens))
+        .route("/ai-promo-radar", get(serve_ai_promo_radar))
+        .route("/ai-promo-radar/", get(serve_ai_promo_radar))
         .route("/api/search", post(api_search))
         .route("/api/similar", post(api_similar))
+        .route("/api/outside-lens", get(api_outside_lens))
+        .route("/api/ai-promo-radar", get(api_ai_promo_radar))
         .route("/api/health", get(api_health))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -136,6 +160,32 @@ async fn serve_oyun_bulucu() -> Html<&'static str> {
 
 async fn serve_cad_studio() -> Html<&'static str> {
     Html(CAD_STUDIO_HTML)
+}
+
+async fn serve_outside_lens() -> Html<&'static str> {
+    Html(OUTSIDE_LENS_HTML)
+}
+
+async fn serve_ai_promo_radar() -> Html<&'static str> {
+    Html(AI_PROMO_RADAR_HTML)
+}
+
+async fn api_outside_lens(
+    State(state): State<AppState>,
+    Query(params): Query<RefreshParams>,
+) -> Json<OutsideLensResponse> {
+    let force = params.refresh.unwrap_or(0) == 1;
+    let resp = state.outside_lens_cache.get_or_fetch(&state.client, force).await;
+    Json(resp)
+}
+
+async fn api_ai_promo_radar(
+    State(state): State<AppState>,
+    Query(params): Query<RefreshParams>,
+) -> Json<AiPromoResponse> {
+    let force = params.refresh.unwrap_or(0) == 1;
+    let resp = state.ai_promo_cache.get_or_fetch(&state.client, force).await;
+    Json(resp)
 }
 
 async fn api_health() -> &'static str {

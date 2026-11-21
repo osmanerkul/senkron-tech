@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outside Lens — Turkey in the Foreign Press • senkron.tech</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --surface: #121722;
+      --surface-2: #192030;
+      --border: #263147;
+      --text: #eef2fa;
+      --muted: #93a4be;
+      --accent: #6366f1;
+      --cyan: #38bdf8;
+      --green: #10b981;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(244, 63, 94, 0.12), transparent 36%),
+        radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.10), transparent 36%);
+    }
+    body.large-text .story-title { font-size: 1.28rem; }
+    body.large-text .story-desc { font-size: 1.04rem; }
+    nav {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(11, 14, 20, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1120px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    }
+    .brand { color: #fff; text-decoration: none; font-weight: 800; font-size: 1.08rem; display: flex; align-items: center; gap: 8px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pill {
+      font-size: 0.78rem; font-weight: 700; padding: 5px 11px; border-radius: 99px;
+      background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.45); color: #6ee7b7;
+    }
+    .btn {
+      cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; text-decoration: none;
+      transition: all .15s;
+    }
+    .btn:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.18); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px 20px 56px; }
+    .hero { margin-bottom: 20px; }
+    .hero h1 { font-size: 1.85rem; font-weight: 800; margin-bottom: 6px; }
+    .hero p { color: var(--muted); font-size: 0.96rem; }
+    .controls {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px;
+    }
+    .controls input, .controls select {
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+      padding: 9px 12px; border-radius: 9px; font-size: 0.9rem; outline: none;
+    }
+    .controls input { flex: 1; min-width: 220px; }
+    .controls input:focus, .controls select:focus { border-color: var(--cyan); }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tab {
+      cursor: pointer; padding: 8px 14px; border-radius: 99px; font-size: 0.86rem; font-weight: 700;
+      background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+      color: var(--muted); font-size: 0.84rem; margin-bottom: 14px;
+    }
+    .stories { display: flex; flex-direction: column; gap: 12px; }
+    .story {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; display: flex; flex-direction: column; gap: 9px;
+      transition: border-color .15s;
+    }
+    .story:hover { border-color: rgba(56, 189, 248, 0.45); }
+    .story-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.82rem; }
+    .pub { font-weight: 700; color: #fff; }
+    .badge { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+    .badge-press { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; }
+    .badge-social { background: rgba(168, 85, 247, 0.18); color: #d8b4fe; }
+    .badge-topic { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
+    .story-title { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.38; }
+    .story-desc { font-size: 0.93rem; color: var(--muted); }
+    .story-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+    .story-url { font-family: ui-monospace, monospace; font-size: 0.76rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 560px; }
+    .empty { text-align: center; padding: 48px 20px; color: var(--muted); background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+  </style>
+</head>
+<body class="large-text">
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="brand">← senkron.tech &nbsp;|&nbsp; 🌐 Outside Lens</a>
+      <div class="nav-right">
+        <span class="pill" id="guardPill">🛡 Non-Turkey Guard Active</span>
+        <button class="btn" id="textToggleBtn">Aa Large Text: ON</button>
+        <button class="btn btn-primary" id="refreshBtn">↻ Scan Now</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="hero">
+      <h1>Outside Lens — Turkey in the Foreign Press</h1>
+      <p>Live headlines, short explanations, and direct source links from 14 non-Turkey international newsrooms + Bluesky, Mastodon, Lemmy &amp; Hacker News. All Turkey-based outlets (.tr &amp; 40+ local domains) and Thanksgiving/poultry false positives are strictly filtered out.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-medium="all">All Foreign Coverage</button>
+      <button class="tab" data-medium="Foreign Press">📰 Foreign Press Only</button>
+      <button class="tab" data-medium="Social Media">💬 Social Media Only</button>
+    </div>
+
+    <div class="controls">
+      <input id="searchInput" type="search" placeholder="Search headlines, cities, economy, NATO…" />
+      <select id="countryFilter">
+        <option value="">All Foreign Countries</option>
+        <option value="UK">🇬🇧 UK</option>
+        <option value="USA">🇺🇸 USA</option>
+        <option value="Germany">🇩🇪 Germany</option>
+        <option value="France">🇫🇷 France</option>
+        <option value="EU">🇪🇺 EU</option>
+        <option value="Qatar">🇶🇦 Qatar</option>
+        <option value="Balkans">🌍 Balkans</option>
+        <option value="International">🌐 International</option>
+      </select>
+      <select id="topicFilter">
+        <option value="">All Topics</option>
+        <option value="Politics">Politics</option>
+        <option value="Economy">Economy</option>
+        <option value="Diplomacy & NATO">Diplomacy &amp; NATO</option>
+        <option value="Defense">Defense</option>
+        <option value="Society & Culture">Society &amp; Culture</option>
+      </select>
+    </div>
+
+    <div class="status-bar">
+      <span id="statusText">Scanning foreign press &amp; social media…</span>
+      <span id="countText"></span>
+    </div>
+
+    <div class="stories" id="storiesList">
+      <div class="empty">Loading live international sources…</div>
+    </div>
+  </main>
+
+  <script>
+    let allStories = [];
+    let activeMedium = 'all';
+
+    function timeAgo(iso) {
+      if (!iso) return '';
+      const diff = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function render() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const c = document.getElementById('countryFilter').value;
+      const t = document.getElementById('topicFilter').value;
+
+      const filtered = allStories.filter(s => {
+        if (activeMedium !== 'all' && s.medium !== activeMedium) return false;
+        if (c && s.country !== c) return false;
+        if (t && !(s.topics || []).includes(t)) return false;
+        if (q && !(s.headline + ' ' + s.explanation + ' ' + s.publisher + ' ' + s.country).toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      document.getElementById('countText').textContent = `Showing ${filtered.length} stories`;
+      const root = document.getElementById('storiesList');
+      if (!filtered.length) {
+        root.innerHTML = '<div class="empty">No matching foreign stories found. Try clearing filters or clicking Scan Now.</div>';
+        return;
+      }
+
+      root.innerHTML = filtered.map(s => `
+        <article class="story">
+          <div class="story-meta">
+            <span class="pub">${esc(s.flag)} ${esc(s.publisher)}</span>
+            <span class="badge ${s.medium === 'Foreign Press' ? 'badge-press' : 'badge-social'}">${esc(s.medium)}</span>
+            ${s.published_at ? `<span style="color:var(--muted)">• ${esc(timeAgo(s.published_at))}</span>` : ''}
+            <span style="flex:1"></span>
+            ${(s.topics || []).slice(0, 2).map(tp => `<span class="badge badge-topic">${esc(tp)}</span>`).join('')}
+          </div>
+          <div class="story-title">${esc(s.headline)}</div>
+          <div class="story-desc">${esc(s.explanation)}</div>
+          <div class="story-foot">
+            <span class="story-url">${esc(s.link)}</span>
+            <a class="btn btn-primary" href="${esc(s.link)}" target="_blank" rel="noopener noreferrer">Open Source ↗</a>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function loadData(force = false) {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.textContent = 'Scanning…';
+      try {
+        const res = await fetch('/api/outside-lens' + (force ? '?refresh=1' : ''));
+        const data = await res.json();
+        allStories = data.stories || [];
+        document.getElementById('guardPill').textContent = `🛡 Blocked ${data.blocked_tr_count} TR-based items`;
+        document.getElementById('statusText').textContent =
+          `${data.press_count} foreign press • ${data.social_count} social posts • ${data.cached ? 'Cached' : 'Fresh scan'}`;
+        render();
+      } catch (e) {
+        document.getElementById('storiesList').innerHTML = '<div class="empty">Could not reach scanner endpoint. Please retry.</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '↻ Scan Now';
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeMedium = btn.dataset.medium;
+        render();
+      });
+    });
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('countryFilter').addEventListener('change', render);
+    document.getElementById('topicFilter').addEventListener('change', render);
+    document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
+    document.getElementById('textToggleBtn').addEventListener('click', (e) => {
+      const on = document.body.classList.toggle('large-text');
+      e.target.textContent = on ? 'Aa Large Text: ON' : 'Aa Large Text: OFF';
+    });
+
+    loadData(false);
+  </script>
+</body>
+</html>

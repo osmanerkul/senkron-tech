@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Promo Radar — Daily AI Credits & Live Feeds • senkron.tech</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --surface: #121722;
+      --surface-2: #192030;
+      --border: #263147;
+      --text: #eef2fa;
+      --muted: #93a4be;
+      --accent: #6366f1;
+      --cyan: #38bdf8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --pink: #ec4899;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 12% 10%, rgba(16, 185, 129, 0.12), transparent 36%),
+        radial-gradient(circle at 86% 18%, rgba(236, 72, 153, 0.10), transparent 36%);
+    }
+    nav {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(11, 14, 20, 0.88); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .brand { color: #fff; text-decoration: none; font-weight: 800; font-size: 1.08rem; }
+    .btn {
+      cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; text-decoration: none;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 24px 20px 56px; }
+    .hero { margin-bottom: 18px; }
+    .hero h1 { font-size: 1.85rem; font-weight: 800; margin-bottom: 6px; }
+    .hero p { color: var(--muted); }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tab {
+      cursor: pointer; padding: 9px 16px; border-radius: 99px; font-size: 0.88rem; font-weight: 700;
+      background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .controls {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px;
+    }
+    .controls input, .controls select {
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 11px; border-radius: 9px; font-size: 0.88rem; outline: none;
+    }
+    .controls input { flex: 1; min-width: 200px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .card.claimed { border-color: rgba(16, 185, 129, 0.65); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .hot { background: var(--pink); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 99px; }
+    .pill { font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: #cbd5e1; }
+    .burn-low { background: rgba(16,185,129,0.16); color: #6ee7b7; border-color: transparent; }
+    .burn-med { background: rgba(245,158,11,0.16); color: #fcd34d; border-color: transparent; }
+    .burn-heavy { background: rgba(244,63,94,0.16); color: #fda4af; border-color: transparent; }
+    .token-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 0.84rem; }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .story-list { display: flex; flex-direction: column; gap: 10px; }
+    .story { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; display: flex; flex-direction: column; gap: 7px; }
+    .tag-promo { background: rgba(236,72,153,0.18); color: #f9a8d4; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+    .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 16px; max-width: 780px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric { background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 14px; }
+    .metric .val { font-size: 1.25rem; font-weight: 800; color: var(--cyan); margin: 4px 0; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="brand">← senkron.tech &nbsp;|&nbsp; 📡 AI Promo Radar</a>
+      <div class="row">
+        <span class="pill" id="dailyResetPill">Daily Reset</span>
+        <button class="btn btn-primary" id="refreshBtn">↻ Refresh Feeds</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="hero">
+      <h1>AI Promo Radar — Daily Credits, Origins &amp; Token Ratios</h1>
+      <p>Track free daily AI credits, filter by platform &amp; country of origin, decode token burn rates in plain English, and monitor 15 live AI RSS feeds for new promos &amp; agents.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-view="directory">✨ AI Credits Directory</button>
+      <button class="tab" data-view="radar">📡 Live Promo Radar <span id="promoCountBadge"></span></button>
+      <button class="tab" data-view="guide">🧮 Token Ratio Translator</button>
+    </div>
+
+    <!-- VIEW 1: DIRECTORY -->
+    <section id="view-directory">
+      <div class="controls">
+        <input id="toolSearch" type="search" placeholder="Search Qoder, Qronos, Trae, Kiro, OpenRouter…" />
+        <select id="catFilter">
+          <option value="">All Categories</option>
+          <option value="Coding">Coding</option>
+          <option value="API Gateway">API Gateway</option>
+          <option value="Chat">Chat</option>
+          <option value="Image">Image</option>
+          <option value="Video">Video</option>
+          <option value="Audio">Audio</option>
+        </select>
+        <select id="platFilter">
+          <option value="">All Platforms</option>
+          <option value="macOS">macOS</option>
+          <option value="Windows">Windows</option>
+          <option value="Linux">Linux</option>
+          <option value="iOS">iOS / iPadOS</option>
+          <option value="Android">Android</option>
+          <option value="Web">Web</option>
+          <option value="CLI/API">CLI / API</option>
+        </select>
+        <select id="countryFilter">
+          <option value="">All Countries</option>
+          <option value="USA">🇺🇸 USA</option>
+          <option value="China">🇨🇳 China</option>
+          <option value="France">🇫🇷 France</option>
+          <option value="Singapore">🇸🇬 Singapore</option>
+          <option value="Canada">🇨🇦 Canada</option>
+          <option value="Global">🌍 Global</option>
+        </select>
+        <label style="font-size:0.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="dailyOnly" /> Daily Credits Only
+        </label>
+      </div>
+      <div class="grid" id="toolsGrid"></div>
+    </section>
+
+    <!-- VIEW 2: LIVE RSS RADAR -->
+    <section id="view-radar" class="hidden">
+      <div class="controls">
+        <input id="newsSearch" type="search" placeholder="Filter live AI releases &amp; promos…" />
+        <label style="font-size:0.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="promoOnly" checked /> Promo &amp; Agent Signals Only
+        </label>
+        <span class="muted" id="radarStatus"></span>
+      </div>
+      <div class="story-list" id="articlesList"></div>
+    </section>
+
+    <!-- VIEW 3: TOKEN RATIO TRANSLATOR -->
+    <section id="view-guide" class="hidden">
+      <div class="calc-card">
+        <h2>Interactive Token Translator</h2>
+        <p class="muted">Slide to any promo amount (like Qronos’s 10M free tokens) to see what it actually buys in real life.</p>
+        <div class="row">
+          <strong>Promo / Credit Amount:</strong>
+          <strong id="tokLabel" style="color:var(--cyan);font-size:1.1rem">10.0 Million Tokens</strong>
+        </div>
+        <input type="range" id="tokSlider" min="0.5" max="50" step="0.5" value="10" />
+        <select id="tierSelect" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px;border-radius:9px;">
+          <option value="0.30">Fast / Flash Model ($0.30 / 1M avg)</option>
+          <option value="3.00">Mid-Tier Coding Model ($3.00 / 1M avg)</option>
+          <option value="10.00">Flagship / Reasoning Model ($10.00 / 1M avg)</option>
+        </select>
+        <div class="metrics">
+          <div class="metric"><div class="muted">≈ English Words</div><div class="val" id="mWords">7.5M</div><div class="muted" id="mNovels">~93 novels</div></div>
+          <div class="metric"><div class="muted">≈ Agentic Coding</div><div class="val" id="mCoding">4–12 sessions</div><div class="muted">Multi-file IDE work</div></div>
+          <div class="metric"><div class="muted">≈ API Retail Value</div><div class="val" id="mValue">$3.00</div><div class="muted">At chosen tier</div></div>
+        </div>
+        <div class="token-box">
+          <strong>Quick Rules:</strong><br/>
+          • 1 English word ≈ 1.3 tokens (1 Turkish word ≈ 1.8–2.2 tokens).<br/>
+          • <strong>Input : Output Ratio (1:4 or 1:5):</strong> Replies &amp; Thinking tokens cost 4×–5× more than reading your prompt.<br/>
+          • Starting a fresh chat per task dramatically reduces repeat input token burn.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let allTools = [];
+    let allArticles = [];
+    const todayKey = 'aipromo_claimed_' + new Date().toISOString().slice(0, 10);
+    let claimed = new Set(JSON.parse(localStorage.getItem(todayKey) || '[]'));
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function toggleClaim(id) {
+      if (claimed.has(id)) claimed.delete(id); else claimed.add(id);
+      localStorage.setItem(todayKey, JSON.stringify([...claimed]));
+      renderTools();
+    }
+
+    function renderTools() {
+      const q = document.getElementById('toolSearch').value.trim().toLowerCase();
+      const cat = document.getElementById('catFilter').value;
+      const plat = document.getElementById('platFilter').value;
+      const ctry = document.getElementById('countryFilter').value;
+      const daily = document.getElementById('dailyOnly').checked;
+
+      const list = allTools.filter(t => {
+        if (daily && t.reset_cycle !== 'Daily Reset') return false;
+        if (cat && t.category !== cat) return false;
+        if (plat && !t.platforms.includes(plat)) return false;
+        if (ctry && t.country !== ctry) return false;
+        if (q && !(t.name + ' ' + t.company + ' ' + t.free_tier + ' ' + t.note + ' ' + t.country).toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      document.getElementById('toolsGrid').innerHTML = list.map(t => {
+        const isClaimed = claimed.has(t.id);
+        const burnCls = t.burn_rate.includes('Low') ? 'burn-low' : (t.burn_rate.includes('Heavy') ? 'burn-heavy' : 'burn-med');
+        return `
+          <article class="card ${isClaimed ? 'claimed' : ''}">
+            <div class="row">
+              <div>
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <strong style="font-size:1.05rem">${esc(t.name)}</strong>
+                  <span>${esc(t.flag)}</span>
+                  ${t.hot ? '<span class="hot">HOT</span>' : ''}
+                </div>
+                <div class="muted">${esc(t.company)} • ${esc(t.category)} • ${esc(t.country)}</div>
+              </div>
+              ${t.reset_cycle === 'Daily Reset'
+                ? `<button class="btn" onclick="toggleClaim('${esc(t.id)}')">${isClaimed ? '✓ Used' : 'Mark Used'}</button>`
+                : `<span class="pill">${esc(t.reset_cycle)}</span>`}
+            </div>
+            <div style="font-weight:700;color:#fff">${esc(t.free_tier)}</div>
+            <div class="token-box">
+              <div class="row" style="margin-bottom:4px">
+                <span class="pill ${burnCls}">${esc(t.burn_rate)}</span>
+                <span class="muted">Ratio ${esc(t.io_ratio)}</span>
+              </div>
+              <div class="muted">${esc(t.plain_estimate)}</div>
+            </div>
+            <div class="row">
+              <div style="display:flex;gap:5px;flex-wrap:wrap">
+                ${t.platforms.map(p => `<span class="pill">${esc(p)}</span>`).join('')}
+              </div>
+              <a class="btn btn-primary" href="${esc(t.website)}" target="_blank" rel="noopener noreferrer">Open ↗</a>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderArticles() {
+      const q = document.getElementById('newsSearch').value.trim().toLowerCase();
+      const promoOnly = document.getElementById('promoOnly').checked;
+      const list = allArticles.filter(a => {
+        if (promoOnly && !(a.tags && a.tags.length)) return false;
+        if (q && !(a.title + ' ' + a.summary + ' ' + a.source_name).toLowerCase().includes(q)) return false;
+        return true;
+      });
+      document.getElementById('radarStatus').textContent = `${list.length} stories shown`;
+      document.getElementById('articlesList').innerHTML = list.map(a => `
+        <article class="story">
+          <div class="row">
+            <span class="muted">${esc(a.flag)} <strong>${esc(a.source_name)}</strong></span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">${(a.tags || []).map(tg => `<span class="tag-promo">${esc(tg)}</span>`).join('')}</div>
+          </div>
+          <strong style="font-size:1.05rem">${esc(a.title)}</strong>
+          ${a.summary ? `<p class="muted">${esc(a.summary)}</p>` : ''}
+          <div class="row">
+            <span></span>
+            <a class="btn btn-primary" href="${esc(a.link)}" target="_blank" rel="noopener noreferrer">Read Story ↗</a>
+          </div>
+        </article>
+      `).join('') || '<div class="card">No stories matched. Try turning off Promo Signals Only.</div>';
+    }
+
+    function updateCalc() {
+      const m = parseFloat(document.getElementById('tokSlider').value);
+      const rate = parseFloat(document.getElementById('tierSelect').value);
+      document.getElementById('tokLabel').textContent = m.toFixed(1) + ' Million Tokens';
+      document.getElementById('mWords').textContent = (m * 0.75).toFixed(1) + 'M';
+      document.getElementById('mNovels').textContent = '~' + Math.max(1, Math.round((m * 750000) / 80000)) + ' full novels';
+      document.getElementById('mCoding').textContent = `${Math.max(1, Math.round(m / 2.5))}–${Math.max(2, Math.round(m / 0.8))} sessions`;
+      document.getElementById('mValue').textContent = '$' + (m * rate).toFixed(2);
+    }
+
+    async function loadData(force = false) {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true; btn.textContent = 'Refreshing…';
+      try {
+        const res = await fetch('/api/ai-promo-radar' + (force ? '?refresh=1' : ''));
+        const data = await res.json();
+        allTools = data.tools || [];
+        allArticles = data.articles || [];
+        document.getElementById('promoCountBadge').textContent = data.promo_signal_count ? `(${data.promo_signal_count})` : '';
+        renderTools();
+        renderArticles();
+      } finally {
+        btn.disabled = false; btn.textContent = '↻ Refresh Feeds';
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        ['directory', 'radar', 'guide'].forEach(v => {
+          document.getElementById('view-' + v).classList.toggle('hidden', v !== btn.dataset.view);
+        });
+      });
+    });
+
+    ['toolSearch', 'catFilter', 'platFilter', 'countryFilter', 'dailyOnly'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderTools);
+      document.getElementById(id).addEventListener('change', renderTools);
+    });
+    ['newsSearch', 'promoOnly'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderArticles);
+      document.getElementById(id).addEventListener('change', renderArticles);
+    });
+    document.getElementById('tokSlider').addEventListener('input', updateCalc);
+    document.getElementById('tierSelect').addEventListener('change', updateCalc);
+    document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
+
+    updateCalc();
+    loadData(false);
+  </script>
+</body>
+</html>
