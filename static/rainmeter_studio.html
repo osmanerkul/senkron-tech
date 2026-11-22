@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rainmeter Skin Studio — Senkront</title>
+  <meta name="description" content="Realtime browser-based Rainmeter skin builder with .rmskin pack tree, clipart, app-only font import, live sensors, and one-click .ini / .rmskin export." />
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #131824;
+      --panel-2: #1a2132;
+      --input: #0d111a;
+      --border: #2a354d;
+      --border-hi: #4f86f7;
+      --text: #f2f6ff;
+      --muted: #9eb0cf;
+      --accent: #5ebaff;
+      --green: #6ee7a8;
+      --danger: #ff7b89;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 13.5px; }
+    button, input, select, textarea { font-family: inherit; font-size: 13px; color: var(--text); }
+    button {
+      background: #232d44; border: 1px solid #384768; border-radius: 6px; padding: 5px 10px;
+      cursor: pointer; font-weight: 600; transition: background .12s, border-color .12s; white-space: nowrap;
+    }
+    button:hover { background: #314062; border-color: #6ea8ff; }
+    button.primary { background: #265496; border-color: #5ebaff; color: #fff; }
+    button.primary:hover { background: #3169b8; }
+    button.green { background: #173d2e; border-color: #46c48a; color: #9cf5c8; }
+    button.green:hover { background: #1e523d; }
+    button.danger { background: #3b1c24; border-color: #a84253; color: #ffb4bd; }
+    button.danger:hover { background: #542430; }
+    button.small { padding: 3px 7px; font-size: 12px; }
+    input[type="text"], input[type="number"], select, textarea {
+      background: var(--input); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text);
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    input[type="range"] { accent-color: var(--accent); cursor: pointer; }
+    input[type="color"] { width: 28px; height: 26px; border: 1px solid var(--border); border-radius: 5px; background: var(--input); padding: 1px; cursor: pointer; }
+    label { color: var(--text); display: inline-flex; align-items: center; gap: 5px; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* Layout */
+    .app { display: grid; grid-template-rows: 46px 1fr auto 36px; height: 100vh; }
+    .topbar {
+      background: #10141f; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px; padding: 0 12px; overflow-x: auto;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #8fd0ff; font-size: 14.5px; text-decoration: none; margin-right: 4px; }
+    .sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+    .workspace { display: grid; grid-template-columns: 275px 1fr 315px; min-height: 0; }
+    .sidebar {
+      background: var(--panel); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .inspector {
+      background: var(--panel); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: 10px 12px;
+    }
+    .tabs { display: flex; gap: 4px; padding: 8px 8px 6px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .tab-btn { flex: 1; padding: 5px 6px; font-size: 12px; background: transparent; border: 1px solid transparent; color: var(--muted); }
+    .tab-btn.active { background: #26487a; border-color: #5ebaff; color: #fff; }
+    .tab-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+    /* Canvas area */
+    .canvas-wrap { position: relative; overflow: hidden; background: #0d1018; }
+    #skinCanvas { width: 100%; height: 100%; display: block; cursor: default; }
+
+    /* Code drawer */
+    .code-drawer {
+      background: #0d1018; border-top: 1px solid var(--border); padding: 8px 12px;
+      display: none; flex-direction: column; gap: 6px; height: 210px;
+    }
+    .code-drawer.open { display: flex; }
+    .code-drawer textarea { flex: 1; font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; resize: none; line-height: 1.45; }
+
+    /* Bottom bar */
+    .bottombar {
+      background: #0f131d; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; padding: 0 12px; font-size: 12.5px;
+    }
+    .toast { margin-left: auto; color: #8fd0ff; font-weight: 600; }
+
+    /* Reusable UI blocks */
+    .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .sec-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 7px; }
+    .sec-title { font-weight: 700; font-size: 13px; color: #dbe7ff; display: flex; align-items: center; justify-content: space-between; }
+    .layer-item {
+      display: flex; align-items: center; gap: 6px; padding: 5px 7px; border-radius: 6px;
+      cursor: pointer; border: 1px solid transparent; background: transparent;
+    }
+    .layer-item:hover { background: #20293e; }
+    .layer-item.selected { background: #264a7e; border-color: #5ebaff; }
+    .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+    .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .icon-tile {
+      height: 46px; display: flex; align-items: center; justify-content: center;
+      background: #1b2233; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    }
+    .icon-tile:hover { background: #2b3854; border-color: var(--accent); }
+    .tree-folder { margin-left: 8px; border-left: 1px solid #263149; padding-left: 6px; }
+    .tree-head { padding: 4px 6px; cursor: pointer; font-weight: 600; border-radius: 5px; display: flex; align-items: center; gap: 5px; }
+    .tree-head:hover { background: #1e273a; }
+    .tree-file { padding: 4px 7px; cursor: pointer; border-radius: 5px; font-size: 12.5px; display: flex; align-items: center; gap: 5px; }
+    .tree-file:hover { background: #1e273a; }
+    .tree-file.active { background: #264a7e; color: #fff; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .field { display: flex; flex-direction: column; gap: 3px; }
+    .field label { font-size: 11.5px; color: var(--muted); }
+    .field input, .field select { width: 100%; }
+    .slider-row { display: grid; grid-template-columns: 74px 1fr 48px; align-items: center; gap: 6px; font-size: 12px; }
+    .slider-row span:last-child { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    /* Dropdown menu */
+    .dropdown { position: relative; }
+    .dropdown-menu {
+      position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 90;
+      background: #192133; border: 1px solid #495d87; border-radius: 8px; padding: 5px;
+      min-width: 225px; box-shadow: 0 12px 30px rgba(0,0,0,0.55); display: none; flex-direction: column; gap: 3px;
+    }
+    .dropdown-menu.open { display: flex; }
+    .dropdown-menu button { text-align: left; background: transparent; border-color: transparent; padding: 6px 9px; }
+    .dropdown-menu button:hover { background: #29395b; border-color: #5ebaff; }
+
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: 230px 1fr 265px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- TOP TOOLBAR -->
+  <header class="topbar">
+    <a href="/" class="brand" title="Back to Senkront">◆ Rainmeter Studio</a>
+    <div class="sep"></div>
+
+    <div class="dropdown">
+      <button id="btnTemplates">Templates ▾</button>
+      <div class="dropdown-menu" id="templateMenu"></div>
+    </div>
+
+    <button class="primary" id="btnImportRmskin">Import .rmskin</button>
+    <button id="btnOpenIni">Open Skin (.ini)</button>
+    <button class="green" id="btnDownloadIni">Download .ini</button>
+    <button class="green" id="btnExportRmskin">Export .rmskin</button>
+
+    <div class="sep"></div>
+
+    <select id="selBackdrop" title="Preview Backdrop">
+      <option value="midnight">Midnight Grid</option>
+      <option value="aurora">Aurora Dark</option>
+      <option value="light">Light Wallpaper</option>
+      <option value="checker">Transparent Grid</option>
+    </select>
+
+    <button class="small" id="btnZoomOut">−</button>
+    <span id="lblZoom" style="min-width:38px;text-align:center;font-weight:600;">125%</span>
+    <button class="small" id="btnZoomIn">+</button>
+    <button class="small" id="btnResetView">Reset View</button>
+
+    <div class="sep"></div>
+    <label><input type="checkbox" id="chkSnap" checked /> Snap</label>
+    <label><input type="checkbox" id="chkOutlines" checked /> Outlines</label>
+    <label><input type="checkbox" id="chkPreview" /> Preview</label>
+    <button class="small" id="btnCodeView">Code View</button>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="tabs">
+        <button class="tab-btn" data-tab="pack">Pack</button>
+        <button class="tab-btn active" data-tab="elements">Elements</button>
+        <button class="tab-btn" data-tab="icons">Icons</button>
+        <button class="tab-btn" data-tab="data">Live Data</button>
+        <button class="tab-btn" data-tab="theme">Theme</button>
+      </div>
+      <div class="tab-body" id="leftBody"></div>
+    </aside>
+
+    <!-- CENTER CANVAS -->
+    <main class="canvas-wrap">
+      <canvas id="skinCanvas"></canvas>
+    </main>
+
+    <!-- RIGHT PROPERTIES INSPECTOR -->
+    <aside class="inspector" id="inspector"></aside>
+  </div>
+
+  <!-- LIVE CODE DRAWER -->
+  <section class="code-drawer" id="codeDrawer">
+    <div class="row-between">
+      <strong>Live Rainmeter .ini Code</strong>
+      <div class="row">
+        <button class="small" id="btnCopyIni">Copy INI</button>
+        <button class="small primary" id="btnApplyIni">Apply Code Changes</button>
+      </div>
+    </div>
+    <textarea id="txtIniCode" spellcheck="false"></textarea>
+  </section>
+
+  <!-- BOTTOM SENSOR & STATUS BAR -->
+  <footer class="bottombar">
+    <label><input type="checkbox" id="chkLiveSensors" checked /> Live Sensors</label>
+    <div class="sep"></div>
+    <label>CPU <input type="range" id="rngCpu" min="0" max="100" value="34" style="width:90px" /> <span id="lblCpu">34%</span></label>
+    <label>RAM <input type="range" id="rngRam" min="0" max="100" value="62" style="width:90px" /> <span id="lblRam">62%</span></label>
+    <span class="toast" id="lblToast">Ready — drag widgets on the canvas, pick a template, or import any .rmskin pack!</span>
+  </footer>
+</div>
+
+<!-- Hidden File Inputs -->
+<input type="file" id="fileIni" accept=".ini,.inc,.txt" hidden />
+<input type="file" id="fileRmskin" accept=".rmskin,.zip" hidden />
+<input type="file" id="fileImage" accept="image/png,image/jpeg,image/webp,image/bmp,image/x-icon" hidden />
+<input type="file" id="fileFont" accept=".ttf,.otf,.woff,.woff2" hidden />
+
+<script>
+(() => {
+  // =========================================================================
+  // 1. BUILT-IN VECTOR CLIPART LIBRARY
+  // =========================================================================
+  const CLIPART = [
+    { id: 'sun', label: 'Sun', cat: 'Weather', color: [255,206,86,255] },
+    { id: 'cloud', label: 'Cloud', cat: 'Weather', color: [215,226,242,255] },
+    { id: 'rain', label: 'Rain', cat: 'Weather', color: [104,185,255,255] },
+    { id: 'moon', label: 'Moon', cat: 'Weather', color: [225,214,255,255] },
+    { id: 'bolt', label: 'Lightning', cat: 'Weather', color: [255,224,92,255] },
+    { id: 'cpu', label: 'CPU Chip', cat: 'System', color: [94,186,255,255] },
+    { id: 'memory', label: 'RAM', cat: 'System', color: [138,226,152,255] },
+    { id: 'battery', label: 'Battery', cat: 'System', color: [112,232,146,255] },
+    { id: 'wifi', label: 'Wi-Fi', cat: 'System', color: [110,205,255,255] },
+    { id: 'volume', label: 'Volume', cat: 'System', color: [220,228,240,255] },
+    { id: 'disk', label: 'Drive', cat: 'System', color: [186,168,255,255] },
+    { id: 'play', label: 'Play', cat: 'Media & UI', color: [255,112,158,255] },
+    { id: 'pause', label: 'Pause', cat: 'Media & UI', color: [235,242,252,255] },
+    { id: 'next', label: 'Next', cat: 'Media & UI', color: [235,242,252,255] },
+    { id: 'prev', label: 'Prev', cat: 'Media & UI', color: [235,242,252,255] },
+    { id: 'music', label: 'Music', cat: 'Media & UI', color: [255,112,158,255] },
+    { id: 'clock', label: 'Clock', cat: 'Media & UI', color: [94,186,255,255] },
+    { id: 'heart', label: 'Heart', cat: 'Media & UI', color: [255,102,134,255] },
+    { id: 'star', label: 'Star', cat: 'Media & UI', color: [255,212,92,255] },
+    { id: 'folder', label: 'Folder', cat: 'Media & UI', color: [255,204,96,255] },
+    { id: 'terminal', label: 'Terminal', cat: 'Media & UI', color: [112,226,178,255] },
+    { id: 'gear', label: 'Settings', cat: 'Media & UI', color: [130,190,255,255] },
+    { id: 'power', label: 'Power', cat: 'Media & UI', color: [255,114,114,255] },
+    { id: 'shield', label: 'Shield', cat: 'Media & UI', color: [130,220,255,255] },
+  ];
+
+  function drawClipart(ctx, id, x, y, w, h, rgbaCss) {
+    const cx = x + w / 2, cy = y + h / 2, s = Math.min(w, h), r = s * 0.42;
+    const sw = Math.max(1.8, s * 0.075);
+    ctx.save();
+    ctx.strokeStyle = rgbaCss; ctx.fillStyle = rgbaCss;
+    ctx.lineWidth = sw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    switch (id) {
+      case 'sun':
+        ctx.arc(cx, cy, r * 0.48, 0, Math.PI * 2); ctx.fill();
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI / 4;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * r * 0.68, cy + Math.sin(a) * r * 0.68);
+          ctx.lineTo(cx + Math.cos(a) * r * 0.96, cy + Math.sin(a) * r * 0.96);
+          ctx.stroke();
+        }
+        break;
+      case 'cloud':
+      case 'rain': {
+        const by = cy + (id === 'rain' ? -r * 0.05 : r * 0.22);
+        ctx.arc(cx - r * 0.42, by, r * 0.34, 0, Math.PI * 2);
+        ctx.arc(cx - r * 0.04, by - r * 0.28, r * 0.44, 0, Math.PI * 2);
+        ctx.arc(cx + r * 0.42, by + r * 0.02, r * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx - r * 0.44, by - r * 0.05, r * 0.88, r * 0.38);
+        if (id === 'rain') {
+          [-0.36, 0, 0.36].forEach(o => {
+            ctx.beginPath();
+            ctx.moveTo(cx + r * o, by + r * 0.48);
+            ctx.lineTo(cx + r * o - r * 0.14, by + r * 0.9);
+            ctx.stroke();
+          });
+        }
+        break;
+      }
+      case 'moon':
+        ctx.arc(cx, cy, r * 0.8, 0.4, Math.PI * 1.6);
+        ctx.arc(cx + r * 0.28, cy - r * 0.06, r * 0.64, Math.PI * 1.55, 0.45, true);
+        ctx.closePath(); ctx.fill();
+        break;
+      case 'bolt':
+        ctx.moveTo(cx + r * 0.12, cy - r * 0.9);
+        ctx.lineTo(cx - r * 0.46, cy + r * 0.06);
+        ctx.lineTo(cx + r * 0.02, cy + r * 0.06);
+        ctx.lineTo(cx - r * 0.16, cy + r * 0.9);
+        ctx.lineTo(cx + r * 0.48, cy - r * 0.12);
+        ctx.lineTo(cx + r * 0.02, cy - r * 0.12);
+        ctx.closePath(); ctx.fill();
+        break;
+      case 'cpu':
+        ctx.strokeRect(cx - r * 0.56, cy - r * 0.56, r * 1.12, r * 1.12);
+        ctx.fillRect(cx - r * 0.26, cy - r * 0.26, r * 0.52, r * 0.52);
+        [-0.32, 0, 0.32].forEach(d => {
+          ctx.beginPath();
+          ctx.moveTo(cx + r * d, cy - r * 0.56); ctx.lineTo(cx + r * d, cy - r * 0.88);
+          ctx.moveTo(cx + r * d, cy + r * 0.56); ctx.lineTo(cx + r * d, cy + r * 0.88);
+          ctx.moveTo(cx - r * 0.56, cy + r * d); ctx.lineTo(cx - r * 0.88, cy + r * d);
+          ctx.moveTo(cx + r * 0.56, cy + r * d); ctx.lineTo(cx + r * 0.88, cy + r * d);
+          ctx.stroke();
+        });
+        break;
+      case 'memory':
+        ctx.strokeRect(cx - r * 0.82, cy - r * 0.42, r * 1.64, r * 0.84);
+        [-0.44, 0, 0.44].forEach(d => ctx.fillRect(cx + r * d - r * 0.13, cy - r * 0.22, r * 0.26, r * 0.44));
+        break;
+      case 'battery':
+        ctx.strokeRect(cx - r * 0.78, cy - r * 0.44, r * 1.42, r * 0.88);
+        ctx.fillRect(cx + r * 0.68, cy - r * 0.2, r * 0.18, r * 0.4);
+        ctx.fillRect(cx - r * 0.62, cy - r * 0.28, r * 0.95, r * 0.56);
+        break;
+      case 'wifi':
+        ctx.arc(cx, cy + r * 0.52, r * 0.14, 0, Math.PI * 2); ctx.fill();
+        [0.44, 0.78, 1.12].forEach(rad => {
+          ctx.beginPath();
+          ctx.arc(cx, cy + r * 0.52, r * rad, -Math.PI * 0.75, -Math.PI * 0.25);
+          ctx.stroke();
+        });
+        break;
+      case 'play':
+        ctx.moveTo(cx - r * 0.44, cy - r * 0.66);
+        ctx.lineTo(cx + r * 0.7, cy);
+        ctx.lineTo(cx - r * 0.44, cy + r * 0.66);
+        ctx.closePath(); ctx.fill();
+        break;
+      case 'pause':
+        ctx.fillRect(cx - r * 0.52, cy - r * 0.64, r * 0.34, r * 1.28);
+        ctx.fillRect(cx + r * 0.18, cy - r * 0.64, r * 0.34, r * 1.28);
+        break;
+      case 'next':
+        ctx.moveTo(cx - r * 0.62, cy - r * 0.56); ctx.lineTo(cx + r * 0.24, cy); ctx.lineTo(cx - r * 0.62, cy + r * 0.56);
+        ctx.closePath(); ctx.fill();
+        ctx.fillRect(cx + r * 0.36, cy - r * 0.56, r * 0.24, r * 1.12);
+        break;
+      case 'prev':
+        ctx.moveTo(cx + r * 0.62, cy - r * 0.56); ctx.lineTo(cx - r * 0.24, cy); ctx.lineTo(cx + r * 0.62, cy + r * 0.56);
+        ctx.closePath(); ctx.fill();
+        ctx.fillRect(cx - r * 0.6, cy - r * 0.56, r * 0.24, r * 1.12);
+        break;
+      case 'music':
+        ctx.arc(cx - r * 0.4, cy + r * 0.5, r * 0.24, 0, Math.PI * 2);
+        ctx.arc(cx + r * 0.36, cy + r * 0.34, r * 0.24, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.18, cy + r * 0.46); ctx.lineTo(cx - r * 0.18, cy - r * 0.54);
+        ctx.lineTo(cx + r * 0.58, cy - r * 0.7); ctx.lineTo(cx + r * 0.58, cy + r * 0.3);
+        ctx.stroke();
+        break;
+      case 'clock':
+        ctx.arc(cx, cy, r * 0.84, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - r * 0.48);
+        ctx.moveTo(cx, cy); ctx.lineTo(cx + r * 0.38, cy + r * 0.18);
+        ctx.stroke();
+        break;
+      case 'heart':
+        ctx.arc(cx - r * 0.34, cy - r * 0.2, r * 0.4, 0, Math.PI * 2);
+        ctx.arc(cx + r * 0.34, cy - r * 0.2, r * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.72, cy - r * 0.06); ctx.lineTo(cx + r * 0.72, cy - r * 0.06); ctx.lineTo(cx, cy + r * 0.84);
+        ctx.closePath(); ctx.fill();
+        break;
+      case 'star':
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + i * Math.PI / 5;
+          const rad = i % 2 === 0 ? r * 0.92 : r * 0.42;
+          const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.fill();
+        break;
+      case 'folder':
+        ctx.strokeRect(cx - r * 0.8, cy - r * 0.34, r * 1.6, r * 0.98);
+        ctx.fillRect(cx - r * 0.8, cy - r * 0.62, r * 0.72, r * 0.3);
+        break;
+      case 'terminal':
+        ctx.strokeRect(cx - r * 0.82, cy - r * 0.62, r * 1.64, r * 1.24);
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.46, cy - r * 0.22); ctx.lineTo(cx - r * 0.14, cy); ctx.lineTo(cx - r * 0.46, cy + r * 0.22);
+        ctx.moveTo(cx + r * 0.02, cy + r * 0.22); ctx.lineTo(cx + r * 0.48, cy + r * 0.22);
+        ctx.stroke();
+        break;
+      case 'gear':
+        ctx.arc(cx, cy, r * 0.48, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI / 4;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * r * 0.62, cy + Math.sin(a) * r * 0.62);
+          ctx.lineTo(cx + Math.cos(a) * r * 0.9, cy + Math.sin(a) * r * 0.9);
+          ctx.stroke();
+        }
+        break;
+      case 'power':
+        ctx.arc(cx, cy, r * 0.72, -Math.PI * 0.32, Math.PI * 1.32); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - r * 0.9); ctx.lineTo(cx, cy - r * 0.08); ctx.stroke();
+        break;
+      default:
+        ctx.arc(cx, cy, r * 0.76, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.3, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    ctx.restore();
+  }
+
+  function clipartFromName(imgName) {
+    if (!imgName) return null;
+    const low = imgName.toLowerCase();
+    return CLIPART.find(c => low.endsWith(`clipart_${c.id}.png`) || low === c.id) || null;
+  }
+
+  function renderClipartToPngBlob(id) {
+    return new Promise(resolve => {
+      const c = document.createElement('canvas');
+      c.width = 128; c.height = 128;
+      drawClipart(c.getContext('2d'), id, 8, 8, 112, 112, 'rgba(255,255,255,1)');
+      c.toBlob(blob => resolve(blob), 'image/png');
+    });
+  }
+
+  // =========================================================================
+  // 2. RAINMETER INI DATA MODEL, PARSER & SERIALIZER
+  // =========================================================================
+  function parseColor(raw) {
+    if (!raw) return null;
+    const s = raw.trim();
+    if (s.includes(',')) {
+      const p = s.split(',').map(v => parseInt(v.trim(), 10));
+      if (p.length >= 3 && !p.slice(0,3).some(isNaN)) {
+        return [p[0], p[1], p[2], p.length >= 4 && !isNaN(p[3]) ? p[3] : 255];
+      }
+    } else {
+      const h = s.replace(/^#/, '');
+      if (/^[0-9a-f]{6}$/i.test(h)) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16), 255];
+      if (/^[0-9a-f]{8}$/i.test(h)) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16), parseInt(h.slice(6,8),16)];
+    }
+    return null;
+  }
+  const rgbaToCss = c => c ? `rgba(${c[0]},${c[1]},${c[2]},${(c[3]/255).toFixed(3)})` : 'rgba(255,255,255,1)';
+  const rgbaToRm = c => c[3] === 255 ? `${c[0]},${c[1]},${c[2]}` : `${c[0]},${c[1]},${c[2]},${c[3]}`;
+  const rgbaToHex = c => '#' + [c[0],c[1],c[2]].map(v => v.toString(16).padStart(2,'0')).join('');
+  const hexToRgba = (hex, alpha=255) => {
+    const h = hex.replace('#','');
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16), alpha];
+  };
+
+  function getEntry(sec, key) {
+    const low = key.toLowerCase();
+    const found = sec.entries.find(e => !e[0].startsWith(';') && e[0].toLowerCase() === low);
+    return found ? found[1] : undefined;
+  }
+  function setEntry(sec, key, val) {
+    const low = key.toLowerCase();
+    const found = sec.entries.find(e => !e[0].startsWith(';') && e[0].toLowerCase() === low);
+    if (found) found[1] = String(val);
+    else sec.entries.push([key, String(val)]);
+  }
+  function removeEntry(sec, key) {
+    const low = key.toLowerCase();
+    sec.entries = sec.entries.filter(e => e[0].startsWith(';') || e[0].toLowerCase() !== low);
+  }
+  function sectionKind(sec) {
+    const n = sec.name.toLowerCase();
+    if (n === 'rainmeter') return 'rainmeter';
+    if (n === 'metadata') return 'metadata';
+    if (n === 'variables') return 'variables';
+    if (getEntry(sec, 'Meter') !== undefined) return 'meter';
+    if (getEntry(sec, 'Measure') !== undefined) return 'measure';
+    return 'other';
+  }
+  function friendlyMeterType(raw='') {
+    return ({ string:'Text', image:'Icon / Picture', button:'Button', shape:'Box / Card', bar:'Progress Bar', roundline:'Circle Gauge' })[raw.toLowerCase()] || 'Element';
+  }
+  function friendlyMeasureType(raw='') {
+    return ({ time:'Clock / Date', cpu:'CPU Usage', physicalmemory:'Memory (RAM)', netin:'Download Speed', netout:'Upload Speed', calc:'Custom Math', plugin:'Live Web / Plugin' })[raw.toLowerCase()] || 'Data Source';
+  }
+
+  function decodeIniBuffer(buf) {
+    const u8 = new Uint8Array(buf);
+    if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder('utf-16le').decode(u8.subarray(2));
+    if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder('utf-16be').decode(u8.subarray(2));
+    if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder('utf-8').decode(u8.subarray(3));
+    return new TextDecoder('utf-8').decode(u8);
+  }
+
+  function encodeUtf16LeBom(str) {
+    const buf = new ArrayBuffer(2 + str.length * 2);
+    const view = new DataView(buf);
+    view.setUint8(0, 0xFF); view.setUint8(1, 0xFE);
+    for (let i = 0; i < str.length; i++) view.setUint16(2 + i * 2, str.charCodeAt(i), true);
+    return new Blob([buf], { type: 'text/plain' });
+  }
+
+  function parseIni(text) {
+    const sections = [];
+    let cur = null;
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      if (line.startsWith(';')) { if (cur) cur.entries.push([';', line]); continue; }
+      if (line.startsWith('[') && line.endsWith(']') && line.length > 2) {
+        if (cur) sections.push(cur);
+        cur = { name: line.slice(1, -1).trim(), entries: [] };
+        continue;
+      }
+      const eq = line.indexOf('=');
+      if (eq > 0) {
+        if (!cur) cur = { name: 'Rainmeter', entries: [] };
+        cur.entries.push([line.slice(0, eq).trim(), line.slice(eq + 1).trim()]);
+      }
+    }
+    if (cur) sections.push(cur);
+    const doc = { sections, fileName: 'MySkin.ini', packPath: null, dirty: false, includedVars: [] };
+    ensureCore(doc);
+    return doc;
+  }
+
+  function ensureCore(doc) {
+    const has = n => doc.sections.some(s => s.name.toLowerCase() === n.toLowerCase());
+    if (!has('Rainmeter')) doc.sections.unshift({ name: 'Rainmeter', entries: [['Update','1000'],['AccurateText','1'],['DynamicWindowSize','1']] });
+    if (!has('Metadata')) doc.sections.splice(1, 0, { name: 'Metadata', entries: [['Name','My Widget'],['Author','Senkront Studio'],['Version','1.0']] });
+    if (!has('Variables')) doc.sections.splice(2, 0, { name: 'Variables', entries: [] });
+  }
+
+  function serializeIni(doc) {
+    return doc.sections.map(s => {
+      const lines = [`[${s.name}]`];
+      for (const [k, v] of s.entries) lines.push(k.startsWith(';') ? v : `${k}=${v}`);
+      return lines.join('\r\n');
+    }).join('\r\n\r\n') + '\r\n';
+  }
+
+  function findSection(doc, name) {
+    return doc.sections.find(s => s.name.toLowerCase() === name.toLowerCase());
+  }
+
+  function resolveVars(doc, input) {
+    if (!input) return '';
+    let out = String(input).replace(/#CRLF#/gi, '\n');
+    const varsSec = findSection(doc, 'Variables');
+    const allVars = [...(varsSec ? varsSec.entries.filter(e => !e[0].startsWith(';')) : []), ...(doc.includedVars || [])];
+    for (let pass = 0; pass < 4; pass++) {
+      let changed = false;
+      for (const [k, v] of allVars) {
+        const re = new RegExp(`#${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}#`, 'gi');
+        if (re.test(out)) { out = out.replace(re, v); changed = true; }
+      }
+      if (!changed) break;
+    }
+    return out;
+  }
+
+  function evalMath(expr) {
+    const clean = String(expr || '').trim().replace(/^\(|\)$/g, '').trim();
+    if (!clean) return NaN;
+    if (/^-?\d+(\.\d+)?$/.test(clean)) return parseFloat(clean);
+    if (/^[0-9+\-*/().\s]+$/.test(clean)) {
+      try { const v = Function(`"use strict"; return (${clean})`)(); if (typeof v === 'number' && isFinite(v)) return v; } catch {}
+    }
+    return NaN;
+  }
+
+  function formatTime(fmt) {
+    const d = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const pad = n => String(n).padStart(2, '0');
+    const h24 = d.getHours(), h12 = h24 % 12 || 12;
+    return (fmt || '%H:%M:%S').replace(/^"|"$/g, '')
+      .replace(/%H/g, pad(h24)).replace(/%#H|%-H/g, String(h24))
+      .replace(/%I/g, pad(h12)).replace(/%#I|%-I/g, String(h12))
+      .replace(/%M/g, pad(d.getMinutes())).replace(/%#M|%-M/g, String(d.getMinutes()))
+      .replace(/%S/g, pad(d.getSeconds())).replace(/%#S|%-S/g, String(d.getSeconds()))
+      .replace(/%p/g, h24 >= 12 ? 'PM' : 'AM')
+      .replace(/%A/g, days[d.getDay()]).replace(/%a/g, days[d.getDay()].slice(0,3))
+      .replace(/%B/g, months[d.getMonth()]).replace(/%b/g, months[d.getMonth()].slice(0,3))
+      .replace(/%d/g, pad(d.getDate())).replace(/%#d|%-d/g, String(d.getDate()))
+      .replace(/%Y/g, String(d.getFullYear())).replace(/%y/g, String(d.getFullYear()).slice(-2));
+  }
+
+  // =========================================================================
+  // 3. STATE & TEMPLATES
+  // =========================================================================
+  const state = {
+    doc: null,
+    selectedIdx: null,
+    leftTab: 'elements',
+    zoom: 1.25,
+    panX: 0, panY: 0,
+    snap: true, gridSize: 4,
+    outlines: true, preview: false,
+    backdrop: 'midnight',
+    lockAspect: false,
+    sim: { live: true, cpu: 34, ram: 62, t: 0 },
+    appFonts: [],      // { name, fileName, blob, source: 'app'|'pack' }
+    imageCache: new Map(), // key -> { img, blob?, fileName? }
+    pack: null,        // { name, author, version, zip, files: Map<path, Uint8Array>, tree, activePath, modified: Set }
+    packSearch: '',
+    drag: null,
+    toastTimer: null,
+  };
+
+  function makeSec(name, pairs) { return { name, entries: pairs.map(([k,v]) => [k, String(v)]) }; }
+
+  const TEMPLATES = [
+    { id: 'timecal', label: 'Time & Calendar', build: () => ({
+      fileName: 'TimeCalendar.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','0,0,0,1']]),
+        makeSec('Metadata', [['Name','Time & Calendar'],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['FontName','Default'],['AccentColor','94,186,255,255'],['TextColor','245,248,255,255'],['MutedColor','162,176,204,220'],['CardBg','16,20,32,222']]),
+        makeSec('MeasureTime', [['Measure','Time'],['Format','%H:%M']]),
+        makeSec('MeasureSec', [['Measure','Time'],['Format',':%S']]),
+        makeSec('MeasureDayFull', [['Measure','Time'],['Format','%A, %#d']]),
+        makeSec('MeasureMonthYear', [['Measure','Time'],['Format','%B %Y']]),
+        makeSec('MeterCard', [['Meter','Shape'],['X',10],['Y',10],['W',350],['H',235],['Shape','Rectangle 0,0,350,235,20 | Fill Color #CardBg# | StrokeWidth 1.5 | Stroke Color 255,255,255,34']]),
+        makeSec('MeterTime', [['Meter','String'],['MeasureName','MeasureTime'],['X',32],['Y',22],['W',180],['H',60],['FontFace','#FontName#'],['FontSize',46],['FontWeight',600],['FontColor','#TextColor#'],['Text','%1']]),
+        makeSec('MeterSec', [['Meter','String'],['MeasureName','MeasureSec'],['X',188],['Y',44],['W',60],['H',28],['FontFace','#FontName#'],['FontSize',19],['FontColor','#AccentColor#'],['Text','%1']]),
+        makeSec('MeterDayFull', [['Meter','String'],['MeasureName','MeasureDayFull'],['X',34],['Y',88],['W',160],['H',22],['FontFace','#FontName#'],['FontSize',13],['FontColor','#AccentColor#'],['Text','%1']]),
+        makeSec('MeterMonthYear', [['Meter','String'],['MeasureName','MeasureMonthYear'],['X',336],['Y',88],['W',150],['H',22],['FontFace','#FontName#'],['FontSize',13],['FontColor','#MutedColor#'],['StringAlign','Right'],['Text','%1']]),
+        makeSec('MeterWeekHeader', [['Meter','String'],['X',34],['Y',126],['W',300],['H',22],['FontFace','Monospace'],['FontSize',11],['FontWeight',700],['FontColor','#MutedColor#'],['Text','MO   TU   WE   TH   FR   SA   SU']]),
+        makeSec('MeterCalRow1', [['Meter','String'],['X',34],['Y',152],['W',300],['H',22],['FontFace','Monospace'],['FontSize',11],['FontColor','#TextColor#'],['Text','02   03   04   05   06   07   08']]),
+        makeSec('MeterCalRow2', [['Meter','String'],['X',34],['Y',176],['W',300],['H',22],['FontFace','Monospace'],['FontSize',11],['FontColor','#TextColor#'],['Text','09   10   11   12   13   14   15']]),
+        makeSec('MeterCalRow3', [['Meter','String'],['X',34],['Y',200],['W',300],['H',22],['FontFace','Monospace'],['FontSize',11],['FontColor','#AccentColor#'],['Text','16   17   18   19   20   21  [22]']]),
+      ]
+    })},
+    { id: 'weather', label: 'Weather Widget', build: () => ({
+      fileName: 'WeatherWidget.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','0,0,0,1']]),
+        makeSec('Metadata', [['Name','Weather Widget'],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['City','Istanbul'],['FontName','Default'],['AccentColor','255,206,86,255'],['TextColor','248,250,255,255'],['MutedColor','178,192,216,220'],['CardBg','18,24,38,220']]),
+        makeSec('MeasureWeather', [['Measure','Plugin'],['Plugin','WebParser'],['URL','https://wttr.in/#City#?format=%t|%C|%h|%w'],['RegExp','(?siU)^([^|]+)\\|([^|]+)\\|([^|]+)\\|(.*)$'],['UpdateRate',900],['PreviewText','22°C']]),
+        makeSec('MeasureTemp', [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureWeather]'],['StringIndex',1],['PreviewText','22°C']]),
+        makeSec('MeasureCondition', [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureWeather]'],['StringIndex',2],['PreviewText','Partly Cloudy']]),
+        makeSec('MeasureHumidity', [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureWeather]'],['StringIndex',3],['PreviewText','54%']]),
+        makeSec('MeasureWind', [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureWeather]'],['StringIndex',4],['PreviewText','12 km/h']]),
+        makeSec('MeterBg', [['Meter','Shape'],['X',10],['Y',10],['W',330],['H',164],['Shape','Rectangle 0,0,330,164,20 | Fill Color #CardBg# | StrokeWidth 1.5 | Stroke Color 255,206,86,68']]),
+        makeSec('MeterSun', [['Meter','Image'],['ImageName','#@#Images\\clipart_sun.png'],['ImageTint','#AccentColor#'],['X',30],['Y',32],['W',64],['H',64]]),
+        makeSec('MeterTemp', [['Meter','String'],['MeasureName','MeasureTemp'],['X',112],['Y',24],['W',190],['H',52],['FontFace','#FontName#'],['FontSize',40],['FontWeight',600],['FontColor','#TextColor#'],['Text','%1']]),
+        makeSec('MeterCondition', [['Meter','String'],['MeasureName','MeasureCondition'],['X',114],['Y',78],['W',200],['H',24],['FontFace','#FontName#'],['FontSize',14],['FontColor','#AccentColor#'],['Text','%1']]),
+        makeSec('MeterDetails', [['Meter','String'],['MeasureName','MeasureHumidity'],['MeasureName2','MeasureWind'],['X',30],['Y',126],['W',290],['H',24],['FontFace','#FontName#'],['FontSize',11],['FontColor','#MutedColor#'],['Text','#City#  |  Humidity: %1  |  Wind: %2']]),
+      ]
+    })},
+    { id: 'gnews', label: 'Google News Feed', build: () => buildNewsTemplate('Google News Feed', 'GOOGLE NEWS', 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en', '94,186,255,255', [
+      'Global markets rally on fresh tech earnings',
+      'Breakthrough battery design doubles EV range',
+      'NASA shares crisp new deep-space telescope view',
+      'Open-source desktop tools see record adoption'
+    ])},
+    { id: 'rssnews', label: 'Any News Feed (Custom RSS)', build: () => buildNewsTemplate('Custom RSS News Feed', 'WORLD NEWS RSS', 'https://feeds.bbci.co.uk/news/world/rss.xml', '126,232,162,255', [
+      'Edit FeedUrl in Theme tab to use any RSS feed',
+      'Click any headline in Rainmeter to open the story',
+      'Supports BBC, TechCrunch, Hacker News, Reuters...',
+      'Click Refresh in the top-right to fetch latest items'
+    ])},
+    { id: 'clock', label: 'Glass Digital Clock', build: () => ({
+      fileName: 'GlassClock.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','0,0,0,1']]),
+        makeSec('Metadata', [['Name','Glass Digital Clock'],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['FontName','Default'],['AccentColor','94,186,255,255'],['TextColor','245,248,255,255'],['MutedColor','168,180,204,220'],['CardBg','20,24,36,215']]),
+        makeSec('MeasureTime', [['Measure','Time'],['Format','%H:%M']]),
+        makeSec('MeasureSeconds', [['Measure','Time'],['Format',':%S']]),
+        makeSec('MeasureDate', [['Measure','Time'],['Format','%A, %B %#d']]),
+        makeSec('MeterCard', [['Meter','Shape'],['X',10],['Y',10],['W',320],['H',140],['Shape','Rectangle 0,0,320,140,18 | Fill Color #CardBg# | StrokeWidth 1.5 | Stroke Color 255,255,255,36']]),
+        makeSec('MeterClockIcon', [['Meter','Image'],['ImageName','#@#Images\\clipart_clock.png'],['ImageTint','#AccentColor#'],['X',32],['Y',36],['W',38],['H',38]]),
+        makeSec('MeterTime', [['Meter','String'],['MeasureName','MeasureTime'],['X',84],['Y',24],['W',170],['H',62],['FontFace','#FontName#'],['FontSize',44],['FontWeight',600],['FontColor','#TextColor#'],['Text','%1']]),
+        makeSec('MeterSeconds', [['Meter','String'],['MeasureName','MeasureSeconds'],['X',236],['Y',46],['W',64],['H',32],['FontFace','#FontName#'],['FontSize',20],['FontColor','#AccentColor#'],['Text','%1']]),
+        makeSec('MeterDate', [['Meter','String'],['MeasureName','MeasureDate'],['X',34],['Y',102],['W',270],['H',28],['FontFace','#FontName#'],['FontSize',14],['FontColor','#MutedColor#'],['Text','%1']]),
+      ]
+    })},
+    { id: 'sysmon', label: 'System Monitor (CPU / RAM)', build: () => ({
+      fileName: 'SystemMonitor.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','0,0,0,1']]),
+        makeSec('Metadata', [['Name','System Monitor'],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['FontName','Default'],['CpuColor','94,186,255,255'],['RamColor','126,232,162,255'],['TextColor','240,245,255,255'],['CardBg','18,22,32,228']]),
+        makeSec('MeasureCPU', [['Measure','CPU']]),
+        makeSec('MeasureRAM', [['Measure','PhysicalMemory']]),
+        makeSec('MeterBg', [['Meter','Shape'],['X',10],['Y',10],['W',320],['H',190],['Shape','Rectangle 0,0,320,190,16 | Fill Color #CardBg# | StrokeWidth 1.5 | Stroke Color 255,255,255,30']]),
+        makeSec('MeterHeader', [['Meter','String'],['X',28],['Y',24],['W',200],['H',26],['FontFace','#FontName#'],['FontSize',12],['FontWeight',700],['FontColor','160,174,198,255'],['Text','SYSTEM TELEMETRY']]),
+        makeSec('MeterCpuIcon', [['Meter','Image'],['ImageName','#@#Images\\clipart_cpu.png'],['ImageTint','#CpuColor#'],['X',28],['Y',62],['W',28],['H',28]]),
+        makeSec('MeterCpuLabel', [['Meter','String'],['MeasureName','MeasureCPU'],['X',66],['Y',64],['W',240],['H',24],['FontFace','#FontName#'],['FontSize',15],['FontColor','#TextColor#'],['Text','CPU Load: %1%']]),
+        makeSec('MeterCpuBar', [['Meter','Bar'],['MeasureName','MeasureCPU'],['X',28],['Y',98],['W',282],['H',10],['BarColor','#CpuColor#'],['SolidColor','255,255,255,28'],['BarOrientation','Horizontal']]),
+        makeSec('MeterRamIcon', [['Meter','Image'],['ImageName','#@#Images\\clipart_memory.png'],['ImageTint','#RamColor#'],['X',28],['Y',126],['W',28],['H',28]]),
+        makeSec('MeterRamLabel', [['Meter','String'],['MeasureName','MeasureRAM'],['X',66],['Y',128],['W',240],['H',24],['FontFace','#FontName#'],['FontSize',15],['FontColor','#TextColor#'],['Percentual',1],['Text','Memory: %1%']]),
+        makeSec('MeterRamBar', [['Meter','Bar'],['MeasureName','MeasureRAM'],['X',28],['Y',162],['W',282],['H',10],['BarColor','#RamColor#'],['SolidColor','255,255,255,28'],['BarOrientation','Horizontal']]),
+      ]
+    })},
+    { id: 'blank', label: 'Blank Canvas', build: () => ({
+      fileName: 'BlankSkin.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','22,26,38,215']]),
+        makeSec('Metadata', [['Name','Untitled Widget'],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['FontName','Default'],['AccentColor','94,186,255,255'],['TextColor','245,248,255,255']]),
+      ]
+    })},
+  ];
+
+  function buildNewsTemplate(name, header, url, accent, previews) {
+    return {
+      fileName: name.replace(/\s+/g,'') + '.ini', packPath: null, dirty: false, includedVars: [],
+      sections: [
+        makeSec('Rainmeter', [['Update',1000],['AccurateText',1],['DynamicWindowSize',1],['BackgroundMode',2],['SolidColor','0,0,0,1']]),
+        makeSec('Metadata', [['Name',name],['Author','Senkront Studio'],['Version','1.0']]),
+        makeSec('Variables', [['FeedTitle',header],['FeedUrl',url],['FontName','Default'],['AccentColor',accent],['TextColor','242,246,255,255'],['MutedColor','165,178,204,220'],['CardBg','16,20,30,224']]),
+        makeSec('MeasureRSS', [['Measure','Plugin'],['Plugin','WebParser'],['URL','#FeedUrl#'],['UpdateRate',600],['RegExp','(?siU)<item>.*<title>(?:<!\\[CDATA\\[)?(.*)(?:\\]\\]>)?</title>.*<link>(.*)</link>.*<item>.*<title>(?:<!\\[CDATA\\[)?(.*)(?:\\]\\]>)?</title>.*<link>(.*)</link>.*<item>.*<title>(?:<!\\[CDATA\\[)?(.*)(?:\\]\\]>)?</title>.*<link>(.*)</link>.*<item>.*<title>(?:<!\\[CDATA\\[)?(.*)(?:\\]\\]>)?</title>.*<link>(.*)</link>'],['PreviewText',previews[0]]]),
+        ...[0,1,2,3].flatMap(i => [
+          makeSec(`MeasureTitle${i+1}`, [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureRSS]'],['StringIndex',i*2+1],['PreviewText',previews[i]]]),
+          makeSec(`MeasureLink${i+1}`, [['Measure','Plugin'],['Plugin','WebParser'],['URL','[MeasureRSS]'],['StringIndex',i*2+2],['PreviewText','https://news.google.com']]),
+        ]),
+        makeSec('MeterCard', [['Meter','Shape'],['X',10],['Y',10],['W',420],['H',220],['Shape','Rectangle 0,0,420,220,18 | Fill Color #CardBg# | StrokeWidth 1.5 | Stroke Color 255,255,255,34']]),
+        makeSec('MeterHeader', [['Meter','String'],['X',28],['Y',24],['W',280],['H',24],['FontFace','#FontName#'],['FontSize',12],['FontWeight',700],['FontColor','#AccentColor#'],['Text','#FeedTitle#']]),
+        makeSec('MeterRefreshBtn', [['Meter','String'],['X',408],['Y',24],['W',80],['H',22],['FontFace','#FontName#'],['FontSize',11],['FontColor','#MutedColor#'],['StringAlign','Right'],['Text','Refresh'],['LeftMouseUpAction','[!CommandMeasure MeasureRSS "Update"]']]),
+        ...[0,1,2,3].map(i => makeSec(`MeterItem${i+1}`, [['Meter','String'],['MeasureName',`MeasureTitle${i+1}`],['X',28],['Y',60+i*38],['W',384],['H',30],['FontFace','#FontName#'],['FontSize',12],['FontColor','#TextColor#'],['ClipString',1],['Text','•  %1'],['LeftMouseUpAction',`["[MeasureLink${i+1}]"]`]])),
+      ]
+    };
+  }
+
+  // =========================================================================
+  // 4. MEASURE EVALUATION & LAYOUT
+  // =========================================================================
+  function evalMeasure(doc, mName) {
+    const sec = findSection(doc, mName);
+    if (!sec) return { text: '', frac: 0 };
+    const t = (getEntry(sec, 'Measure') || '').toLowerCase();
+    const cpu = state.sim.live ? Math.min(99, Math.max(2, state.sim.cpu + Math.sin(state.sim.t * 1.1) * 12)) : state.sim.cpu;
+    const ram = state.sim.live ? Math.min(98, Math.max(5, state.sim.ram + Math.sin(state.sim.t * 0.4) * 3)) : state.sim.ram;
+    if (t === 'time') return { text: formatTime(resolveVars(doc, getEntry(sec, 'Format') || '%H:%M:%S')), frac: new Date().getSeconds() / 60 };
+    if (t === 'cpu') return { text: String(Math.round(cpu)), frac: cpu / 100 };
+    if (t === 'physicalmemory' || t === 'memory') return { text: String(Math.round(ram)), frac: ram / 100 };
+    if (t === 'netin') return { text: '1.4 MB/s', frac: 0.35 };
+    if (t === 'netout') return { text: '310 KB/s', frac: 0.18 };
+    if (t === 'calc') { const v = evalMath(resolveVars(doc, getEntry(sec, 'Formula') || '50')) || 50; return { text: String(Math.round(v)), frac: Math.min(1, Math.max(0, v / 100)) }; }
+    if (t === 'plugin') {
+      const prev = getEntry(sec, 'PreviewText');
+      if (prev) return { text: resolveVars(doc, prev), frac: 0.65 };
+      if ((getEntry(sec, 'Plugin') || '').toLowerCase().includes('power')) return { text: '86', frac: 0.86 };
+    }
+    return { text: sec.name, frac: 0.6 };
+  }
+
+  function resolveMeterText(doc, sec) {
+    let text = resolveVars(doc, getEntry(sec, 'Text') || '');
+    const m1 = getEntry(sec, 'MeasureName');
+    if (!text && m1) return evalMeasure(doc, resolveVars(doc, m1)).text;
+    if (m1) text = text.replace(/%1/g, evalMeasure(doc, resolveVars(doc, m1)).text);
+    for (let n = 2; n <= 5; n++) {
+      const mn = getEntry(sec, `MeasureName${n}`);
+      if (mn) text = text.replace(new RegExp(`%${n}`, 'g'), evalMeasure(doc, resolveVars(doc, mn)).text);
+    }
+    return text;
+  }
+
+  function parseCoord(raw, prevMin, prevMax) {
+    if (!raw) return 0;
+    const s = raw.trim();
+    if (s.endsWith('r')) return prevMin + (evalMath(s.slice(0, -1)) || 0);
+    if (s.endsWith('R')) return prevMax + (evalMath(s.slice(0, -1)) || 0);
+    return evalMath(s) || 0;
+  }
+
+  function computeMeterRects(doc) {
+    const out = [];
+    let prev = { x: 0, y: 0, w: 0, h: 0 };
+    doc.sections.forEach((sec, idx) => {
+      if (sectionKind(sec) !== 'meter') return;
+      const x = parseCoord(resolveVars(doc, getEntry(sec, 'X')), prev.x, prev.x + prev.w);
+      const y = parseCoord(resolveVars(doc, getEntry(sec, 'Y')), prev.y, prev.y + prev.h);
+      const mt = (getEntry(sec, 'Meter') || '').toLowerCase();
+      const fs = evalMath(resolveVars(doc, getEntry(sec, 'FontSize'))) || 16;
+      const defW = mt === 'string' ? Math.min(340, Math.max(70, (getEntry(sec,'Text')||'Label').length * fs * 0.62))
+        : mt === 'bar' ? 180 : mt === 'shape' ? 260 : mt === 'roundline' ? 96 : 56;
+      const defH = mt === 'string' ? Math.max(24, fs * 1.5) : mt === 'bar' ? 12 : mt === 'shape' ? 140 : mt === 'roundline' ? 96 : 56;
+      const w = evalMath(resolveVars(doc, getEntry(sec, 'W'))) || defW;
+      const h = evalMath(resolveVars(doc, getEntry(sec, 'H'))) || defH;
+      const rect = { idx, x, y, w, h };
+      out.push(rect);
+      prev = rect;
+    });
+    return out;
+  }
+
+  function computeCanvasSize(doc, rects) {
+    let maxX = 0, maxY = 0;
+    for (const r of rects) { maxX = Math.max(maxX, r.x + r.w + 10); maxY = Math.max(maxY, r.y + r.h + 10); }
+    return { w: Math.max(80, maxX || 280), h: Math.max(60, maxY || 140) };
+  }
+
+  function syncShapeDims(sec, w, h) {
+    const s = getEntry(sec, 'Shape');
+    if (!s) return;
+    const parts = s.split('|');
+    const m = parts[0].trim().match(/^rectangle\s+([^,]+),([^,]+),([^,]+),([^,]+)(?:,([^,]+))?$/i);
+    if (m) {
+      parts[0] = `Rectangle ${m[1].trim()},${m[2].trim()},${Math.round(w)},${Math.round(h)}${m[5] ? ',' + m[5].trim() : ''} `;
+      setEntry(sec, 'Shape', parts.join('|'));
+    }
+  }
+
+  function scaleDocumentAxes(doc, sx, sy, sf) {
+    const scaleKey = (sec, key, factor, minV) => {
+      const raw = getEntry(sec, key);
+      if (raw === undefined) return;
+      const v = evalMath(resolveVars(doc, raw));
+      if (!isNaN(v)) setEntry(sec, key, Math.round(Math.max(minV, v * factor)));
+    };
+    for (const sec of doc.sections) {
+      if (sectionKind(sec) !== 'meter') continue;
+      scaleKey(sec, 'X', sx, 0); scaleKey(sec, 'Y', sy, 0);
+      scaleKey(sec, 'W', sx, 8); scaleKey(sec, 'H', sy, 4);
+      scaleKey(sec, 'FontSize', sf, 8);
+      scaleKey(sec, 'LineStart', sf, 4); scaleKey(sec, 'LineLength', sf, 8);
+      const w = parseFloat(getEntry(sec, 'W')), h = parseFloat(getEntry(sec, 'H'));
+      if (w && h) syncShapeDims(sec, w, h);
+    }
+    doc.dirty = true;
+  }
+
+  // =========================================================================
+  // 5. CANVAS RENDERING & INTERACTION
+  // =========================================================================
+  const canvas = document.getElementById('skinCanvas');
+  const ctx2d = canvas.getContext('2d');
+
+  function getSkinTransform(rects) {
+    const dpr = window.devicePixelRatio || 1;
+    const cw = canvas.width / dpr, ch = canvas.height / dpr;
+    const sz = computeCanvasSize(state.doc, rects);
+    const ox = cw / 2 - (sz.w * state.zoom) / 2 + state.panX;
+    const oy = ch / 2 - (sz.h * state.zoom) / 2 + state.panY;
+    return { ox, oy, sz, cw, ch };
+  }
+
+  function paintBackdrop(cw, ch) {
+    if (state.backdrop === 'midnight') {
+      ctx2d.fillStyle = '#0f121a'; ctx2d.fillRect(0, 0, cw, ch);
+      ctx2d.strokeStyle = 'rgba(120,145,190,0.08)'; ctx2d.lineWidth = 1;
+      ctx2d.beginPath();
+      for (let x = 0; x < cw; x += 28) { ctx2d.moveTo(x, 0); ctx2d.lineTo(x, ch); }
+      for (let y = 0; y < ch; y += 28) { ctx2d.moveTo(0, y); ctx2d.lineTo(cw, y); }
+      ctx2d.stroke();
+    } else if (state.backdrop === 'aurora') {
+      ctx2d.fillStyle = '#0d1322'; ctx2d.fillRect(0, 0, cw, ch);
+      const g1 = ctx2d.createRadialGradient(cw*0.25, ch*0.3, 10, cw*0.25, ch*0.3, cw*0.4);
+      g1.addColorStop(0, 'rgba(45,115,240,0.28)'); g1.addColorStop(1, 'transparent');
+      ctx2d.fillStyle = g1; ctx2d.fillRect(0, 0, cw, ch);
+      const g2 = ctx2d.createRadialGradient(cw*0.78, ch*0.72, 10, cw*0.78, ch*0.72, cw*0.35);
+      g2.addColorStop(0, 'rgba(175,65,205,0.22)'); g2.addColorStop(1, 'transparent');
+      ctx2d.fillStyle = g2; ctx2d.fillRect(0, 0, cw, ch);
+    } else if (state.backdrop === 'light') {
+      ctx2d.fillStyle = '#e4eaf4'; ctx2d.fillRect(0, 0, cw, ch);
+    } else {
+      ctx2d.fillStyle = '#262a32'; ctx2d.fillRect(0, 0, cw, ch);
+      ctx2d.fillStyle = '#313641';
+      for (let y = 0; y < ch; y += 20) for (let x = 0; x < cw; x += 20) if (((x/20)+(y/20))%2===0) ctx2d.fillRect(x,y,20,20);
+    }
+  }
+
+  function roundRectPath(x, y, w, h, r) {
+    const rad = Math.min(r, w/2, h/2);
+    ctx2d.beginPath();
+    ctx2d.moveTo(x + rad, y);
+    ctx2d.arcTo(x + w, y, x + w, y + h, rad);
+    ctx2d.arcTo(x + w, y + h, x, y + h, rad);
+    ctx2d.arcTo(x, y + h, x, y, rad);
+    ctx2d.arcTo(x, y, x + w, y, rad);
+    ctx2d.closePath();
+  }
+
+  function resolveCachedImage(doc, rawName) {
+    const clean = (rawName || '').trim().replace(/^"|"$/g, '').replace(/\\/g, '/').toLowerCase();
+    if (!clean) return null;
+    if (state.imageCache.has(clean)) return state.imageCache.get(clean).img;
+    const base = clean.split('/').pop();
+    for (const [k, v] of state.imageCache.entries()) {
+      if (k.endsWith('/' + base) || k === base) return v.img;
+    }
+    return null;
+  }
+
+  function render() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+    }
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const rects = computeMeterRects(state.doc);
+    const { ox, oy, sz, cw, ch } = getSkinTransform(rects);
+    paintBackdrop(cw, ch);
+
+    const z = state.zoom;
+    const sx = ox, sy = oy, sw = sz.w * z, sh = sz.h * z;
+
+    // Skin SolidColor backdrop if visible
+    const rm = findSection(state.doc, 'Rainmeter');
+    if (rm && (getEntry(rm, 'BackgroundMode') || '0') === '2') {
+      const bg = parseColor(resolveVars(state.doc, getEntry(rm, 'SolidColor') || ''));
+      if (bg && bg[3] > 2) {
+        roundRectPath(sx, sy, sw, sh, 10);
+        ctx2d.fillStyle = rgbaToCss(bg); ctx2d.fill();
+      }
+    }
+
+    // Whole-widget resize frame when nothing selected
+    if (!state.preview && state.outlines && state.selectedIdx === null) {
+      roundRectPath(sx, sy, sw, sh, 12);
+      ctx2d.strokeStyle = 'rgba(110,186,255,0.55)'; ctx2d.lineWidth = 1.2; ctx2d.stroke();
+      ctx2d.fillStyle = '#6ebaff'; ctx2d.fillRect(sx + sw - 6, sy + sh - 6, 12, 12);
+      ctx2d.strokeStyle = '#10141c'; ctx2d.strokeRect(sx + sw - 6, sy + sh - 6, 12, 12);
+    }
+
+    // Paint meters
+    for (const r of rects) {
+      const sec = state.doc.sections[r.idx];
+      if ((getEntry(sec, 'Hidden') || '0') === '1') continue;
+      const mx = ox + r.x * z, my = oy + r.y * z, mw = r.w * z, mh = r.h * z;
+      const mt = (getEntry(sec, 'Meter') || '').toLowerCase();
+
+      if (mt !== 'shape') {
+        const bg = parseColor(resolveVars(state.doc, getEntry(sec, 'SolidColor') || ''));
+        if (bg) { roundRectPath(mx, my, mw, mh, 4); ctx2d.fillStyle = rgbaToCss(bg); ctx2d.fill(); }
+      }
+
+      if (mt === 'shape') {
+        const shapeDef = resolveVars(state.doc, getEntry(sec, 'Shape') || '');
+        let fill = [24,28,40,210], stroke = [255,255,255,34], strokeW = 1.5, rad = 16;
+        shapeDef.split('|').forEach((part, pi) => {
+          const p = part.trim(), low = p.toLowerCase();
+          if (pi === 0 && low.startsWith('rectangle')) {
+            const nums = p.slice(9).split(','); if (nums[4]) rad = parseFloat(nums[4]) || 0;
+          } else if (low.startsWith('fill color')) {
+            fill = parseColor(resolveVars(state.doc, p.slice(10).trim())) || fill;
+          } else if (low.startsWith('stroke color')) {
+            stroke = parseColor(resolveVars(state.doc, p.slice(12).trim())) || stroke;
+          } else if (low.startsWith('strokewidth')) {
+            strokeW = parseFloat(p.slice(11)) || 0;
+          }
+        });
+        roundRectPath(mx, my, mw, mh, rad * z);
+        ctx2d.fillStyle = rgbaToCss(fill); ctx2d.fill();
+        if (strokeW > 0 && stroke[3] > 0) {
+          ctx2d.strokeStyle = rgbaToCss(stroke); ctx2d.lineWidth = strokeW * z; ctx2d.stroke();
+        }
+      } else if (mt === 'string') {
+        const text = resolveMeterText(state.doc, sec);
+        const face = resolveVars(state.doc, getEntry(sec, 'FontFace') || 'Default');
+        const fontFamily = face.toLowerCase() === 'monospace' ? 'Consolas, monospace'
+          : face.toLowerCase() === 'default' ? "'Segoe UI', system-ui, sans-serif" : `'${face}', 'Segoe UI', sans-serif`;
+        const fs = (evalMath(resolveVars(state.doc, getEntry(sec, 'FontSize'))) || 16) * z;
+        const fw = getEntry(sec, 'FontWeight') || '400';
+        const col = parseColor(resolveVars(state.doc, getEntry(sec, 'FontColor') || '')) || [255,255,255,255];
+        const align = (getEntry(sec, 'StringAlign') || 'left').toLowerCase();
+        ctx2d.save();
+        ctx2d.font = `${fw} ${fs}px ${fontFamily}`;
+        ctx2d.fillStyle = rgbaToCss(col);
+        ctx2d.textBaseline = align.includes('center') && align !== 'center' ? 'middle' : 'top';
+        ctx2d.textAlign = align.startsWith('right') ? 'right' : align.startsWith('center') ? 'center' : 'left';
+        const tx = ctx2d.textAlign === 'right' ? mx + mw : ctx2d.textAlign === 'center' ? mx + mw / 2 : mx;
+        const ty = ctx2d.textBaseline === 'middle' ? my + mh / 2 : my;
+        if ((getEntry(sec, 'StringEffect') || '').toLowerCase() === 'shadow') {
+          ctx2d.shadowColor = 'rgba(0,0,0,0.65)'; ctx2d.shadowOffsetX = 1.5*z; ctx2d.shadowOffsetY = 1.5*z; ctx2d.shadowBlur = 2*z;
+        }
+        ctx2d.fillText(text, tx, ty, mw + 40);
+        ctx2d.restore();
+      } else if (mt === 'image' || mt === 'button') {
+        const rawImg = resolveVars(state.doc, (mt === 'button' ? getEntry(sec, 'ButtonImage') : null) || getEntry(sec, 'ImageName') || '');
+        const alpha = (parseInt(getEntry(sec, 'ImageAlpha') || '255', 10) || 255) / 255;
+        const tint = parseColor(resolveVars(state.doc, getEntry(sec, 'ImageTint') || '')) || [255,255,255,255];
+        const finalCol = [tint[0], tint[1], tint[2], Math.round(tint[3] * alpha)];
+        const clip = clipartFromName(rawImg);
+        if (clip) {
+          drawClipart(ctx2d, clip.id, mx, my, mw, mh, rgbaToCss(finalCol));
+        } else {
+          const img = resolveCachedImage(state.doc, rawImg);
+          if (img && img.complete && img.naturalWidth > 0) {
+            ctx2d.save(); ctx2d.globalAlpha = alpha;
+            if (mt === 'button' && img.naturalWidth >= img.naturalHeight * 2) {
+              ctx2d.drawImage(img, 0, 0, img.naturalWidth / 3, img.naturalHeight, mx, my, mw, mh);
+            } else {
+              ctx2d.drawImage(img, mx, my, mw, mh);
+            }
+            ctx2d.restore();
+          } else {
+            ctx2d.strokeStyle = 'rgba(180,195,220,0.45)'; ctx2d.strokeRect(mx, my, mw, mh);
+            ctx2d.fillStyle = 'rgba(180,195,220,0.7)'; ctx2d.font = `${11*z}px sans-serif`;
+            ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'middle';
+            ctx2d.fillText('IMG', mx + mw/2, my + mh/2);
+          }
+        }
+      } else if (mt === 'bar') {
+        const m = getEntry(sec, 'MeasureName');
+        const frac = m ? evalMeasure(state.doc, resolveVars(state.doc, m)).frac : 0.65;
+        const col = parseColor(resolveVars(state.doc, getEntry(sec, 'BarColor') || '')) || [94,186,255,255];
+        const vert = (getEntry(sec, 'BarOrientation') || '').toLowerCase() === 'vertical';
+        ctx2d.fillStyle = rgbaToCss(col);
+        if (vert) roundRectPath(mx, my + mh * (1 - frac), mw, mh * frac, 4);
+        else roundRectPath(mx, my, mw * frac, mh, Math.min(mw, mh) * 0.45);
+        ctx2d.fill();
+      } else if (mt === 'roundline') {
+        const m = getEntry(sec, 'MeasureName');
+        const frac = m ? evalMeasure(state.doc, resolveVars(state.doc, m)).frac : 0.72;
+        const sa = evalMath(resolveVars(state.doc, getEntry(sec, 'StartAngle'))) || 4.712;
+        const ra = evalMath(resolveVars(state.doc, getEntry(sec, 'RotationAngle'))) || Math.PI * 2;
+        const ls = (evalMath(resolveVars(state.doc, getEntry(sec, 'LineStart'))) || 30) * z;
+        const ll = (evalMath(resolveVars(state.doc, getEntry(sec, 'LineLength'))) || 42) * z;
+        const col = parseColor(resolveVars(state.doc, getEntry(sec, 'LineColor') || '')) || [94,186,255,255];
+        const rad = Math.min((ls + ll) / 2, Math.min(mw, mh) * 0.48);
+        const thick = Math.max(4 * z, Math.abs(ll - ls));
+        ctx2d.save();
+        ctx2d.lineWidth = thick; ctx2d.lineCap = 'round';
+        ctx2d.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx2d.beginPath(); ctx2d.arc(mx + mw/2, my + mh/2, rad, 0, Math.PI * 2); ctx2d.stroke();
+        ctx2d.strokeStyle = rgbaToCss(col);
+        ctx2d.beginPath(); ctx2d.arc(mx + mw/2, my + mh/2, rad, sa, sa + ra * Math.max(0.02, frac)); ctx2d.stroke();
+        ctx2d.restore();
+      }
+
+      if (!state.preview && state.outlines && state.selectedIdx !== r.idx) {
+        ctx2d.strokeStyle = 'rgba(255,255,255,0.1)'; ctx2d.lineWidth = 1;
+        ctx2d.strokeRect(mx, my, mw, mh);
+      }
+    }
+
+    // Selected meter highlight & resize handle
+    if (!state.preview && state.selectedIdx !== null) {
+      const sel = rects.find(r => r.idx === state.selectedIdx);
+      if (sel) {
+        const mx = ox + sel.x * z, my = oy + sel.y * z, mw = sel.w * z, mh = sel.h * z;
+        ctx2d.strokeStyle = '#5ebaff'; ctx2d.lineWidth = 1.8; ctx2d.strokeRect(mx, my, mw, mh);
+        ctx2d.fillStyle = '#5ebaff'; ctx2d.fillRect(mx + mw - 5, my + mh - 5, 10, 10);
+        const badge = `${state.doc.sections[sel.idx].name} (${Math.round(sel.x)}, ${Math.round(sel.y)}) ${Math.round(sel.w)}×${Math.round(sel.h)}`;
+        ctx2d.font = '11px Segoe UI, sans-serif';
+        const bw = ctx2d.measureText(badge).width + 12;
+        const by = Math.max(4, my - 22);
+        roundRectPath(mx, by, bw, 18, 4);
+        ctx2d.fillStyle = 'rgba(16,22,36,0.9)'; ctx2d.fill();
+        ctx2d.fillStyle = '#e8f2ff'; ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'middle';
+        ctx2d.fillText(badge, mx + 6, by + 9);
+      }
+    }
+  }
+
+  // Canvas pointer events
+  canvas.addEventListener('pointerdown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const rects = computeMeterRects(state.doc);
+    const { ox, oy, sz } = getSkinTransform(rects);
+    const z = state.zoom;
+
+    if (e.button === 1 || e.altKey) {
+      state.drag = { type: 'pan', sx: px, sy: py, ox: state.panX, oy: state.panY };
+      canvas.setPointerCapture(e.pointerId); return;
+    }
+    if (state.preview) return;
+
+    // Selected meter resize handle
+    if (state.selectedIdx !== null) {
+      const sel = rects.find(r => r.idx === state.selectedIdx);
+      if (sel) {
+        const hx = ox + (sel.x + sel.w) * z, hy = oy + (sel.y + sel.h) * z;
+        if (Math.abs(px - hx) <= 10 && Math.abs(py - hy) <= 10) {
+          state.drag = { type: 'resize', idx: sel.idx, sx: px, sy: py, ow: sel.w, oh: sel.h };
+          canvas.setPointerCapture(e.pointerId); return;
+        }
+      }
+    }
+    // Whole-widget resize handle
+    if (state.selectedIdx === null && state.outlines) {
+      const hx = ox + sz.w * z, hy = oy + sz.h * z;
+      if (Math.abs(px - hx) <= 12 && Math.abs(py - hy) <= 12) {
+        state.drag = { type: 'resizeAll', sx: px, sy: py, ow: sz.w, oh: sz.h, snapSections: JSON.parse(JSON.stringify(state.doc.sections)) };
+        canvas.setPointerCapture(e.pointerId); return;
+      }
+    }
+    // Hit test meters (topmost first)
+    for (let i = rects.length - 1; i >= 0; i--) {
+      const r = rects[i];
+      if ((getEntry(state.doc.sections[r.idx], 'Hidden') || '0') === '1') continue;
+      const mx = ox + r.x * z, my = oy + r.y * z, mw = r.w * z, mh = r.h * z;
+      if (px >= mx && px <= mx + mw && py >= my && py <= my + mh) {
+        state.selectedIdx = r.idx;
+        state.drag = { type: 'move', idx: r.idx, sx: px, sy: py, ox: r.x, oy: r.y };
+        canvas.setPointerCapture(e.pointerId);
+        renderUI(); return;
+      }
+    }
+    state.selectedIdx = null;
+    state.drag = { type: 'pan', sx: px, sy: py, ox: state.panX, oy: state.panY };
+    canvas.setPointerCapture(e.pointerId);
+    renderUI();
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!state.drag) return;
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const dx = (px - state.drag.sx) / state.zoom, dy = (py - state.drag.sy) / state.zoom;
+    const snapV = v => state.snap ? Math.round(v / state.gridSize) * state.gridSize : Math.round(v);
+    if (state.drag.type === 'pan') {
+      state.panX = state.drag.ox + (px - state.drag.sx);
+      state.panY = state.drag.oy + (py - state.drag.sy);
+    } else if (state.drag.type === 'move') {
+      const sec = state.doc.sections[state.drag.idx];
+      setEntry(sec, 'X', Math.max(0, snapV(state.drag.ox + dx)));
+      setEntry(sec, 'Y', Math.max(0, snapV(state.drag.oy + dy)));
+      state.doc.dirty = true;
+    } else if (state.drag.type === 'resize') {
+      const sec = state.doc.sections[state.drag.idx];
+      const nw = Math.max(12, snapV(state.drag.ow + dx)), nh = Math.max(8, snapV(state.drag.oh + dy));
+      setEntry(sec, 'W', nw); setEntry(sec, 'H', nh); syncShapeDims(sec, nw, nh);
+      state.doc.dirty = true;
+    } else if (state.drag.type === 'resizeAll') {
+      const sx = Math.min(3, Math.max(0.4, (state.drag.ow + dx) / state.drag.ow));
+      const sy = Math.min(3, Math.max(0.4, (state.drag.oh + dy) / state.drag.oh));
+      state.doc.sections = JSON.parse(JSON.stringify(state.drag.snapSections));
+      scaleDocumentAxes(state.doc, sx, sy, (sx + sy) / 2);
+    }
+    syncCodeDrawer();
+  });
+
+  canvas.addEventListener('pointerup', () => {
+    if (state.drag) { state.drag = null; renderUI(); }
+  });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    state.zoom = Math.min(3.5, Math.max(0.4, state.zoom * (e.deltaY < 0 ? 1.1 : 0.91)));
+    document.getElementById('lblZoom').textContent = Math.round(state.zoom * 100) + '%';
+  }, { passive: false });
+
+  // =========================================================================
+  // 6. SIDEBAR & INSPECTOR UI
+  // =========================================================================
+  function setToast(msg) {
+    document.getElementById('lblToast').textContent = msg;
+  }
+
+  function uniqueName(base) {
+    if (!findSection(state.doc, base)) return base;
+    let n = 2; while (findSection(state.doc, `${base}${n}`)) n++;
+    return `${base}${n}`;
+  }
+
+  function renderLeftPanel() {
+    const body = document.getElementById('leftBody');
+    body.innerHTML = '';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === state.leftTab));
+
+    if (state.leftTab === 'pack') {
+      const top = el('div', 'row');
+      top.append(btn('Import .rmskin', 'primary', () => document.getElementById('fileRmskin').click()));
+      if (state.pack) top.append(btn('Export Edited .rmskin', 'green', exportPackRmskin));
+      body.append(top);
+      if (!state.pack) {
+        body.append(el('p', 'muted', 'Import any .rmskin pack to browse every widget inside as a collapsible folder tree and edit any .ini live in your browser.'));
+        return;
+      }
+      body.append(el('div', '', `<strong style="color:#8fd0ff;font-size:14px">${esc(state.pack.name)}</strong><div class="muted">${state.pack.totalInis} widgets${state.pack.author ? ' • by ' + esc(state.pack.author) : ''}</div>`));
+      const search = document.createElement('input');
+      search.type = 'text'; search.placeholder = 'Search widgets in pack...'; search.value = state.packSearch;
+      search.oninput = () => { state.packSearch = search.value; renderLeftPanel(); };
+      body.append(search);
+      const treeWrap = el('div', '');
+      renderPackNodes(treeWrap, state.pack.tree, state.packSearch.toLowerCase());
+      body.append(treeWrap);
+    } else if (state.leftTab === 'elements') {
+      body.append(el('div', 'muted', 'Add to Widget'));
+      const addRow = el('div', 'row');
+      addRow.append(
+        btn('+ Text', 'small', () => addMeter(makeSec(uniqueName('TextLabel'), [['Meter','String'],['X',30],['Y',30],['W',180],['H',34],['FontFace','Default'],['FontSize',18],['FontColor','245,248,255,255'],['Text','New Label']]))),
+        btn('+ Box / Card', 'small', () => addMeter(makeSec(uniqueName('CardBox'), [['Meter','Shape'],['X',16],['Y',16],['W',240],['H',120],['Shape','Rectangle 0,0,240,120,16 | Fill Color 20,25,38,215 | StrokeWidth 1.5 | Stroke Color 255,255,255,36']]))),
+        btn('+ Progress Bar', 'small', () => addMeter(makeSec(uniqueName('ProgressBar'), [['Meter','Bar'],['X',30],['Y',90],['W',200],['H',12],['BarColor','94,186,255,255'],['SolidColor','255,255,255,28'],['BarOrientation','Horizontal']]))),
+        btn('+ Circle Gauge', 'small', () => addMeter(makeSec(uniqueName('CircleGauge'), [['Meter','Roundline'],['X',40],['Y',40],['W',96],['H',96],['StartAngle',4.712],['RotationAngle',6.283],['LineStart',34],['LineLength',44],['LineColor','94,186,255,255'],['Solid',1]]))),
+        btn('+ Picture', 'small', () => { state._pendingImgTarget = 'new'; document.getElementById('fileImage').click(); })
+      );
+      body.append(addRow);
+
+      const head = el('div', 'row-between');
+      head.append(el('strong', '', 'Widget Layers'), btn('Widget Size & Info', 'small', () => { state.selectedIdx = null; renderUI(); }));
+      body.append(head);
+
+      const meters = state.doc.sections.map((s, i) => ({ s, i })).filter(x => sectionKind(x.s) === 'meter');
+      meters.forEach((m, pos) => {
+        const item = el('div', 'layer-item' + (state.selectedIdx === m.i ? ' selected' : ''));
+        const hidden = (getEntry(m.s, 'Hidden') || '0') === '1';
+        const eye = btn(hidden ? '○' : '●', 'small', e => { e.stopPropagation(); setEntry(m.s, 'Hidden', hidden ? '0' : '1'); renderUI(); });
+        const name = el('span', 'layer-name', `${esc(m.s.name)} <span class="muted">(${friendlyMeterType(getEntry(m.s,'Meter'))})</span>`);
+        item.append(eye, name);
+        if (pos > 0) item.append(btn('↑', 'small', e => { e.stopPropagation(); swapSections(m.i, meters[pos-1].i); }));
+        if (pos + 1 < meters.length) item.append(btn('↓', 'small', e => { e.stopPropagation(); swapSections(m.i, meters[pos+1].i); }));
+        item.onclick = () => { state.selectedIdx = m.i; renderUI(); };
+        body.append(item);
+      });
+    } else if (state.leftTab === 'icons') {
+      body.append(el('div', 'muted', 'Click any icon to add it to your widget, or upload your own picture.'));
+      body.append(btn('Upload PNG / JPG / ICO...', 'primary', () => { state._pendingImgTarget = 'new'; document.getElementById('fileImage').click(); }));
+      for (const cat of ['Weather', 'System', 'Media & UI']) {
+        body.append(el('strong', '', cat));
+        const grid = el('div', 'icon-grid');
+        CLIPART.filter(c => c.cat === cat).forEach(c => {
+          const tile = el('div', 'icon-tile'); tile.title = c.label;
+          const ic = document.createElement('canvas'); ic.width = 40; ic.height = 40;
+          drawClipart(ic.getContext('2d'), c.id, 4, 4, 32, 32, rgbaToCss(c.color));
+          tile.append(ic);
+          tile.onclick = () => {
+            addMeter(makeSec(uniqueName('Icon' + c.label.replace(/\s+/g,'')), [
+              ['Meter','Image'],['ImageName',`#@#Images\\clipart_${c.id}.png`],['ImageTint',rgbaToRm(c.color)],['X',36],['Y',36],['W',48],['H',48]
+            ]));
+            setToast(`Added ${c.label} icon`);
+          };
+          grid.append(tile);
+        });
+        body.append(grid);
+      }
+    } else if (state.leftTab === 'data') {
+      body.append(el('div', 'muted', 'Add Live Data Source'));
+      const row = el('div', 'row');
+      row.append(
+        btn('+ Clock', 'small', () => addMeasure('ClockData', 'Time', [['Format','%H:%M:%S']])),
+        btn('+ CPU', 'small', () => addMeasure('CpuUsage', 'CPU', [])),
+        btn('+ Memory', 'small', () => addMeasure('MemoryUsage', 'PhysicalMemory', [])),
+        btn('+ Download', 'small', () => addMeasure('NetDown', 'NetIn', [])),
+        btn('+ Upload', 'small', () => addMeasure('NetUp', 'NetOut', []))
+      );
+      body.append(row);
+      state.doc.sections.forEach((s, i) => {
+        if (sectionKind(s) !== 'measure') return;
+        const item = el('div', 'layer-item' + (state.selectedIdx === i ? ' selected' : ''));
+        const val = evalMeasure(state.doc, s.name).text;
+        item.innerHTML = `<span class="layer-name">${esc(s.name)} <span class="muted">(${friendlyMeasureType(getEntry(s,'Measure'))})</span> → ${esc(val)}</span>`;
+        item.onclick = () => { state.selectedIdx = i; renderUI(); };
+        body.append(item);
+      });
+    } else if (state.leftTab === 'theme') {
+      body.append(el('div', 'muted', 'Shared theme colors, city, RSS feed URLs, and reusable values.'));
+      const vars = findSection(state.doc, 'Variables');
+      if (vars) {
+        vars.entries.forEach((e, idx) => {
+          if (e[0].startsWith(';')) return;
+          const r = el('div', 'row');
+          r.append(el('strong', '', esc(e[0])));
+          const col = parseColor(e[1]);
+          if (col) {
+            const cp = document.createElement('input'); cp.type = 'color'; cp.value = rgbaToHex(col);
+            cp.oninput = () => { e[1] = rgbaToRm(hexToRgba(cp.value, col[3])); syncCodeDrawer(); };
+            r.append(cp);
+          }
+          const inp = document.createElement('input'); inp.type = 'text'; inp.value = e[1]; inp.style.flex = '1'; inp.style.minWidth = '80px';
+          inp.oninput = () => { e[1] = inp.value; syncCodeDrawer(); };
+          r.append(inp, btn('×', 'small danger', () => { vars.entries.splice(idx, 1); renderUI(); }));
+          body.append(r);
+        });
+        const addR = el('div', 'row');
+        const kIn = document.createElement('input'); kIn.type='text'; kIn.placeholder='Name'; kIn.style.width='85px';
+        const vIn = document.createElement('input'); vIn.type='text'; vIn.placeholder='Value'; vIn.style.flex='1';
+        addR.append(kIn, vIn, btn('+ Add', 'small', () => {
+          if (kIn.value.trim()) { setEntry(vars, kIn.value.trim(), vIn.value.trim()); renderUI(); }
+        }));
+        body.append(addR);
+      }
+    }
+  }
+
+  function renderPackNodes(parent, nodes, q) {
+    for (const n of nodes) {
+      if (n.type === 'folder') {
+        if (q && !folderMatches(n, q)) continue;
+        const head = el('div', 'tree-head', `📁 ${esc(n.name)}`);
+        const kids = el('div', 'tree-folder');
+        let open = !!q || nodes.length <= 3;
+        kids.style.display = open ? 'block' : 'none';
+        head.onclick = () => { open = !open; kids.style.display = open ? 'block' : 'none'; };
+        renderPackNodes(kids, n.children, q);
+        parent.append(head, kids);
+      } else {
+        if (q && !n.name.toLowerCase().includes(q)) continue;
+        const active = state.pack.activePath === n.path;
+        const mod = state.pack.modified.has(n.path);
+        const f = el('div', 'tree-file' + (active ? ' active' : ''), `📄 ${esc(n.name)}${mod ? ' ●' : ''}`);
+        f.onclick = () => loadPackIni(n.path);
+        parent.append(f);
+      }
+    }
+  }
+  function folderMatches(node, q) {
+    if (node.name.toLowerCase().includes(q)) return true;
+    return node.children.some(c => c.type === 'folder' ? folderMatches(c, q) : c.name.toLowerCase().includes(q));
+  }
+
+  function renderInspector() {
+    const panel = document.getElementById('inspector');
+    panel.innerHTML = '';
+    const idx = state.selectedIdx;
+    if (idx === null || !state.doc.sections[idx]) {
+      renderWidgetSettings(panel);
+      return;
+    }
+    const sec = state.doc.sections[idx];
+    const kind = sectionKind(sec);
+    if (kind === 'meter') renderMeterInspector(panel, sec, idx);
+    else if (kind === 'measure') renderMeasureInspector(panel, sec, idx);
+    else renderWidgetSettings(panel);
+  }
+
+  function renderWidgetSettings(panel) {
+    panel.append(el('h3', '', 'Widget Settings'));
+    panel.append(el('p', 'muted', 'Click any element on the canvas to edit it, or scale the whole widget below.'));
+
+    const sizeCard = el('div', 'sec-card');
+    sizeCard.append(el('div', 'sec-title', 'Widget Size & Scaling'));
+    const sRow = el('div', 'row');
+    [['Smaller (-15%)', 0.85], ['Larger (+15%)', 1.15], ['Compact (75%)', 0.75], ['Big (125%)', 1.25]].forEach(([lbl, f]) => {
+      sRow.append(btn(lbl, 'small', () => { scaleDocumentAxes(state.doc, f, f, f); renderUI(); setToast(`Scaled widget ${Math.round(f*100)}%`); }));
+    });
+    sizeCard.append(sRow);
+
+    const rects = computeMeterRects(state.doc);
+    const sz = computeCanvasSize(state.doc, rects);
+    sizeCard.append(
+      sliderRow('Width', Math.round(sz.w), 120, 1200, 'px', v => { scaleDocumentAxes(state.doc, v / Math.max(40, sz.w), 1, 1); syncCodeDrawer(); }),
+      sliderRow('Height', Math.round(sz.h), 60, 900, 'px', v => { scaleDocumentAxes(state.doc, 1, v / Math.max(30, sz.h), 1); syncCodeDrawer(); }),
+      el('div', 'muted', 'Tip: Drag the blue corner handle on the widget to resize it live.')
+    );
+    panel.append(sizeCard);
+
+    const meta = findSection(state.doc, 'Metadata');
+    if (meta) {
+      const mc = el('div', 'sec-card');
+      mc.append(el('div', 'sec-title', 'Widget Info'));
+      [['Name','Name'],['Author','Author'],['Version','Version'],['Description','Information']].forEach(([lbl, k]) => {
+        mc.append(textField(lbl, getEntry(meta, k) || '', v => { setEntry(meta, k, v); syncCodeDrawer(); }));
+      });
+      panel.append(mc);
+    }
+  }
+
+  function renderMeterInspector(panel, sec, idx) {
+    const mt = (getEntry(sec, 'Meter') || 'String').toLowerCase();
+    const head = el('div', 'row-between');
+    const nameIn = document.createElement('input'); nameIn.type='text'; nameIn.value=sec.name; nameIn.style.width='155px';
+    nameIn.onchange = () => { if (nameIn.value.trim()) { sec.name = nameIn.value.trim(); renderUI(); } };
+    head.append(nameIn, el('strong', '', `<span style="color:#6ebaff">${friendlyMeterType(mt)}</span>`));
+    panel.append(head);
+
+    const actRow = el('div', 'row'); actRow.style.margin = '6px 0 8px';
+    actRow.append(
+      btn('Duplicate', 'small', () => {
+        const clone = JSON.parse(JSON.stringify(sec)); clone.name = uniqueName(sec.name);
+        setEntry(clone, 'X', (evalMath(getEntry(clone,'X'))||10) + 16);
+        setEntry(clone, 'Y', (evalMath(getEntry(clone,'Y'))||10) + 16);
+        state.doc.sections.splice(idx + 1, 0, clone); state.selectedIdx = idx + 1; renderUI();
+      }),
+      btn('Delete', 'small danger', () => { state.doc.sections.splice(idx, 1); state.selectedIdx = null; renderUI(); })
+    );
+    panel.append(actRow);
+
+    // Position & Size
+    const posCard = el('div', 'sec-card');
+    posCard.append(el('div', 'sec-title', 'Position & Size'));
+    const xVal = evalMath(resolveVars(state.doc, getEntry(sec,'X'))) || 0;
+    const yVal = evalMath(resolveVars(state.doc, getEntry(sec,'Y'))) || 0;
+    const wVal = evalMath(resolveVars(state.doc, getEntry(sec,'W'))) || 100;
+    const hVal = evalMath(resolveVars(state.doc, getEntry(sec,'H'))) || 40;
+    const g = el('div', 'grid2');
+    g.append(
+      numField('Left (px)', xVal, v => { setEntry(sec, 'X', Math.round(v)); syncCodeDrawer(); }),
+      numField('Top (px)', yVal, v => { setEntry(sec, 'Y', Math.round(v)); syncCodeDrawer(); })
+    );
+    posCard.append(g);
+    posCard.append(
+      sliderRow('Width', wVal, 8, 800, 'px', v => {
+        let nh = evalMath(getEntry(sec,'H')) || hVal;
+        if (state.lockAspect && wVal > 0) { nh = Math.max(8, Math.round(v * (hVal / wVal))); setEntry(sec, 'H', nh); }
+        setEntry(sec, 'W', Math.round(v)); syncShapeDims(sec, v, nh); syncCodeDrawer();
+      }),
+      sliderRow('Height', hVal, 4, 600, 'px', v => {
+        let nw = evalMath(getEntry(sec,'W')) || wVal;
+        if (state.lockAspect && hVal > 0) { nw = Math.max(8, Math.round(v * (wVal / hVal))); setEntry(sec, 'W', nw); }
+        setEntry(sec, 'H', Math.round(v)); syncShapeDims(sec, nw, v); syncCodeDrawer();
+      })
+    );
+    const lockLbl = document.createElement('label');
+    const lockChk = document.createElement('input'); lockChk.type='checkbox'; lockChk.checked = state.lockAspect;
+    lockChk.onchange = () => { state.lockAspect = lockChk.checked; };
+    lockLbl.append(lockChk, 'Lock proportions');
+    posCard.append(lockLbl);
+
+    const presets = mt === 'image' ? [['24px',24,24],['36px',36,36],['48px',48,48],['64px',64,64],['96px',96,96]]
+      : mt === 'shape' ? [['Small',220,100],['Card',320,150],['Wide',420,120],['Square',200,200]]
+      : mt === 'bar' ? [['Slim',180,6],['Medium',240,12],['Thick',280,18]]
+      : [['Compact',120,28],['Medium',200,40],['Wide',300,56]];
+    const pRow = el('div', 'row');
+    presets.forEach(([l, pw, ph]) => pRow.append(btn(l, 'small', () => { setEntry(sec,'W',pw); setEntry(sec,'H',ph); syncShapeDims(sec,pw,ph); renderUI(); })));
+    posCard.append(pRow);
+    panel.append(posCard);
+
+    // Type-specific properties
+    if (mt === 'string') {
+      const tc = el('div', 'sec-card');
+      tc.append(el('div', 'sec-title', 'Text & Live Data'));
+      tc.append(textField('Display Text', getEntry(sec,'Text') || '', v => { setEntry(sec,'Text',v); syncCodeDrawer(); }));
+      const measures = state.doc.sections.filter(s => sectionKind(s) === 'measure').map(s => s.name);
+      tc.append(selectField('Live Data', getEntry(sec,'MeasureName') || '', [['','(Static Text)'], ...measures.map(m => [m, m])], v => {
+        if (!v) removeEntry(sec, 'MeasureName'); else { setEntry(sec,'MeasureName',v); if (!getEntry(sec,'Text')) setEntry(sec,'Text','%1'); }
+        renderUI();
+      }));
+      panel.append(tc);
+
+      const fc = el('div', 'sec-card');
+      const fHead = el('div', 'sec-title', 'Font & Style');
+      fHead.append(btn('+ Import Font', 'small primary', () => { state._fontTargetIdx = idx; document.getElementById('fileFont').click(); }));
+      fc.append(fHead);
+      const fontOpts = [['Default','Default (Built-in)'], ['Monospace','Monospace (Built-in)'], ...state.appFonts.map(f => [f.name, `${f.source==='pack'?'📦':'★'} ${f.name}`])];
+      const curFace = getEntry(sec,'FontFace') || 'Default';
+      if (!fontOpts.some(o => o[0].toLowerCase() === curFace.toLowerCase())) fontOpts.push([curFace, curFace]);
+      fc.append(
+        selectField('App Fonts (Browser-Only)', curFace, fontOpts, v => { setEntry(sec,'FontFace',v); syncCodeDrawer(); }),
+        sliderRow('Size', evalMath(resolveVars(state.doc, getEntry(sec,'FontSize'))) || 16, 8, 96, 'pt', v => { setEntry(sec,'FontSize',Math.round(v)); syncCodeDrawer(); }),
+        colorRow('Text Color', getEntry(sec,'FontColor') || '255,255,255,255', v => { setEntry(sec,'FontColor',v); syncCodeDrawer(); }),
+        selectField('Thickness', getEntry(sec,'FontWeight') || '400', [['300','Light'],['400','Regular'],['600','Semibold'],['700','Bold'],['800','Extra Bold']], v => { setEntry(sec,'FontWeight',v); syncCodeDrawer(); }),
+        selectField('Align', getEntry(sec,'StringAlign') || 'Left', ['Left','Center','Right','LeftCenter','CenterCenter','RightCenter'].map(a=>[a,a]), v => { setEntry(sec,'StringAlign',v); syncCodeDrawer(); }),
+        el('div', 'muted', 'Imported fonts stay strictly in your browser—never installed to Windows.')
+      );
+      panel.append(fc);
+    } else if (mt === 'image' || mt === 'button') {
+      const ic = el('div', 'sec-card');
+      ic.append(el('div', 'sec-title', 'Icon & Picture'));
+      ic.append(
+        textField('Image File', getEntry(sec,'ImageName') || '', v => { setEntry(sec,'ImageName',v); syncCodeDrawer(); }),
+        btn('Upload Replacement Image...', 'small', () => { state._pendingImgTarget = idx; document.getElementById('fileImage').click(); }),
+        colorRow('Icon Color', getEntry(sec,'ImageTint') || '255,255,255,255', v => { setEntry(sec,'ImageTint',v); syncCodeDrawer(); }),
+        sliderRow('Opacity', Math.round(((parseInt(getEntry(sec,'ImageAlpha')||'255',10)||255)/255)*100), 0, 100, '%', v => { setEntry(sec,'ImageAlpha',Math.round(v/100*255)); syncCodeDrawer(); })
+      );
+      panel.append(ic);
+    } else if (mt === 'shape') {
+      const sc = el('div', 'sec-card');
+      sc.append(el('div', 'sec-title', 'Card Appearance'));
+      const raw = resolveVars(state.doc, getEntry(sec,'Shape') || '');
+      let rad = 16, fill = [20,25,38,215], sw = 1.5, stroke = [255,255,255,36];
+      raw.split('|').forEach((p, i) => {
+        const t = p.trim(), l = t.toLowerCase();
+        if (i === 0 && l.startsWith('rectangle')) { const n = t.slice(9).split(','); if (n[4]) rad = parseFloat(n[4])||0; }
+        else if (l.startsWith('fill color')) fill = parseColor(t.slice(10).trim()) || fill;
+        else if (l.startsWith('stroke color')) stroke = parseColor(t.slice(12).trim()) || stroke;
+        else if (l.startsWith('strokewidth')) sw = parseFloat(t.slice(11)) || 0;
+      });
+      const rebuild = () => {
+        const cw = evalMath(getEntry(sec,'W')) || wVal, ch = evalMath(getEntry(sec,'H')) || hVal;
+        setEntry(sec, 'Shape', `Rectangle 0,0,${Math.round(cw)},${Math.round(ch)},${Math.round(rad)} | Fill Color ${rgbaToRm(fill)} | StrokeWidth ${sw.toFixed(1)} | Stroke Color ${rgbaToRm(stroke)}`);
+        syncCodeDrawer();
+      };
+      sc.append(
+        sliderRow('Corners', rad, 0, 64, 'px', v => { rad = v; rebuild(); }),
+        colorRow('Fill Color', rgbaToRm(fill), v => { fill = parseColor(v) || fill; rebuild(); }),
+        sliderRow('Border', sw, 0, 8, 'px', v => { sw = v; rebuild(); }),
+        colorRow('Border Col', rgbaToRm(stroke), v => { stroke = parseColor(v) || stroke; rebuild(); })
+      );
+      panel.append(sc);
+    } else if (mt === 'bar') {
+      const bc = el('div', 'sec-card');
+      bc.append(el('div', 'sec-title', 'Progress Bar'));
+      const measures = state.doc.sections.filter(s => sectionKind(s) === 'measure').map(s => s.name);
+      bc.append(
+        selectField('Live Data', getEntry(sec,'MeasureName') || '', [['','(None)'], ...measures.map(m => [m, m])], v => { setEntry(sec,'MeasureName',v); syncCodeDrawer(); }),
+        colorRow('Fill Color', getEntry(sec,'BarColor') || '94,186,255,255', v => { setEntry(sec,'BarColor',v); syncCodeDrawer(); }),
+        colorRow('Track Bg', getEntry(sec,'SolidColor') || '255,255,255,28', v => { setEntry(sec,'SolidColor',v); syncCodeDrawer(); })
+      );
+      panel.append(bc);
+    } else if (mt === 'roundline') {
+      const rc = el('div', 'sec-card');
+      rc.append(el('div', 'sec-title', 'Circle Gauge'));
+      const measures = state.doc.sections.filter(s => sectionKind(s) === 'measure').map(s => s.name);
+      rc.append(
+        selectField('Live Data', getEntry(sec,'MeasureName') || '', [['','(None)'], ...measures.map(m => [m, m])], v => { setEntry(sec,'MeasureName',v); syncCodeDrawer(); }),
+        colorRow('Ring Color', getEntry(sec,'LineColor') || '94,186,255,255', v => { setEntry(sec,'LineColor',v); syncCodeDrawer(); }),
+        sliderRow('Inner Rad', evalMath(getEntry(sec,'LineStart'))||34, 0, 120, 'px', v => { setEntry(sec,'LineStart',Math.round(v)); syncCodeDrawer(); }),
+        sliderRow('Outer Rad', evalMath(getEntry(sec,'LineLength'))||44, 4, 140, 'px', v => { setEntry(sec,'LineLength',Math.round(v)); syncCodeDrawer(); })
+      );
+      panel.append(rc);
+    }
+
+    const ac = el('div', 'sec-card');
+    ac.append(el('div', 'sec-title', 'Click Action & Hover Tip'));
+    ac.append(
+      textField('When Clicked', getEntry(sec,'LeftMouseUpAction') || '', v => { v ? setEntry(sec,'LeftMouseUpAction',v) : removeEntry(sec,'LeftMouseUpAction'); syncCodeDrawer(); }),
+      textField('Hover Tip', getEntry(sec,'ToolTipText') || '', v => { v ? setEntry(sec,'ToolTipText',v) : removeEntry(sec,'ToolTipText'); syncCodeDrawer(); })
+    );
+    panel.append(ac);
+  }
+
+  function renderMeasureInspector(panel, sec, idx) {
+    panel.append(el('h3', '', 'Live Data Source'));
+    const c = el('div', 'sec-card');
+    c.append(
+      textField('Name', sec.name, v => { if (v.trim()) { sec.name = v.trim(); renderLeftPanel(); } }),
+      selectField('Source Type', getEntry(sec,'Measure') || 'Time', [
+        ['Time','Clock / Date'],['CPU','CPU Usage'],['PhysicalMemory','Memory (RAM)'],['NetIn','Download Speed'],['NetOut','Upload Speed'],['Calc','Custom Math'],['Plugin','Web / Plugin']
+      ], v => { setEntry(sec,'Measure',v); renderUI(); })
+    );
+    if ((getEntry(sec,'Measure')||'').toLowerCase() === 'time') {
+      c.append(textField('Time Format', getEntry(sec,'Format') || '%H:%M:%S', v => { setEntry(sec,'Format',v); syncCodeDrawer(); }));
+    }
+    c.append(btn('Delete Data Source', 'small danger', () => { state.doc.sections.splice(idx, 1); state.selectedIdx = null; renderUI(); }));
+    panel.append(c);
+  }
+
+  // UI helpers
+  function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
+  function btn(text, cls, onclick) { const b = document.createElement('button'); b.textContent = text; if (cls) b.className = cls; b.onclick = onclick; return b; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function textField(label, val, onChange) {
+    const d = el('div', 'field'); d.append(el('label', '', label));
+    const i = document.createElement('input'); i.type='text'; i.value = val; i.oninput = () => onChange(i.value);
+    d.append(i); return d;
+  }
+  function numField(label, val, onChange) {
+    const d = el('div', 'field'); d.append(el('label', '', label));
+    const i = document.createElement('input'); i.type='number'; i.value = Math.round(val); i.oninput = () => onChange(parseFloat(i.value)||0);
+    d.append(i); return d;
+  }
+  function selectField(label, val, opts, onChange) {
+    const d = el('div', 'field'); d.append(el('label', '', label));
+    const s = document.createElement('select');
+    opts.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; if (v.toLowerCase() === String(val).toLowerCase()) o.selected = true; s.append(o); });
+    s.onchange = () => onChange(s.value);
+    d.append(s); return d;
+  }
+  function sliderRow(label, val, min, max, suffix, onChange) {
+    const r = el('div', 'slider-row');
+    const lbl = el('span', '', label);
+    const rng = document.createElement('input'); rng.type='range'; rng.min=min; rng.max=max; rng.step = max <= 10 ? 0.5 : 1; rng.value = val;
+    const out = el('span', '', `${Math.round(val)}${suffix}`);
+    rng.oninput = () => { const v = parseFloat(rng.value); out.textContent = `${max<=10 ? v.toFixed(1) : Math.round(v)}${suffix}`; onChange(v); };
+    r.append(lbl, rng, out); return r;
+  }
+  function colorRow(label, raw, onChange) {
+    const r = el('div', 'row');
+    r.append(el('span', '', `<span class="muted">${label}:</span>`));
+    const col = parseColor(resolveVars(state.doc, raw)) || [255,255,255,255];
+    const cp = document.createElement('input'); cp.type='color'; cp.value = rgbaToHex(col);
+    const inp = document.createElement('input'); inp.type='text'; inp.value = raw; inp.style.flex='1'; inp.style.minWidth='90px';
+    cp.oninput = () => { const c = hexToRgba(cp.value, col[3]); inp.value = rgbaToRm(c); onChange(inp.value); };
+    inp.oninput = () => onChange(inp.value);
+    r.append(cp, inp); return r;
+  }
+
+  function addMeter(sec) { state.doc.sections.push(sec); state.selectedIdx = state.doc.sections.length - 1; state.doc.dirty = true; renderUI(); }
+  function addMeasure(base, type, extra) {
+    const sec = makeSec(uniqueName(base), [['Measure', type], ...extra]);
+    const pos = state.doc.sections.findIndex(s => sectionKind(s) === 'meter');
+    const at = pos >= 0 ? pos : state.doc.sections.length;
+    state.doc.sections.splice(at, 0, sec); state.selectedIdx = at; state.doc.dirty = true; renderUI();
+  }
+  function swapSections(a, b) {
+    [state.doc.sections[a], state.doc.sections[b]] = [state.doc.sections[b], state.doc.sections[a]];
+    if (state.selectedIdx === a) state.selectedIdx = b; else if (state.selectedIdx === b) state.selectedIdx = a;
+    renderUI();
+  }
+  function syncCodeDrawer() {
+    if (document.getElementById('codeDrawer').classList.contains('open')) {
+      document.getElementById('txtIniCode').value = serializeIni(state.doc);
+    }
+  }
+  function renderUI() { renderLeftPanel(); renderInspector(); syncCodeDrawer(); }
+
+  // =========================================================================
+  // 7. IMPORT / EXPORT (.ini, .rmskin, Fonts, Images)
+  // =========================================================================
+  async function importRmskinFile(file) {
+    if (typeof JSZip === 'undefined') { setToast('JSZip library failed to load.'); return; }
+    try {
+      let buf = await file.arrayBuffer();
+      const u8 = new Uint8Array(buf);
+      // Strip 16-byte Rainmeter RMSKIN footer if present
+      if (u8.length > 16) {
+        const tail = new TextDecoder().decode(u8.subarray(u8.length - 7));
+        if (tail === 'RMSKIN\0') {
+          const dv = new DataView(buf, u8.length - 16, 8);
+          const zipSize = Number(dv.getBigUint64(0, true));
+          if (zipSize > 0 && zipSize <= u8.length - 16) buf = buf.slice(0, zipSize);
+        }
+      }
+      const zip = await JSZip.loadAsync(buf);
+      const files = new Map();
+      let packName = file.name.replace(/\.(rmskin|zip)$/i, ''), author = '', version = '';
+      const iniPaths = [];
+
+      // Clear previous pack-only fonts
+      state.appFonts = state.appFonts.filter(f => f.source !== 'pack');
+
+      for (const [relPath, entry] of Object.entries(zip.files)) {
+        if (entry.dir) continue;
+        const data = await entry.async('uint8array');
+        const norm = relPath.replace(/\\/g, '/');
+        files.set(norm, data);
+        const low = norm.toLowerCase();
+
+        if (low === 'rmskin.ini') {
+          const rmDoc = parseIni(decodeIniBuffer(data.buffer));
+          const rmSec = findSection(rmDoc, 'rmskin');
+          if (rmSec) {
+            packName = getEntry(rmSec, 'Name') || packName;
+            author = getEntry(rmSec, 'Author') || '';
+            version = getEntry(rmSec, 'Version') || '';
+          }
+        } else if (low.endsWith('.ini') && !low.includes('/@resources/') && !low.startsWith('@resources/')) {
+          iniPaths.push(norm);
+        } else if (/\.(png|jpg|jpeg|webp|bmp|ico)$/i.test(low)) {
+          const blob = new Blob([data]);
+          const img = new Image(); img.src = URL.createObjectURL(blob);
+          state.imageCache.set(low, { img, blob, fileName: norm.split('/').pop() });
+        } else if (/\.(ttf|otf)$/i.test(low)) {
+          const blob = new Blob([data]);
+          const fname = norm.split('/').pop();
+          const fontName = fname.replace(/\.(ttf|otf)$/i, '').replace(/[_-]+/g, ' ');
+          try {
+            const ff = new FontFace(fontName, data);
+            await ff.load(); document.fonts.add(ff);
+            if (!state.appFonts.some(f => f.name.toLowerCase() === fontName.toLowerCase())) {
+              state.appFonts.push({ name: fontName, fileName: fname, blob, source: 'pack' });
+            }
+          } catch {}
+        }
+      }
+
+      // Build folder tree
+      const root = { type: 'folder', name: 'root', children: [] };
+      iniPaths.sort((a,b) => a.localeCompare(b));
+      for (const p of iniPaths) {
+        const parts = p.replace(/^Skins\//i, '').split('/');
+        let cur = root;
+        for (let i = 0; i < parts.length - 1; i++) {
+          let sub = cur.children.find(c => c.type === 'folder' && c.name === parts[i]);
+          if (!sub) { sub = { type: 'folder', name: parts[i], children: [] }; cur.children.push(sub); }
+          cur = sub;
+        }
+        cur.children.push({ type: 'file', name: parts[parts.length - 1], path: p });
+      }
+
+      state.pack = { name: packName, author, version, files, tree: root.children, totalInis: iniPaths.length, activePath: null, modified: new Set() };
+      state.leftTab = 'pack';
+      state.packSearch = '';
+      if (iniPaths.length > 0) loadPackIni(iniPaths[0]);
+      else renderUI();
+      setToast(`Imported "${packName}" (${iniPaths.length} widgets)`);
+    } catch (err) {
+      setToast('Failed to import .rmskin: ' + err.message);
+    }
+  }
+
+  function loadPackIni(path) {
+    if (!state.pack) return;
+    // Save current edits back to pack memory
+    if (state.pack.activePath && state.doc.dirty) {
+      const text = serializeIni(state.doc);
+      state.pack.files.set(state.pack.activePath, new TextEncoder().encode(text));
+      state.pack.modified.add(state.pack.activePath);
+    }
+    const bytes = state.pack.files.get(path);
+    if (!bytes) return;
+    const doc = parseIni(decodeIniBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)));
+    doc.fileName = path.split('/').pop();
+    doc.packPath = path;
+
+    // Load @Include variables from inside the pack
+    for (const sec of doc.sections) {
+      for (const [k, v] of sec.entries) {
+        if (k.toLowerCase().startsWith('@include')) {
+          const fname = v.replace(/\\/g, '/').split('/').pop().toLowerCase();
+          for (const [fp, fb] of state.pack.files.entries()) {
+            if (fp.toLowerCase().endsWith('/' + fname) || fp.toLowerCase() === fname) {
+              const inc = parseIni(decodeIniBuffer(fb.buffer.slice(fb.byteOffset, fb.byteOffset + fb.byteLength)));
+              const vs = findSection(inc, 'Variables');
+              if (vs) doc.includedVars.push(...vs.entries.filter(e => !e[0].startsWith(';')));
+            }
+          }
+        }
+      }
+    }
+
+    state.doc = doc;
+    state.pack.activePath = path;
+    state.selectedIdx = null;
+    state.panX = 0; state.panY = 0;
+    renderUI();
+    setToast(`Opened ${doc.fileName}`);
+  }
+
+  async function buildRmskinBlob(zipObj) {
+    const zipBytes = await zipObj.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    const out = new Uint8Array(zipBytes.length + 16);
+    out.set(zipBytes, 0);
+    const dv = new DataView(out.buffer, zipBytes.length, 16);
+    dv.setBigUint64(0, BigInt(zipBytes.length), true);
+    dv.setUint8(8, 0);
+    const sig = new TextEncoder().encode('RMSKIN\0');
+    out.set(sig, zipBytes.length + 9);
+    return new Blob([out], { type: 'application/octet-stream' });
+  }
+
+  async function exportPackRmskin() {
+    if (typeof JSZip === 'undefined') return;
+    const zip = new JSZip();
+    if (state.pack) {
+      if (state.pack.activePath && state.doc.dirty) {
+        state.pack.files.set(state.pack.activePath, new TextEncoder().encode(serializeIni(state.doc)));
+      }
+      for (const [p, data] of state.pack.files.entries()) zip.file(p, data);
+      const blob = await buildRmskinBlob(zip);
+      triggerDownload(blob, `${state.pack.name.replace(/[^a-z0-9_-]/gi,'_')}_edited.rmskin`);
+      setToast('Exported edited .rmskin pack!');
+    } else {
+      const meta = findSection(state.doc, 'Metadata');
+      const skinName = (meta && getEntry(meta, 'Name') || 'MyWidget').replace(/[^a-z0-9 _-]/gi, '').trim() || 'MyWidget';
+      const base = `Skins/${skinName}`;
+      zip.file('RMSKIN.ini', `[rmskin]\r\nName=${skinName}\r\nAuthor=Senkront Studio\r\nVersion=1.0\r\nLoadType=Skin\r\nLoad=${skinName}\\${skinName}.ini\r\n`);
+      zip.file(`${base}/${skinName}.ini`, await encodeUtf16LeBom(serializeIni(state.doc)).arrayBuffer());
+      // Export used built-in clipart PNGs
+      for (const sec of state.doc.sections) {
+        const imgName = getEntry(sec, 'ImageName');
+        const clip = clipartFromName(imgName);
+        if (clip) {
+          const pngBlob = await renderClipartToPngBlob(clip.id);
+          if (pngBlob) zip.file(`${base}/@Resources/Images/clipart_${clip.id}.png`, await pngBlob.arrayBuffer());
+        }
+      }
+      // Export used app-only fonts
+      for (const f of state.appFonts) {
+        if (f.blob) zip.file(`${base}/@Resources/Fonts/${f.fileName}`, await f.blob.arrayBuffer());
+      }
+      const blob = await buildRmskinBlob(zip);
+      triggerDownload(blob, `${skinName}.rmskin`);
+      setToast(`Exported ${skinName}.rmskin installer!`);
+    }
+  }
+
+  function triggerDownload(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  // =========================================================================
+  // 8. WIRE EVENTS & START LOOP
+  // =========================================================================
+  const tplMenu = document.getElementById('templateMenu');
+  TEMPLATES.forEach(t => {
+    const b = document.createElement('button'); b.textContent = t.label;
+    b.onclick = () => {
+      state.doc = t.build(); state.selectedIdx = null; state.panX = 0; state.panY = 0;
+      if (state.pack) state.pack.activePath = null;
+      tplMenu.classList.remove('open'); renderUI(); setToast(`Loaded template: ${t.label}`);
+    };
+    tplMenu.append(b);
+  });
+  document.getElementById('btnTemplates').onclick = e => { e.stopPropagation(); tplMenu.classList.toggle('open'); };
+  document.addEventListener('click', () => tplMenu.classList.remove('open'));
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { state.leftTab = b.dataset.tab; renderLeftPanel(); });
+  document.getElementById('btnImportRmskin').onclick = () => document.getElementById('fileRmskin').click();
+  document.getElementById('btnOpenIni').onclick = () => document.getElementById('fileIni').click();
+  document.getElementById('btnDownloadIni').onclick = () => {
+    triggerDownload(encodeUtf16LeBom(serializeIni(state.doc)), state.doc.fileName || 'MySkin.ini');
+    setToast(`Downloaded ${state.doc.fileName || 'MySkin.ini'} (UTF-16 LE BOM)`);
+  };
+  document.getElementById('btnExportRmskin').onclick = exportPackRmskin;
+
+  document.getElementById('fileIni').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    state.doc = parseIni(decodeIniBuffer(await f.arrayBuffer()));
+    state.doc.fileName = f.name; state.selectedIdx = null; state.panX = 0; state.panY = 0;
+    renderUI(); setToast(`Opened ${f.name}`); e.target.value = '';
+  };
+  document.getElementById('fileRmskin').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    await importRmskinFile(f); e.target.value = '';
+  };
+  document.getElementById('fileImage').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const img = new Image(); img.src = URL.createObjectURL(f);
+    const key = f.name.toLowerCase();
+    state.imageCache.set(key, { img, blob: f, fileName: f.name });
+    if (state._pendingImgTarget === 'new') {
+      addMeter(makeSec(uniqueName('Picture'), [['Meter','Image'],['ImageName',`#@#Images\\${f.name}`],['X',30],['Y',30],['W',64],['H',64]]));
+    } else if (typeof state._pendingImgTarget === 'number') {
+      setEntry(state.doc.sections[state._pendingImgTarget], 'ImageName', `#@#Images\\${f.name}`);
+      renderUI();
+    }
+    setToast(`Loaded image: ${f.name}`); e.target.value = '';
+  };
+  document.getElementById('fileFont').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const name = f.name.replace(/\.(ttf|otf|woff2?)$/i, '').replace(/[_-]+/g, ' ');
+    try {
+      const ff = new FontFace(name, await f.arrayBuffer());
+      await ff.load(); document.fonts.add(ff);
+      if (!state.appFonts.some(x => x.name.toLowerCase() === name.toLowerCase())) {
+        state.appFonts.push({ name, fileName: f.name, blob: f, source: 'app' });
+      }
+      if (typeof state._fontTargetIdx === 'number' && state.doc.sections[state._fontTargetIdx]) {
+        setEntry(state.doc.sections[state._fontTargetIdx], 'FontFace', name);
+      }
+      renderUI(); setToast(`Imported browser-only font: ${name}`);
+    } catch (err) { setToast('Could not load font: ' + err.message); }
+    e.target.value = '';
+  };
+
+  document.getElementById('selBackdrop').onchange = e => { state.backdrop = e.target.value; };
+  document.getElementById('btnZoomIn').onclick = () => { state.zoom = Math.min(3.5, state.zoom + 0.15); document.getElementById('lblZoom').textContent = Math.round(state.zoom*100)+'%'; };
+  document.getElementById('btnZoomOut').onclick = () => { state.zoom = Math.max(0.4, state.zoom - 0.15); document.getElementById('lblZoom').textContent = Math.round(state.zoom*100)+'%'; };
+  document.getElementById('btnResetView').onclick = () => { state.zoom = 1.25; state.panX = 0; state.panY = 0; document.getElementById('lblZoom').textContent = '125%'; };
+  document.getElementById('chkSnap').onchange = e => { state.snap = e.target.checked; };
+  document.getElementById('chkOutlines').onchange = e => { state.outlines = e.target.checked; };
+  document.getElementById('chkPreview').onchange = e => { state.preview = e.target.checked; };
+  document.getElementById('btnCodeView').onclick = () => { document.getElementById('codeDrawer').classList.toggle('open'); syncCodeDrawer(); };
+  document.getElementById('btnCopyIni').onclick = () => { navigator.clipboard.writeText(document.getElementById('txtIniCode').value); setToast('Copied .ini to clipboard!'); };
+  document.getElementById('btnApplyIni').onclick = () => {
+    const fn = state.doc.fileName; state.doc = parseIni(document.getElementById('txtIniCode').value);
+    state.doc.fileName = fn; state.selectedIdx = null; renderUI(); setToast('Applied raw .ini edits!');
+  };
+  document.getElementById('chkLiveSensors').onchange = e => { state.sim.live = e.target.checked; };
+  document.getElementById('rngCpu').oninput = e => { state.sim.cpu = +e.target.value; document.getElementById('lblCpu').textContent = e.target.value + '%'; };
+  document.getElementById('rngRam').oninput = e => { state.sim.ram = +e.target.value; document.getElementById('lblRam').textContent = e.target.value + '%'; };
+
+  window.addEventListener('keydown', e => {
+    if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+    if (state.selectedIdx === null) return;
+    const sec = state.doc.sections[state.selectedIdx];
+    if (!sec || sectionKind(sec) !== 'meter') return;
+    if (e.key === 'Delete') { state.doc.sections.splice(state.selectedIdx, 1); state.selectedIdx = null; renderUI(); return; }
+    const step = e.shiftKey ? 8 : 1;
+    let dx = 0, dy = 0;
+    if (e.key === 'ArrowLeft') dx = -step; if (e.key === 'ArrowRight') dx = step;
+    if (e.key === 'ArrowUp') dy = -step; if (e.key === 'ArrowDown') dy = step;
+    if (dx || dy) {
+      e.preventDefault();
+      setEntry(sec, 'X', Math.max(0, (evalMath(getEntry(sec,'X'))||0) + dx));
+      setEntry(sec, 'Y', Math.max(0, (evalMath(getEntry(sec,'Y'))||0) + dy));
+      renderInspector(); syncCodeDrawer();
+    }
+  });
+
+  // Boot with Time & Calendar template
+  state.doc = TEMPLATES[0].build();
+  renderUI();
+
+  function tick(ts) {
+    state.sim.t = ts / 1000;
+    render();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

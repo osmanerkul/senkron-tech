@@ -20,7 +20,7 @@
       --radius: 14px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -28,10 +28,8 @@
       line-height: 1.6;
       min-height: 100vh;
       background-image:
-        radial-gradient(circle at 12% 8%, rgba(99, 102, 241, 0.22), transparent 38%),
-        radial-gradient(circle at 86% 14%, rgba(56, 189, 248, 0.17), transparent 36%),
-        radial-gradient(circle at 50% 62%, rgba(244, 63, 94, 0.10), transparent 42%),
-        radial-gradient(circle at 80% 88%, rgba(16, 185, 129, 0.13), transparent 40%);
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.14), transparent 38%),
+        radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.10), transparent 36%);
     }
 
     /* Nav */
@@ -204,41 +202,26 @@
     /* Project Grid */
     .projects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
       gap: 20px;
     }
     .project-card {
-      --card-accent: #818cf8;
-      --card-soft: rgba(99, 102, 241, 0.16);
-      --card-border: rgba(99, 102, 241, 0.45);
-      background: linear-gradient(180deg, rgba(22, 29, 44, 0.94), rgba(16, 21, 32, 0.96));
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 22px;
       display: flex;
       flex-direction: column;
       gap: 14px;
-      transition: transform .18s, border-color .18s, box-shadow .18s;
+      transition: transform .16s, border-color .16s, box-shadow .16s;
       position: relative;
       overflow: hidden;
     }
-    .project-card::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--card-accent), transparent 88%);
-      opacity: 0.95;
-    }
     .project-card:hover {
       transform: translateY(-4px);
-      border-color: var(--card-accent);
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42), 0 0 24px var(--card-soft);
+      border-color: var(--accent);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     }
-    .theme-indigo { --card-accent: #818cf8; --card-soft: rgba(129, 140, 248, 0.18); --card-border: rgba(129, 140, 248, 0.48); }
-    .theme-cyan   { --card-accent: #38bdf8; --card-soft: rgba(56, 189, 248, 0.18);  --card-border: rgba(56, 189, 248, 0.48); }
-    .theme-rose   { --card-accent: #fb7185; --card-soft: rgba(251, 113, 133, 0.18); --card-border: rgba(251, 113, 133, 0.48); }
-    .theme-emerald{ --card-accent: #34d399; --card-soft: rgba(52, 211, 153, 0.18);  --card-border: rgba(52, 211, 153, 0.48); }
     .project-top {
       display: flex;
       align-items: center;
@@ -246,16 +229,15 @@
       gap: 10px;
     }
     .project-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
-      background: var(--card-soft);
-      border: 1px solid var(--card-border);
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
-      box-shadow: 0 4px 14px var(--card-soft);
+      font-size: 1.35rem;
     }
     .live-badge {
       font-size: 0.72rem;
@@ -301,19 +283,19 @@
       flex: 1;
       text-align: center;
       text-decoration: none;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 0.86rem;
+      padding: 9px 14px;
+      border-radius: 9px;
+      font-size: 0.85rem;
       font-weight: 700;
-      background: var(--card-soft);
-      border: 1px solid var(--card-border);
-      color: #fff;
-      transition: all .16s;
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      color: #e0e7ff;
+      transition: all .15s;
     }
     .card-link-btn:hover {
-      background: var(--card-accent);
-      border-color: var(--card-accent);
-      color: #090d16;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
     }
 
     /* Stack / Skills */
@@ -360,7 +342,8 @@
     }
     @media (max-width: 640px) {
       .nav-inner { padding: 12px 16px; }
-      .nav-links { gap: 14px; }
+      .nav-links { gap: 10px; }
+      .nav-links a:not(.nav-cta) { display: none; }
       .container { padding: 0 16px; }
       .hero { padding: 44px 0 28px; }
       .hero-actions a { width: 100%; justify-content: center; }
@@ -377,6 +360,7 @@
         <a href="#projeler">Projeler</a>
         <a href="#yetenekler">Odak</a>
         <a href="#iletisim">İletişim</a>
+        <a href="/oyun-bulucu/" class="nav-cta">🎮 Oyun Bulucu</a>
       </div>
     </div>
   </nav>
@@ -391,8 +375,8 @@
         günlük problemleri çözen hafif, hızlı ve doğrudan tarayıcıdan kullanılabilen araçlar üretiyorum.
       </p>
       <div class="hero-actions">
-        <a href="#projeler" class="btn-primary">📂 Projeleri Keşfet</a>
-        <a href="#iletisim" class="btn-secondary">✉️ İletişim</a>
+        <a href="/oyun-bulucu/" class="btn-primary">🎮 Oyun Bulucu'yu Aç</a>
+        <a href="#projeler" class="btn-secondary">📂 Tüm Projeler</a>
       </div>
     </header>
 
@@ -405,7 +389,7 @@
 
       <div class="projects-grid">
         <!-- Project 1: Oyun Bulucu -->
-        <article class="project-card theme-indigo">
+        <article class="project-card">
           <div class="project-top">
             <div class="project-icon">🎮</div>
             <span class="live-badge">● Canlı Araç</span>
@@ -428,7 +412,7 @@
         </article>
 
         <!-- Project 2: CAD Case Studio -->
-        <article class="project-card theme-cyan">
+        <article class="project-card">
           <div class="project-top">
             <div class="project-icon">🧊</div>
             <span class="live-badge">● Canlı Araç</span>
@@ -448,48 +432,27 @@
           </div>
         </article>
 
-        <!-- Project 3: Outside Lens -->
-        <article class="project-card theme-rose">
+        <!-- Project 3: Rainmeter Skin Studio -->
+        <article class="project-card">
           <div class="project-top">
-            <div class="project-icon">🌐</div>
+            <div class="project-icon">🎨</div>
             <span class="live-badge">● Canlı Araç</span>
           </div>
-          <h3>Outside Lens — Foreign Press TR</h3>
+          <h3>Rainmeter Skin Studio</h3>
           <p>
-            Türkiye hakkındaki haberleri yalnızca Türkiye dışındaki 14 yabancı basın kuruluşu ve
-            Bluesky, Mastodon, Lemmy &amp; HN üzerinden paralel tarayan; yerli kaynakları ve
-            yanlış eşleşmeleri otomatik filtreleyen dış basın radarı.
+            Tarayıcı içinde gerçek zamanlı Rainmeter widget ve skin tasarım stüdyosu.
+            Mevcut <code>.ini</code> veya <code>.rmskin</code> paketlerini ağaç görünümünde açın,
+            ikon/clipart, yazı tipi, boyut ve renkleri canlı düzenleyip tek tıkla <code>.ini</code> veya
+            <code>.rmskin</code> olarak dışa aktarın.
           </p>
           <div class="tech-row">
-            <span class="tech-tag">Rust</span>
-            <span class="tech-tag">14 Dış Basın</span>
-            <span class="tech-tag">Sosyal Medya</span>
-            <span class="tech-tag">Non-TR Guard</span>
+            <span class="tech-tag">HTML5 Canvas</span>
+            <span class="tech-tag">.rmskin / .ini</span>
+            <span class="tech-tag">Canlı Önizleme</span>
+            <span class="tech-tag">Hava / Haber / Takvim</span>
           </div>
           <div class="card-links">
-            <a href="/outside-lens/" class="card-link-btn">Radarı Aç ↗</a>
-          </div>
-        </article>
-
-        <!-- Project 4: AI Promo Radar -->
-        <article class="project-card theme-emerald">
-          <div class="project-top">
-            <div class="project-icon">📡</div>
-            <span class="live-badge">● Canlı Araç</span>
-          </div>
-          <h3>AI Promo Radar — Günlük Krediler</h3>
-          <p>
-            Qoder, Qronos, Trae, Kiro, OpenRouter ve 15+ yapay zeka aracının günlük ücretsiz kredilerini,
-            platform/ülke kökenlerini, token tüketim oranlarını ve 15 canlı AI RSS akışını tek ekranda sunar.
-          </p>
-          <div class="tech-row">
-            <span class="tech-tag">Rust</span>
-            <span class="tech-tag">15 AI RSS</span>
-            <span class="tech-tag">Token Çevirici</span>
-            <span class="tech-tag">Günlük Kredi</span>
-          </div>
-          <div class="card-links">
-            <a href="/ai-promo-radar/" class="card-link-btn">Aracı Başlat ↗</a>
+            <a href="/rainmeter-studio/" class="card-link-btn">Stüdyoyu Aç ↗</a>
           </div>
         </article>
       </div>
