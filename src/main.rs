@@ -25,6 +25,7 @@ const OUTSIDE_LENS_HTML: &str = include_str!("../static/outside_lens.html");
 const AI_PROMO_RADAR_HTML: &str = include_str!("../static/ai_promo_radar.html");
 const RAINMETER_STUDIO_HTML: &str = include_str!("../static/rainmeter_studio.html");
 const GOOGLEBOOK_OS_HTML: &str = include_str!("../static/googlebook_os.html");
+const ORNATA_LIGHT_HTML: &str = include_str!("../static/ornata_light.html");
 
 #[derive(Clone)]
 struct AppState {
@@ -125,6 +126,8 @@ async fn main() {
         .route("/rainmeter-studio/", get(serve_rainmeter_studio))
         .route("/googlebook-os", get(serve_googlebook_os))
         .route("/googlebook-os/", get(serve_googlebook_os))
+        .route("/ornata-light", get(serve_ornata_light))
+        .route("/ornata-light/", get(serve_ornata_light))
         .route("/api/search", post(api_search))
         .route("/api/similar", post(api_similar))
         .route("/api/outside-lens", get(api_outside_lens))
@@ -149,6 +152,7 @@ async fn main() {
     println!("  📡 AI Promo Radar: http://{}/ai-promo-radar/", addr);
     println!("  🎨 Rainmeter:      http://{}/rainmeter-studio/", addr);
     println!("  💻 Googlebook OS:  http://{}/googlebook-os/", addr);
+    println!("  ⌨️ OrnataLight:    http://{}/ornata-light/", addr);
     println!("====================================================");
 
     let listener = tokio::net::TcpListener::bind(addr)
@@ -186,6 +190,10 @@ async fn serve_rainmeter_studio() -> Html<&'static str> {
 
 async fn serve_googlebook_os() -> Html<&'static str> {
     Html(GOOGLEBOOK_OS_HTML)
+}
+
+async fn serve_ornata_light() -> Html<&'static str> {
+    Html(ORNATA_LIGHT_HTML)
 }
 
 async fn api_outside_lens(
