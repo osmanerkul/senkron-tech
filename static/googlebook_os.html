@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Googlebook OS (Android 17) — Windows 11 WHPX &amp; VirGL | senkron.tech</title>
+  <meta name="description" content="Running Googlebook OS (Android 17 / ruby x86_64) on Windows 11 WHPX + Mesa VirGL (AMD Ryzen 7 7735HS &amp; RTX 4060) with low-latency tuning, benchmarks, and upstream references." />
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --surface: #121722;
+      --surface-2: #192030;
+      --border: #263147;
+      --text: #eef2fa;
+      --muted: #8c9bb3;
+      --accent: #6366f1;
+      --cyan: #38bdf8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.14), transparent 38%),
+        radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.10), transparent 36%);
+    }
+
+    /* Nav */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(11, 14, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--accent));
+      box-shadow: 0 0 12px var(--cyan);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .lang-btn {
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: #c7d2fe;
+      padding: 6px 13px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      font-family: inherit;
+    }
+    .lang-btn:hover { background: var(--accent); color: #fff; }
+
+    /* Container */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 72px 0 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-width: 840px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      color: #a7f3d0;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    h1 {
+      font-size: clamp(2rem, 4.6vw, 3.1rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.14;
+      color: #fff;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #38bdf8, #818cf8 60%, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 1.04rem;
+      color: var(--muted);
+      max-width: 720px;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.94rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .12s, filter .15s;
+    }
+    .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.94rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color .15s, background .15s;
+    }
+    .btn-secondary:hover { border-color: var(--cyan); background: var(--surface-2); }
+
+    /* Sections */
+    section { padding: 40px 0; }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Hardware Spec Strip */
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .spec-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .spec-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cyan);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .spec-value {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .spec-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Benchmark Table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(25, 32, 48, 0.75);
+    }
+    tr:last-child td { border-bottom: none; }
+    .badge-bad {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fcd34d;
+      font-size: 0.82rem;
+    }
+    .badge-good {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.42);
+      color: #6ee7b7;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      width: fit-content;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #7dd3fc;
+    }
+    .card h3 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .card p {
+      font-size: 0.89rem;
+      color: var(--muted);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+      font-size: 0.85em;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 5px;
+      color: #cbd5e1;
+    }
+
+    /* Code Blocks with Copy */
+    .cmd-list {
+      display: grid;
+      gap: 14px;
+    }
+    .cmd-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .cmd-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .copy-btn {
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      color: #e0e7ff;
+      padding: 4px 10px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, color .15s;
+    }
+    .copy-btn:hover { background: var(--accent); color: #fff; }
+    pre {
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+
+    /* Shortcuts & Tips */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .tip-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .tip-box strong {
+      display: block;
+      font-size: 0.88rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .tip-box span {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    /* References */
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .ref-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform .15s, border-color .15s;
+    }
+    .ref-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--cyan);
+    }
+    .ref-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .ref-role {
+      font-size: 0.74rem;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .ref-desc {
+      font-size: 0.83rem;
+      color: var(--muted);
+    }
+
+    /* Legal Notice */
+    .notice-card {
+      background: linear-gradient(135deg, rgba(18, 23, 34, 0.95), rgba(25, 32, 48, 0.95));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .notice-card strong { color: var(--text); }
+    .notice-card a { color: var(--cyan); text-decoration: none; }
+    .notice-card a:hover { text-decoration: underline; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 26px 24px;
+      margin-top: 36px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+    footer a { color: #cbd5e1; text-decoration: none; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="brand"><span class="brand-dot"></span> senkron.tech</a>
+      <div class="nav-links">
+        <a href="/" data-tr="← Ana Sayfa" data-en="← Home">← Ana Sayfa</a>
+        <a href="#genel-bakis" data-tr="Genel Bakış" data-en="Overview">Genel Bakış</a>
+        <a href="#optimizasyonlar" data-tr="Optimizasyonlar" data-en="Tuning">Optimizasyonlar</a>
+        <a href="#kurulum" data-tr="Kurulum" data-en="Setup">Kurulum</a>
+        <a href="#referanslar" data-tr="Referanslar" data-en="References">Referanslar</a>
+        <button id="lang-toggle" type="button" class="lang-btn" aria-label="Switch language">TR / EN</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>Android 17 · Windows 11 WHPX · Mesa VirGL</span>
+      </div>
+      <h1>
+        <span data-tr="Googlebook OS (x86_64):" data-en="Googlebook OS (x86_64):">Googlebook OS (x86_64):</span><br />
+        <span class="gradient-text" data-tr="Windows 11 WHPX &amp; 1440p VirGL Optimizasyonu" data-en="Windows 11 WHPX &amp; 1440p VirGL Tuning">Windows 11 WHPX &amp; 1440p VirGL Optimizasyonu</span>
+      </h1>
+      <p data-tr="Resmi Lenovo Googlebook 15 ('ruby', Android 17) kurtarma imajını AMD Ryzen 7 7735HS ve NVIDIA GeForce RTX 4060 Laptop üzerinde Windows Hypervisor Platform (WHPX) + Mesa VirGL ile akıcı şekilde çalıştırma notları, gecikme teşhisi ve açık kaynak fork yamaları." data-en="Engineering notes, latency diagnostics, and open-source fork patches for running the official Lenovo Googlebook 15 ('ruby', Android 17) recovery image smoothly on an AMD Ryzen 7 7735HS + NVIDIA GeForce RTX 4060 Laptop using Windows Hypervisor Platform (WHPX) and Mesa VirGL.">
+        Resmi Lenovo Googlebook 15 ('ruby', Android 17) kurtarma imajını AMD Ryzen 7 7735HS ve NVIDIA GeForce RTX 4060 Laptop üzerinde Windows Hypervisor Platform (WHPX) + Mesa VirGL ile akıcı şekilde çalıştırma notları, gecikme teşhisi ve açık kaynak fork yamaları.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/osmanerkul/gbos-win-whpx" target="_blank" rel="noopener noreferrer" class="btn-primary" data-tr="GitHub Fork (osmanerkul/gbos-win-whpx) ↗" data-en="GitHub Fork (osmanerkul/gbos-win-whpx) ↗">GitHub Fork (osmanerkul/gbos-win-whpx) ↗</a>
+        <a href="https://github.com/ArtemPozharov/gbos-win-whpx" target="_blank" rel="noopener noreferrer" class="btn-secondary" data-tr="Upstream (ArtemPozharov/gbos-win-whpx) ↗" data-en="Upstream (ArtemPozharov/gbos-win-whpx) ↗">Upstream (ArtemPozharov/gbos-win-whpx) ↗</a>
+        <a href="#kurulum" class="btn-secondary" data-tr="⚙️ Kurulum &amp; Komutlar" data-en="⚙️ Setup &amp; Commands">⚙️ Kurulum &amp; Komutlar</a>
+        <a href="#referanslar" class="btn-secondary" data-tr="📚 Referanslar &amp; Ekosistem" data-en="📚 References &amp; Ecosystem">📚 Referanslar &amp; Ekosistem</a>
+      </div>
+    </header>
+
+    <!-- OVERVIEW & BENCHMARKS -->
+    <section id="genel-bakis">
+      <div class="section-head">
+        <h2 class="section-title" data-tr="Test Ortamı &amp; Doğrulanmış Sonuçlar" data-en="Test Environment &amp; Verified Results">Test Ortamı &amp; Doğrulanmış Sonuçlar</h2>
+        <span class="section-sub" data-tr="2560x1440 VirGL oturum günlüklerinden doğrudan ölçülen veriler" data-en="Directly observed metrics from 2560x1440 VirGL session logs">2560x1440 VirGL oturum günlüklerinden doğrudan ölçülen veriler</span>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec-card">
+          <div class="spec-label" data-tr="İşlemci &amp; ISA Katmanı" data-en="CPU &amp; ISA Emulation">İşlemci &amp; ISA Katmanı</div>
+          <div class="spec-value">AMD Ryzen 7 7735HS</div>
+          <div class="spec-note" data-tr="Zen 3+ (8C/16T) · avx_vnni_emu.ko (#UD tuzağı, 0 SIGILL)" data-en="Zen 3+ (8C/16T) · avx_vnni_emu.ko (#UD trap, 0 SIGILL)">Zen 3+ (8C/16T) · avx_vnni_emu.ko (#UD tuzağı, 0 SIGILL)</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label" data-tr="GPU &amp; MUX Profili" data-en="GPU &amp; MUX Profile">GPU &amp; MUX Profili</div>
+          <div class="spec-value">NVIDIA RTX 4060 Laptop</div>
+          <div class="spec-note" data-tr="G-Helper Ultimate MUX (gpu_mode: 2) · Mesa VirGL GLES 3.2" data-en="G-Helper Ultimate MUX (gpu_mode: 2) · Mesa VirGL GLES 3.2">G-Helper Ultimate MUX (gpu_mode: 2) · Mesa VirGL GLES 3.2</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label" data-tr="Hipervizör &amp; Emülatör" data-en="Hypervisor &amp; Emulator">Hipervizör &amp; Emülatör</div>
+          <div class="spec-value">Windows 11 WHPX · QEMU 11.1.0</div>
+          <div class="spec-note" data-tr="16 GiB RAM · 6 vCPU (2 çekirdek host render için serbest)" data-en="16 GiB RAM · 6 vCPUs (2 cores free for host render threads)">16 GiB RAM · 6 vCPU (2 çekirdek host render için serbest)</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-label" data-tr="Hedef İmge" data-en="Target Image">Hedef İmge</div>
+          <div class="spec-value">Lenovo Ruby (16452207)</div>
+          <div class="spec-note" data-tr="Android 17 · Linux 6.12.74 GKI · 2560x1440 SDL GL" data-en="Android 17 · Linux 6.12.74 GKI · 2560x1440 SDL GL">Android 17 · Linux 6.12.74 GKI · 2560x1440 SDL GL</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-tr="Metrik / Bileşen" data-en="Metric / Component">Metrik / Bileşen</th>
+              <th data-tr="Önce (Standart VirGL 1440p)" data-en="Before (Stock VirGL 1440p)">Önce (Standart VirGL 1440p)</th>
+              <th data-tr="Sonra (Recipe 6 + Smooth Başlatıcı)" data-en="After (Recipe 6 + Smooth Launcher)">Sonra (Recipe 6 + Smooth Başlatıcı)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-tr="Seri UART Log Hacmi (serial.log)" data-en="Serial UART Log Volume (serial.log)">Seri UART Log Hacmi (serial.log)</td>
+              <td><span class="badge-bad">28,688 lines (4.09 MB)</span></td>
+              <td><span class="badge-good" data-tr="503 lines (69.9 KB) — %98.2 azalma" data-en="503 lines (69.9 KB) — 98.2% reduction">503 lines (69.9 KB) — %98.2 azalma</span></td>
+            </tr>
+            <tr>
+              <td data-tr="SurfaceFlinger Kawase Bulanıklığı" data-en="SurfaceFlinger Kawase Blur">SurfaceFlinger Kawase Bulanıklığı</td>
+              <td><span class="badge-bad">Background Blurs Enabled (V2)</span></td>
+              <td><span class="badge-good">Disabling blur effects, they are not supported.</span></td>
+            </tr>
+            <tr>
+              <td data-tr="Giriş &amp; İmleç Sınırı" data-en="Input &amp; Cursor Clamp">Giriş &amp; İmleç Sınırı</td>
+              <td><span class="badge-bad">usb-mouse (xHCI) · 1920x1080 clamp</span></td>
+              <td><span class="badge-good">usb-kbd + virtio-mouse-pci (07.0) · 3840x2160 IDC</span></td>
+            </tr>
+            <tr>
+              <td data-tr="VirGL Hostmem, Disk &amp; Öncelik" data-en="VirGL Hostmem, Disk &amp; Priority">VirGL Hostmem, Disk &amp; Öncelik</td>
+              <td><span class="badge-bad">256 MiB hostmem · 8 vCPU · Normal</span></td>
+              <td><span class="badge-good">1024 MiB hostmem · 6 vCPU · writeback · ABOVE_NORMAL</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BOTTLENECKS & FIXES -->
+    <section id="optimizasyonlar">
+      <div class="section-head">
+        <h2 class="section-title" data-tr="Sıçramalı Gecikmenin 4 Kök Nedeni ve Çözümleri" data-en="4 Root Causes of Jumping Latency &amp; Fixes">Sıçramalı Gecikmenin 4 Kök Nedeni ve Çözümleri</h2>
+        <span class="section-sub" data-tr="Recipe 6 vendor yaması + düşük gecikmeli QEMU başlatıcı" data-en="Recipe 6 vendor overlay + low-latency QEMU launcher">Recipe 6 vendor yaması + düşük gecikmeli QEMU başlatıcı</span>
+      </div>
+
+      <div class="cards-grid">
+        <article class="card">
+          <span class="card-tag">VIRGL_RECIPE = 6 · Render</span>
+          <h3 data-tr="1. Tam Ekran Kawase Bulanıklığını Kapatma" data-en="1. Disabling Fullscreen Kawase Blurs">1. Tam Ekran Kawase Bulanıklığını Kapatma</h3>
+          <p data-tr="Stock vendor/build.prop VirGL modunda bile ro.surface_flinger.supports_background_blur=1 değerini açık bırakıyordu. 2560x1440 çözünürlükte çok geçişli blur kare sürelerini sıçratıyordu; Recipe 6 supports_background_blur=0, persist.sys.sf.disable_blurs=1 ve renderengine_gpu_stats=false uygular." data-en="Stock vendor/build.prop kept ro.surface_flinger.supports_background_blur=1 active in VirGL mode, causing heavy multi-pass GPU spikes at 2560x1440. Recipe 6 enforces supports_background_blur=0, persist.sys.sf.disable_blurs=1, and renderengine_gpu_stats=false.">
+            Stock vendor/build.prop VirGL modunda bile ro.surface_flinger.supports_background_blur=1 değerini açık bırakıyordu. 2560x1440 çözünürlükte çok geçişli blur kare sürelerini sıçratıyordu; Recipe 6 supports_background_blur=0, persist.sys.sf.disable_blurs=1 ve renderengine_gpu_stats=false uygular.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="card-tag">Kernel &amp; UART · VM-Exit</span>
+          <h3 data-tr="2. Çöken Servis Döngüleri &amp; UART Seli" data-en="2. Crash-Looping Daemons &amp; UART Flood">2. Çöken Servis Döngüleri &amp; UART Seli</h3>
+          <p data-tr="QEMU'da bulunmayan Lenovo/EC/kamera servisleri (suspend_diagnostics, suspend_notification_service, storage_metrics_service, charge_control, udsattestation, timberslide) her saniye yeniden başlarken earlycon=uart8250 ve loglevel=8 senkron WHPX VM çıkışlarına yol açıyordu. Servisler kapatıldı ve sessiz konsol varsayılan yapıldı." data-en="Missing Lenovo/EC/camera services (suspend_diagnostics, suspend_notification_service, storage_metrics_service, charge_control, udsattestation, timberslide) respawned every second while earlycon=uart8250 and loglevel=8 triggered synchronous WHPX I/O exits. Disabling them and defaulting to a quiet UART console cut logs by over 98%.">
+            QEMU'da bulunmayan Lenovo/EC/kamera servisleri (suspend_diagnostics, suspend_notification_service, storage_metrics_service, charge_control, udsattestation, timberslide) her saniye yeniden başlarken earlycon=uart8250 ve loglevel=8 senkron WHPX VM çıkışlarına yol açıyordu. Servisler kapatıldı ve sessiz konsol varsayılan yapıldı.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="card-tag">VirtIO Input · IDC</span>
+          <h3 data-tr="3. VirtIO PCI Fare &amp; 1080p Sınırını Kaldırma" data-en="3. VirtIO PCI Mouse &amp; Removing 1080p Clamp">3. VirtIO PCI Fare &amp; 1080p Sınırını Kaldırma</h3>
+          <p data-tr="Emüle USB fare yerine doğrudan PCI virtio-mouse-pci (addr=07.0) eklendi ve GenericMouse.idc içindeki cursor.maxX=1920 / maxY=1080 sınırı 3840x2160 değerine yükseltildi. Android masaüstü yazım uyumluluğu için güvenilir usb-kbd korundu; --input tablet seçeneği eklendi." data-en="Replaced xHCI USB mouse polling with direct PCI virtio-mouse-pci (addr=07.0) and raised GenericMouse.idc cursor bounds from 1920x1080 to 3840x2160. Kept reliable usb-kbd for desktop typing and added --input tablet for capture-free pointer mode.">
+            Emüle USB fare yerine doğrudan PCI virtio-mouse-pci (addr=07.0) eklendi ve GenericMouse.idc içindeki cursor.maxX=1920 / maxY=1080 sınırı 3840x2160 değerine yükseltildi. Android masaüstü yazım uyumluluğu için güvenilir usb-kbd korundu; --input tablet seçeneği eklendi.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="card-tag">VirGL · WHPX Scheduler</span>
+          <h3 data-tr="4. 1 GiB Hostmem, Disk Cache &amp; 6 vCPU Dengesi" data-en="4. 1 GiB Hostmem, Disk Cache &amp; 6-vCPU Headroom">4. 1 GiB Hostmem, Disk Cache &amp; 6 vCPU Dengesi</h3>
+          <p data-tr="virtio-gpu-gl-pci max_hostmem değeri 256 MiB'dan 1024 MiB'a çıkarıldı, QCOW2 diske cache=writeback,discard=unmap eklendi ve Windows'ta ABOVE_NORMAL_PRIORITY_CLASS etkinleştirildi. 8 çekirdekli işlemcide 6 vCPU kullanmak QEMU'nun host VirGL/SDL iş parçacıklarına yer bırakır." data-en="Raised virtio-gpu-gl-pci max_hostmem from 256 MiB to 1024 MiB, enabled QCOW2 cache=writeback,discard=unmap, and set ABOVE_NORMAL_PRIORITY_CLASS on Windows. Assigning 6 vCPUs on an 8-core Ryzen leaves dedicated CPU headroom for QEMU's host VirGL/SDL threads.">
+            virtio-gpu-gl-pci max_hostmem değeri 256 MiB'dan 1024 MiB'a çıkarıldı, QCOW2 diske cache=writeback,discard=unmap eklendi ve Windows'ta ABOVE_NORMAL_PRIORITY_CLASS etkinleştirildi. 8 çekirdekli işlemcide 6 vCPU kullanmak QEMU'nun host VirGL/SDL iş parçacıklarına yer bırakır.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- SETUP & COMMANDS -->
+    <section id="kurulum">
+      <div class="section-head">
+        <h2 class="section-title" data-tr="Kurulum &amp; Başlatma Komutları" data-en="Setup &amp; Launch Commands">Kurulum &amp; Başlatma Komutları</h2>
+        <span class="section-sub" data-tr="Önce WHPX ve WSL Ubuntu etkinleştirilmiş olmalıdır" data-en="Requires Windows Hypervisor Platform (WHPX) and WSL Ubuntu">Önce WHPX ve WSL Ubuntu etkinleştirilmiş olmalıdır</span>
+      </div>
+
+      <div class="cmd-list">
+        <div class="cmd-box">
+          <div class="cmd-head">
+            <span data-tr="1. İlk Kurulum (Kurtarma İmajını İndir + VirGL Katmanını Derle)" data-en="1. First-Time Setup (Download Recovery + Build VirGL Overlay)">1. İlk Kurulum (Kurtarma İmajını İndir + VirGL Katmanını Derle)</span>
+            <button type="button" class="copy-btn" data-copy-target="cmd-1" data-tr="Kopyala" data-en="Copy">Kopyala</button>
+          </div>
+          <pre id="cmd-1">powershell -ExecutionPolicy Bypass -File .\install.ps1
+python scripts\build_vendor_virgl.py</pre>
+        </div>
+
+        <div class="cmd-box">
+          <div class="cmd-head">
+            <span data-tr="2. Akıcı 1440p VirGL Başlatma (Önerilen)" data-en="2. Smooth 1440p VirGL Launch (Recommended)">2. Akıcı 1440p VirGL Başlatma (Önerilen)</span>
+            <button type="button" class="copy-btn" data-copy-target="cmd-2" data-tr="Kopyala" data-en="Copy">Kopyala</button>
+          </div>
+          <pre id="cmd-2">.\Start-Googlebook-Smooth.bat --fullscreen</pre>
+        </div>
+
+        <div class="cmd-box">
+          <div class="cmd-head">
+            <span data-tr="3. İmleç Yakalamasız Mod &amp; ADB Bağlantısı" data-en="3. Capture-Free Pointer Mode &amp; ADB Connection">3. İmleç Yakalamasız Mod &amp; ADB Bağlantısı</span>
+            <button type="button" class="copy-btn" data-copy-target="cmd-3" data-tr="Kopyala" data-en="Copy">Kopyala</button>
+          </div>
+          <pre id="cmd-3">.\Start-Googlebook-Smooth.bat --input tablet --fullscreen
+adb connect localhost:5555</pre>
+        </div>
+      </div>
+
+      <div class="tips-grid">
+        <div class="tip-box">
+          <strong>Ctrl + Alt + G</strong>
+          <span data-tr="Pencere içi fare yakalamayı serbest bırakır" data-en="Release captured mouse cursor from QEMU window">Pencere içi fare yakalamayı serbest bırakır</span>
+        </div>
+        <div class="tip-box">
+          <strong>Ctrl + Alt + F</strong>
+          <span data-tr="Tam ekran / pencere modu arasında geçiş yapar" data-en="Toggle fullscreen / windowed display mode">Tam ekran / pencere modu arasında geçiş yapar</span>
+        </div>
+        <div class="tip-box">
+          <strong data-tr="60 Hz / 120 Hz İpucu" data-en="60 Hz / 120 Hz Cadence Tip">60 Hz / 120 Hz İpucu</strong>
+          <span data-tr="144 Hz ekranlarda 60 FPS Android kare temposu uyumsuzluğu hissedilirse 60/120 Hz veya 1080p deneyin" data-en="On 144 Hz panels, switching display refresh to 60/120 Hz or 1080p avoids 60-in-144 judder">144 Hz ekranlarda 60 FPS Android kare temposu uyumsuzluğu hissedilirse 60/120 Hz veya 1080p deneyin</span>
+        </div>
+        <div class="tip-box">
+          <strong data-tr="Hesap Güvenliği" data-en="Account Safety">Hesap Güvenliği</strong>
+          <span data-tr="Test anahtarlı sanal makinelerde birincil Google hesabınızla giriş yapmayın" data-en="Do not sign into your primary Google account inside experimental/test-key VMs">Test anahtarlı sanal makinelerde birincil Google hesabınızla giriş yapmayın</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFERENCES & ECOSYSTEM -->
+    <section id="referanslar">
+      <div class="section-head">
+        <h2 class="section-title" data-tr="Referanslar &amp; Açık Kaynak Ekosistemi" data-en="References &amp; Open-Source Ecosystem">Referanslar &amp; Açık Kaynak Ekosistemi</h2>
+        <span class="section-sub" data-tr="Bu çalışmanın dayandığı projeler ve ilgili x86_64 topluluk portları" data-en="Upstream foundations and related x86_64 community projects">Bu çalışmanın dayandığı projeler ve ilgili x86_64 topluluk portları</span>
+      </div>
+
+      <div class="ref-grid">
+        <a href="https://github.com/ArtemPozharov/gbos-win-whpx" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>ArtemPozharov / gbos-win-whpx</span><span>↗</span></div>
+          <div class="ref-role" data-tr="Doğrudan Upstream · Apache-2.0" data-en="Direct Upstream · Apache-2.0">Doğrudan Upstream · Apache-2.0</div>
+          <div class="ref-desc" data-tr="Windows WHPX başlatıcısı, avx_vnni_emu.ko #UD emülatörü, SELinux execmem, virtio-gpu renk yaması ve Mesa VirGL (PR #2, @kevin-smets)." data-en="Windows WHPX launcher, avx_vnni_emu.ko #UD emulator, SELinux execmem, virtio-gpu color fix, and Mesa VirGL (PR #2, @kevin-smets).">Windows WHPX başlatıcısı, avx_vnni_emu.ko #UD emülatörü, SELinux execmem, virtio-gpu renk yaması ve Mesa VirGL (PR #2, @kevin-smets).</div>
+        </a>
+
+        <a href="https://github.com/danbyumagic/gbrunch" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>danbyumagic / gbrunch</span><span>↗</span></div>
+          <div class="ref-role" data-tr="x86 Kurtarma &amp; GPT Araştırması" data-en="x86 Recovery &amp; GPT Research">x86 Kurtarma &amp; GPT Araştırması</div>
+          <div class="ref-desc" data-tr="Orijinal x86_64 Googlebook kurtarma analizi, GPT bölüm düzeni ve Cuttlefish uyumluluk katmanı." data-en="Original x86_64 Googlebook recovery analysis, GPT partition layout, and Cuttlefish component grafting.">Orijinal x86_64 Googlebook kurtarma analizi, GPT bölüm düzeni ve Cuttlefish uyumluluk katmanı.</div>
+        </a>
+
+        <a href="https://github.com/skylartaylor/gbos-vm" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>skylartaylor / gbos-vm</span><span>↗</span></div>
+          <div class="ref-role" data-tr="Vendor Değiştirme Modeli (Apple Silicon)" data-en="Vendor Replacement Model (Apple Silicon)">Vendor Değiştirme Modeli (Apple Silicon)</div>
+          <div class="ref-desc" data-tr="Cuttlefish tabanlı vendor değiştirme yaklaşımı ve SetupWizard atlama betikleri." data-en="Cuttlefish-based vendor replacement architecture and SetupWizard bypass scripts.">Cuttlefish tabanlı vendor değiştirme yaklaşımı ve SetupWizard atlama betikleri.</div>
+        </a>
+
+        <a href="https://github.com/alesimula/project-churro" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>alesimula / project-churro</span><span>↗</span></div>
+          <div class="ref-role" data-tr="Bare-Metal x86_64 USB Dönüştürücü" data-en="Bare-Metal x86_64 USB Converter">Bare-Metal x86_64 USB Dönüştürücü</div>
+          <div class="ref-desc" data-tr="Resmi kurtarma imajlarını genel x86_64 UEFI PC'ler için boot edilebilir USB'ye dönüştürür ve SPI/TPM araçlarını güvenli şekilde devre dışı bırakır." data-en="Converts official recovery images into bootable generic x86_64 UEFI USB drives while stripping unsafe SPI-flash/TPM updaters.">Resmi kurtarma imajlarını genel x86_64 UEFI PC'ler için boot edilebilir USB'ye dönüştürür ve SPI/TPM araçlarını güvenli şekilde devre dışı bırakır.</div>
+        </a>
+
+        <a href="https://github.com/linuxkid473/gbos-x86" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>linuxkid473 / gbos-x86</span><span>↗</span></div>
+          <div class="ref-role" data-tr="Bare-Metal Intel &amp; Deneysel AMD" data-en="Bare-Metal Intel &amp; Experimental AMD">Bare-Metal Intel &amp; Deneysel AMD</div>
+          <div class="ref-desc" data-tr="Standart Intel ve deneysel AMD Ryzen dizüstüler için yerel kurtarma yamalı canlı/kurulum USB oluşturucusu." data-en="Local live/installer USB builder with compatibility patches for standard Intel and experimental AMD Ryzen laptops.">Standart Intel ve deneysel AMD Ryzen dizüstüler için yerel kurtarma yamalı canlı/kurulum USB oluşturucusu.</div>
+        </a>
+
+        <a href="https://github.com/Mhsbrian/OpenBook" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>Mhsbrian / OpenBook</span><span>↗</span></div>
+          <div class="ref-role" data-tr="AOSP 17 Açık Kaynak Ryzen + RTX Portu" data-en="Open-Source AOSP 17 Ryzen + RTX Port">AOSP 17 Açık Kaynak Ryzen + RTX Portu</div>
+          <div class="ref-desc" data-tr="ASUS Ryzen + RTX dizüstülerde Mesa RADV ve NVIDIA açık çekirdek modülü (D3cold) ile doğrudan AOSP 17 masaüstü deneyimi." data-en="Pure AOSP 17 desktop build targeting ASUS AMD Ryzen + RTX laptops using Mesa RADV and NVIDIA open kernel modules (D3cold).">ASUS Ryzen + RTX dizüstülerde Mesa RADV ve NVIDIA açık çekirdek modülü (D3cold) ile doğrudan AOSP 17 masaüstü deneyimi.</div>
+        </a>
+
+        <a href="https://source.android.com/docs/devices/cuttlefish" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>Android Cuttlefish</span><span>↗</span></div>
+          <div class="ref-role" data-tr="Sanal HAL Altyapısı" data-en="Virtual Hardware HALs">Sanal HAL Altyapısı</div>
+          <div class="ref-desc" data-tr="Google'ın sanal Android donanım HAL bileşenleri (composer3, minigbm, ağ ve giriş katmanları)." data-en="Google's virtual Android device HAL implementations (composer3, minigbm, networking, and input).">Google'ın sanal Android donanım HAL bileşenleri (composer3, minigbm, ağ ve giriş katmanları).</div>
+        </a>
+
+        <a href="https://www.qemu.org/" target="_blank" rel="noopener noreferrer" class="ref-card">
+          <div class="ref-title"><span>The QEMU Project</span><span>↗</span></div>
+          <div class="ref-role" data-tr="WHPX &amp; VirtIO-GPU VMM" data-en="WHPX &amp; VirtIO-GPU VMM">WHPX &amp; VirtIO-GPU VMM</div>
+          <div class="ref-desc" data-tr="Windows Hypervisor Platform desteği, virtio-gpu-gl-pci ve VirtIO PCI giriş/blok aygıtları." data-en="Windows Hypervisor Platform acceleration, virtio-gpu-gl-pci, and VirtIO PCI input/block devices.">Windows Hypervisor Platform desteği, virtio-gpu-gl-pci ve VirtIO PCI giriş/blok aygıtları.</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- LICENSE / DISCLAIMER -->
+    <section>
+      <div class="notice-card">
+        <strong data-tr="Lisans &amp; Yasal Uyarı:" data-en="License &amp; Disclaimer:">Lisans &amp; Yasal Uyarı:</strong>
+        <span data-tr="Bu dokümantasyon ve ilgili yamalar Apache License 2.0 kapsamındaki ArtemPozharov/gbos-win-whpx deposu temel alınarak hazırlanmış bağımsız bir araştırmadır. Bu sitede veya ilgili git dalında Google veya Lenovo'ya ait tescilli ikili dosyalar, kurtarma imajları ya da firmware barındırılmaz; tüm betikler resmi kurtarma imajını kullanıcının kendi makinesinde yerel olarak indirir ve yamalar. Google, Android ve Googlebook Google LLC'nin ticari markalarıdır." data-en="This documentation and the accompanying patches are independent research derived from ArtemPozharov/gbos-win-whpx under the Apache License 2.0. No proprietary binaries, recovery images, or firmware from Google LLC or Lenovo are hosted here or in the git fork; all setup scripts fetch and patch official images locally on the user's own machine. Google, Android, and Googlebook are trademarks of Google LLC.">
+          Bu dokümantasyon ve ilgili yamalar Apache License 2.0 kapsamındaki ArtemPozharov/gbos-win-whpx deposu temel alınarak hazırlanmış bağımsız bir araştırmadır. Bu sitede veya ilgili git dalında Google veya Lenovo'ya ait tescilli ikili dosyalar, kurtarma imajları ya da firmware barındırılmaz; tüm betikler resmi kurtarma imajını kullanıcının kendi makinesinde yerel olarak indirir ve yamalar. Google, Android ve Googlebook Google LLC'nin ticari markalarıdır.
+        </span>
+        <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">Apache-2.0 ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 <a href="/">senkron.tech</a> — Osman Erkul • <span data-tr="Apache 2.0 türev çalışma ve teknik referanslar." data-en="Apache 2.0 derivative work &amp; technical references.">Apache 2.0 türev çalışma ve teknik referanslar.</span>
+  </footer>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'senkront_gbos_lang';
+      var toggleBtn = document.getElementById('lang-toggle');
+      var nodes = document.querySelectorAll('[data-tr][data-en]');
+
+      function applyLang(lang) {
+        var norm = lang === 'en' ? 'en' : 'tr';
+        document.documentElement.lang = norm;
+        nodes.forEach(function (el) {
+          el.textContent = el.getAttribute(norm === 'en' ? 'data-en' : 'data-tr');
+        });
+        toggleBtn.textContent = norm === 'en' ? 'EN · Türkçe' : 'TR · English';
+        try {
+          localStorage.setItem(STORAGE_KEY, norm);
+        } catch (e) {}
+      }
+
+      var saved = 'tr';
+      try {
+        saved = localStorage.getItem(STORAGE_KEY) || 'tr';
+      } catch (e) {}
+      applyLang(saved);
+
+      toggleBtn.addEventListener('click', function () {
+        applyLang(document.documentElement.lang === 'en' ? 'tr' : 'en');
+      });
+
+      document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var target = document.getElementById(btn.getAttribute('data-copy-target'));
+          if (!target || !navigator.clipboard) return;
+          navigator.clipboard.writeText(target.textContent).then(function () {
+            var isEn = document.documentElement.lang === 'en';
+            btn.textContent = isEn ? 'Copied!' : 'Kopyalandı!';
+            setTimeout(function () {
+              btn.textContent = btn.getAttribute(isEn ? 'data-en' : 'data-tr');
+            }, 1400);
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
