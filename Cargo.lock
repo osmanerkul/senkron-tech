@@ -1117,25 +1117,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oyun-bulucu"
-version = "0.1.0"
-dependencies = [
- "axum",
- "chrono",
- "futures",
- "regex",
- "reqwest",
- "scraper",
- "serde",
- "serde_json",
- "tokio",
- "tower-http 0.5.2",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1571,6 +1552,25 @@ dependencies = [
  "precomputed-hash",
  "servo_arc",
  "smallvec",
+]
+
+[[package]]
+name = "senkron-tech"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "futures",
+ "regex",
+ "reqwest",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
 ]
 
 [[package]]

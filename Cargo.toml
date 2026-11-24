@@ -1,8 +1,8 @@
 [package]
-name = "oyun-bulucu"
+name = "senkron-tech"
 version = "0.1.0"
 edition = "2021"
-description = "Çok kaynaklı Rust oyun bulucu — Steam, Epic, App Store, Google Play, GOG, itch.io ve kıyı kenar haber siteleri"
+description = "senkron.tech — Rust portföy ve canlı web araçları (CineScout, Oyun Bulucu, Outside Lens, AI Promo Radar, CAD Studio, Rainmeter Studio)"
 
 [dependencies]
 axum = "0.7"

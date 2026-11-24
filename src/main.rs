@@ -1,16 +1,22 @@
 mod ai_promo_radar;
 mod models;
+mod movie_finder;
 mod outside_lens;
 mod sources;
 
 use ai_promo_radar::{AiPromoCache, AiPromoResponse};
 use axum::{
     extract::{Query, State},
-    response::Html,
+    http::StatusCode,
+    response::{Html, Redirect},
     routing::{get, post},
     Json, Router,
 };
 use models::{SearchQuery, SearchResponse, SimilarRequest, SimilarResponse};
+use movie_finder::{
+    MovieDetailQuery, MovieDetailResponse, MovieFinderCache, MovieSearchRequest,
+    MovieSearchResponse,
+};
 use outside_lens::{OutsideLensCache, OutsideLensResponse};
 use reqwest::Client;
 use serde::Deserialize;
@@ -26,12 +32,14 @@ const AI_PROMO_RADAR_HTML: &str = include_str!("../static/ai_promo_radar.html");
 const RAINMETER_STUDIO_HTML: &str = include_str!("../static/rainmeter_studio.html");
 const GOOGLEBOOK_OS_HTML: &str = include_str!("../static/googlebook_os.html");
 const ORNATA_LIGHT_HTML: &str = include_str!("../static/ornata_light.html");
+const CINESCOUT_HTML: &str = include_str!("../static/cinescout.html");
 
 #[derive(Clone)]
 struct AppState {
     client: Client,
     outside_lens_cache: OutsideLensCache,
     ai_promo_cache: AiPromoCache,
+    movie_finder_cache: MovieFinderCache,
 }
 
 #[derive(Deserialize)]
@@ -44,7 +52,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "oyun_bulucu=info".into()),
+                .unwrap_or_else(|_| "senkron_tech=info".into()),
         )
         .init();
 
@@ -54,7 +62,7 @@ async fn main() {
         .build()
         .expect("HTTP istemcisi oluşturulamadı");
 
-    // Optional CLI mode: `oyun-bulucu --cli <arama>`
+    // Optional CLI mode: `senkron-tech --cli <arama>`
     let args: Vec<String> = std::env::args().collect();
     if args.len() >= 2 && args[1] == "--cli" {
         let query_str = args[2..].join(" ");
@@ -110,12 +118,17 @@ async fn main() {
         client,
         outside_lens_cache: OutsideLensCache::new(),
         ai_promo_cache: AiPromoCache::new(),
+        movie_finder_cache: MovieFinderCache::new(),
     };
 
     let app = Router::new()
         .route("/", get(serve_portfolio))
         .route("/oyun-bulucu", get(serve_oyun_bulucu))
         .route("/oyun-bulucu/", get(serve_oyun_bulucu))
+        .route("/cinescout", get(serve_cinescout))
+        .route("/cinescout/", get(serve_cinescout))
+        .route("/movie-finder", get(redirect_movie_finder))
+        .route("/movie-finder/", get(redirect_movie_finder))
         .route("/cad-studio", get(serve_cad_studio))
         .route("/cad-studio/", get(serve_cad_studio))
         .route("/outside-lens", get(serve_outside_lens))
@@ -130,6 +143,8 @@ async fn main() {
         .route("/ornata-light/", get(serve_ornata_light))
         .route("/api/search", post(api_search))
         .route("/api/similar", post(api_similar))
+        .route("/api/movies/search", post(api_movie_search))
+        .route("/api/movies/detail", get(api_movie_detail))
         .route("/api/outside-lens", get(api_outside_lens))
         .route("/api/ai-promo-radar", get(api_ai_promo_radar))
         .route("/api/health", get(api_health))
@@ -144,9 +159,10 @@ async fn main() {
 
     let addr = SocketAddr::from((ip, port));
     println!("====================================================");
-    println!("  🌐 SENKRONT PORTFÖY & OYUN BULUCU (Rust) başlatıldı!");
+    println!("  🌐 SENKRON.TECH (Rust) başlatıldı!");
     println!("  🏠 Ana Sayfa:      http://{}", addr);
     println!("  🎮 Oyun Bulucu:    http://{}/oyun-bulucu/", addr);
+    println!("  🎬 CineScout:      http://{}/cinescout/", addr);
     println!("  🧊 CAD Studio:     http://{}/cad-studio/", addr);
     println!("  🌐 Outside Lens:   http://{}/outside-lens/", addr);
     println!("  📡 AI Promo Radar: http://{}/ai-promo-radar/", addr);
@@ -190,6 +206,42 @@ async fn serve_rainmeter_studio() -> Html<&'static str> {
 
 async fn serve_googlebook_os() -> Html<&'static str> {
     Html(GOOGLEBOOK_OS_HTML)
+}
+
+async fn serve_cinescout() -> Html<&'static str> {
+    Html(CINESCOUT_HTML)
+}
+
+async fn redirect_movie_finder() -> Redirect {
+    Redirect::permanent("/cinescout/")
+}
+
+async fn api_movie_search(
+    State(state): State<AppState>,
+    Json(payload): Json<MovieSearchRequest>,
+) -> Json<MovieSearchResponse> {
+    let resp = state
+        .movie_finder_cache
+        .search(&state.client, &payload)
+        .await;
+    Json(resp)
+}
+
+async fn api_movie_detail(
+    State(state): State<AppState>,
+    Query(params): Query<MovieDetailQuery>,
+) -> Result<Json<MovieDetailResponse>, (StatusCode, Json<serde_json::Value>)> {
+    state
+        .movie_finder_cache
+        .detail(&state.client, &params)
+        .await
+        .map(Json)
+        .map_err(|err| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": err })),
+            )
+        })
 }
 
 async fn serve_ornata_light() -> Html<&'static str> {
