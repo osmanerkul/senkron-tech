@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CAD Case Studio — Mac mini M4 + Acasis M001 &amp; Hagibis MC25 Pro</title>
   <style>
     :root {
+      color-scheme: dark;
       --bg-0: #0b0e14;
       --bg-1: #121722;
       --bg-2: #192030;
@@ -29,6 +30,10 @@
       padding: 0;
     }
 
+    html, body {
+      max-width: 100%;
+    }
+
     body {
       background: var(--bg-0);
       color: var(--text-0);
@@ -36,7 +41,7 @@
       height: 100vh;
       overflow: hidden;
       display: grid;
-      grid-template-rows: 54px 1fr;
+      grid-template-rows: auto 1fr;
       user-select: none;
     }
 
@@ -44,11 +49,13 @@
     header {
       background: var(--bg-1);
       border-bottom: 1px solid var(--border);
-      padding: 0 18px;
+      min-height: 54px;
+      padding: 8px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px 16px;
+      flex-wrap: wrap;
       z-index: 20;
     }
 
@@ -134,7 +141,8 @@
     .workspace {
       display: grid;
       grid-template-columns: 360px 1fr 355px;
-      height: calc(100vh - 54px);
+      height: 100%;
+      min-height: 0;
       overflow: hidden;
     }
 
@@ -146,6 +154,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      min-width: 0;
     }
 
     .panel-right {
@@ -153,9 +162,37 @@
       border-left: 1px solid var(--border);
     }
 
+    .mobile-panel-tabs {
+      display: none;
+    }
+
+    .mobile-tab-btn {
+      justify-content: center;
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+      background: var(--bg-2);
+      color: var(--text-1);
+      border: 1px solid var(--border);
+    }
+
+    .mobile-tab-btn.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .help-tip-mobile {
+      display: none;
+    }
+
     @media (max-width: 1024px) {
       body {
+        display: flex !important;
+        flex-direction: column;
+        grid-template-rows: none !important;
         height: auto !important;
+        min-height: 100dvh;
         overflow-y: auto !important;
         overflow-x: hidden !important;
       }
@@ -163,34 +200,201 @@
         height: auto !important;
         padding: 10px 12px !important;
         flex-wrap: wrap;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .brand {
+        min-width: 0;
+        flex: 1 1 auto;
         gap: 10px;
+      }
+      .brand h1 {
+        font-size: 14px;
+        line-height: 1.25;
       }
       .header-actions {
         width: 100%;
         justify-content: flex-start;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding-bottom: 2px;
+      }
+      .header-actions > * {
+        flex-shrink: 0;
+        white-space: nowrap;
       }
       .workspace {
+        display: flex !important;
+        flex-direction: column;
         grid-template-columns: 1fr !important;
         height: auto !important;
         overflow: visible !important;
+        width: 100%;
       }
-      .viewport-wrap, .viewport, main {
-        order: -1;
-        min-height: 52vh !important;
-        height: 52vh !important;
+      .viewport-area {
+        order: -2;
         width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: flex;
+        flex-direction: column;
+        overflow: visible !important;
+      }
+      .viewport-top-stack,
+      .viewport-bottom-stack {
+        display: contents !important;
+      }
+      .viewport-toolbar {
+        order: 1;
+        position: static !important;
+        pointer-events: auto !important;
+        padding: 8px 10px !important;
+        gap: 6px !important;
+        background: var(--bg-1);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .viewport-toolbar::-webkit-scrollbar,
+      .header-actions::-webkit-scrollbar {
+        display: none;
+      }
+      .header-actions {
+        scrollbar-width: none;
+      }
+      .viewport-toolbar .toolbar-group {
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+        padding: 4px;
+        gap: 4px;
+      }
+      #canvas-container {
+        order: 2;
+        width: 100% !important;
+        height: clamp(290px, 50dvh, 520px) !important;
+        min-height: 290px !important;
+        position: relative;
+        flex-shrink: 0;
+      }
+      #blueprint-container {
+        order: 2;
+        padding: 12px !important;
+        height: auto !important;
+        min-height: 300px;
+        width: 100%;
+      }
+      .selection-hud {
+        order: 3;
+        position: static !important;
+        width: 100%;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: 1px solid rgba(56, 189, 248, 0.4);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px !important;
+        gap: 8px !important;
+        box-shadow: none !important;
+      }
+      .explode-bar {
+        order: 4;
+        position: static !important;
+        transform: none !important;
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-width: 0 !important;
+        width: 100%;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        padding: 8px 12px !important;
+      }
+      .legend-overlay {
+        order: 5;
+        position: static !important;
+        width: 100%;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 6px 12px !important;
+        padding: 7px 12px !important;
+        font-size: 10.5px !important;
+        pointer-events: auto !important;
+      }
+      .viewport-area.is-2d-mode .explode-bar,
+      .viewport-area.is-2d-mode .legend-overlay {
+        display: none !important;
+      }
+      .mobile-panel-tabs {
+        order: -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--bg-1);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 15;
+      }
+      .workspace[data-mobile-tab="left"] #panel-right,
+      .workspace[data-mobile-tab="right"] #panel-left {
+        display: none !important;
       }
       .panel, .panel-right {
         border-right: none;
         border-left: none;
-        border-top: 1px solid var(--border);
+        border-top: none;
         overflow-y: visible;
         width: 100%;
         min-width: 0 !important;
+        padding: 12px;
       }
-      .modal-card, .dialog, .hud-card {
-        min-width: 0 !important;
-        max-width: 94vw !important;
+      .card, .field {
+        min-width: 0;
+      }
+      .context-menu {
+        max-width: calc(100vw - 16px);
+        max-height: calc(100dvh - 16px);
+        overflow-y: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .brand p {
+        display: none;
+      }
+      .toolbar-group-wheel,
+      .toolbar-label,
+      .legend-overlay,
+      .help-tip-desktop {
+        display: none !important;
+      }
+      .help-tip-mobile {
+        display: block;
+      }
+      .control-grid.three {
+        gap: 6px;
+      }
+      .field label {
+        font-size: 10.5px;
+      }
+      input[type="number"], select {
+        padding: 7px 6px;
+        font-size: 13px;
+        min-width: 0;
+      }
+      .selection-hud .part-meta {
+        font-size: 10.5px;
+        line-height: 1.3;
       }
     }
 
@@ -339,19 +543,30 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
+      min-height: 0;
     }
 
-    .viewport-toolbar {
+    .viewport-top-stack {
       position: absolute;
       top: 12px;
       left: 12px;
       right: 12px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: flex-start;
       gap: 8px;
       pointer-events: none;
       z-index: 10;
+    }
+
+    .viewport-toolbar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      pointer-events: none;
       flex-wrap: wrap;
     }
 
@@ -396,7 +611,7 @@
       width: 100%;
       height: 100%;
       display: none;
-      padding: 72px 20px 20px 20px;
+      padding: 135px 20px 24px 20px;
       overflow: auto;
       background:
         linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
@@ -407,15 +622,12 @@
 
     /* Interactive Selection HUD Banner */
     .selection-hud {
-      position: absolute;
-      top: 62px;
-      left: 12px;
+      max-width: 100%;
       background: rgba(18, 23, 34, 0.92);
       backdrop-filter: blur(8px);
       border: 1px solid var(--accent);
       border-radius: 8px;
       padding: 8px 12px;
-      z-index: 10;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -510,21 +722,35 @@
       margin: 4px 0;
     }
 
-    .explode-bar {
+    .viewport-bottom-stack {
       position: absolute;
       bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .viewport-area.is-2d-mode .viewport-bottom-stack {
+      display: none;
+    }
+
+    .explode-bar {
       background: rgba(18, 23, 34, 0.92);
       backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 8px 18px;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      z-index: 10;
-      min-width: 380px;
+      flex: 0 1 360px;
+      min-width: 260px;
       pointer-events: auto;
     }
 
@@ -536,9 +762,6 @@
     }
 
     .legend-overlay {
-      position: absolute;
-      bottom: 14px;
-      left: 14px;
       background: rgba(18, 23, 34, 0.88);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -547,7 +770,6 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      z-index: 9;
       pointer-events: none;
     }
 
@@ -723,14 +945,22 @@
     </button>
   </div>
 
-  <div class="workspace">
+  <div class="workspace" id="workspace" data-mobile-tab="left">
+    <div class="mobile-panel-tabs" id="mobile-panel-tabs" role="tablist" aria-label="Studio Panels">
+      <button type="button" class="mobile-tab-btn active" data-panel="left" role="tab" aria-selected="true">⚙ Dimensions &amp; Parts</button>
+      <button type="button" class="mobile-tab-btn" data-panel="right" role="tab" aria-selected="false">📐 Inspector &amp; Export</button>
+    </div>
+
     <!-- LEFT PANEL: DIMENSIONS & GEOMETRY -->
-    <aside class="panel">
-      <div class="help-tip">
+    <aside class="panel" id="panel-left">
+      <div class="help-tip help-tip-desktop">
         <strong>Mouse &amp; Right-Click Controls:</strong><br/>
         • <strong>Right-Click any part or empty space</strong>: Copy, Paste Here, Duplicate, Rotate 90°/45°, Ungroup/Group Screw Lugs, or Delete!<br/>
         • <strong>Drag Screw Lugs One-by-One</strong>: Every amber screw-holed lug is ungrouped so you can grab and drag each one individually (hold <code>Shift</code> to drag up/down vertically).<br/>
         • <strong>Mouse Wheel over any part</strong>: Enlarge / shrink that specific screw lug, pocket, or shell!
+      </div>
+      <div class="help-tip help-tip-mobile">
+        <strong>Touch Controls:</strong> 1-finger drag moves selected parts (or switch to <em>Orbit Only</em> to rotate). Pinch with 2 fingers to zoom. Use <em>− Smaller / + Larger</em> under the 3D view to resize parts.
       </div>
 
       <!-- Layout Preset -->
@@ -932,81 +1162,85 @@
     </aside>
 
     <!-- CENTER PANEL: 3D VIEWPORT & 2D BLUEPRINT -->
-    <main class="viewport-area">
-      <div class="viewport-toolbar">
-        <div class="toolbar-group">
-          <button id="view-3d" class="active">3D Interactive CAD</button>
-          <button id="view-2d">2D Drill Blueprint</button>
+    <main class="viewport-area" id="viewport-area">
+      <div class="viewport-top-stack">
+        <div class="viewport-toolbar">
+          <div class="toolbar-group toolbar-group-view">
+            <button id="view-3d" class="active">3D Interactive CAD</button>
+            <button id="view-2d">2D Drill Blueprint</button>
+          </div>
+
+          <div class="toolbar-group toolbar-group-mode">
+            <span class="toolbar-label">Left-Drag:</span>
+            <button id="mode-drag-part" class="active" title="Click and drag any part or individual screw lug to move it">Move Parts</button>
+            <button id="mode-gizmo-translate" title="Show 3D XYZ Move Arrows on selected part">XYZ Gizmo</button>
+            <button id="mode-gizmo-scale" title="Show 3D XYZ Scale Handles on selected part">Scale Gizmo</button>
+            <button id="mode-orbit-only" title="Left-click drag orbits camera only">Orbit Only</button>
+          </div>
+
+          <div class="toolbar-group toolbar-group-wheel">
+            <span class="toolbar-label">Wheel:</span>
+            <button id="wheel-smart" class="active" title="Scroll wheel over a part to enlarge/shrink it; scroll on background to zoom camera">Resize Part / Zoom BG</button>
+            <button id="wheel-resize-selected" title="Scroll wheel always enlarges/shrinks the currently selected part">Always Resize Part</button>
+            <button id="wheel-zoom-only" title="Scroll wheel always zooms camera in/out">Camera Zoom Only</button>
+          </div>
+
+          <div class="toolbar-group toolbar-group-cam">
+            <button id="cam-zoom-in" title="Zoom Camera In">🔍+</button>
+            <button id="cam-zoom-out" title="Zoom Camera Out">🔍−</button>
+            <button id="cam-iso" title="Isometric Camera">Iso</button>
+            <button id="cam-top" title="Top Camera">Top</button>
+            <button id="cam-front" title="Front Camera">Front</button>
+            <button id="cam-side" title="Side Camera">Side</button>
+            <button id="toggle-ghost" class="active" title="Show hardware units inside case">Ghosts</button>
+            <button id="toggle-axes" class="active" title="Show coaxial screw centerlines">Axes</button>
+          </div>
         </div>
 
-        <div class="toolbar-group">
-          <span class="toolbar-label">Left-Drag:</span>
-          <button id="mode-drag-part" class="active" title="Click and drag any part or individual screw lug to move it">Move Parts</button>
-          <button id="mode-gizmo-translate" title="Show 3D XYZ Move Arrows on selected part">XYZ Gizmo</button>
-          <button id="mode-gizmo-scale" title="Show 3D XYZ Scale Handles on selected part">Scale Gizmo</button>
-          <button id="mode-orbit-only" title="Left-click drag orbits camera only">Orbit Only</button>
-        </div>
-
-        <div class="toolbar-group">
-          <span class="toolbar-label">Wheel:</span>
-          <button id="wheel-smart" class="active" title="Scroll wheel over a part to enlarge/shrink it; scroll on background to zoom camera">Resize Part / Zoom BG</button>
-          <button id="wheel-resize-selected" title="Scroll wheel always enlarges/shrinks the currently selected part">Always Resize Part</button>
-          <button id="wheel-zoom-only" title="Scroll wheel always zooms camera in/out">Camera Zoom Only</button>
-        </div>
-
-        <div class="toolbar-group">
-          <button id="cam-zoom-in" title="Zoom Camera In">🔍+</button>
-          <button id="cam-zoom-out" title="Zoom Camera Out">🔍−</button>
-          <button id="cam-iso" title="Isometric Camera">Iso</button>
-          <button id="cam-top" title="Top Camera">Top</button>
-          <button id="cam-front" title="Front Camera">Front</button>
-          <button id="cam-side" title="Side Camera">Side</button>
-          <button id="toggle-ghost" class="active" title="Show hardware units inside case">Ghosts</button>
-          <button id="toggle-axes" class="active" title="Show coaxial screw centerlines">Axes</button>
-        </div>
-      </div>
-
-      <!-- Selected / Hovered Part Live HUD -->
-      <div class="selection-hud" id="selection-hud">
-        <div>
-          <div class="part-name" id="hud-part-name">Selected: Screw Lug BASE-L1</div>
-          <div class="part-meta" id="hud-part-meta">Drag any screw lug one-by-one • Right-click for Copy / Paste / Rotate / Ungroup</div>
-        </div>
-        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-          <button type="button" id="btn-hud-copy" title="Copy selected part (Ctrl+C)">Copy</button>
-          <button type="button" id="btn-hud-paste" title="Paste copied part (Ctrl+V)">Paste</button>
-          <button type="button" id="btn-hud-rotate" title="Rotate selected part 90° (R)">↻ 90°</button>
-          <button type="button" id="btn-part-smaller" title="Make selected part smaller">− Smaller</button>
-          <button type="button" id="btn-part-larger" title="Make selected part larger">+ Larger</button>
-          <select id="wheel-axis-select" title="Which dimension the mouse wheel resizes" style="width:auto; padding:4px 6px; font-size:11px;">
-            <option value="all" selected>Wheel: Uniform</option>
-            <option value="w">Wheel: Width (X)</option>
-            <option value="d">Wheel: Depth/Reach (Z)</option>
-            <option value="h">Wheel: Height/Thick (Y)</option>
-          </select>
+        <!-- Selected / Hovered Part Live HUD -->
+        <div class="selection-hud" id="selection-hud">
+          <div>
+            <div class="part-name" id="hud-part-name">Selected: Screw Lug BASE-L1</div>
+            <div class="part-meta" id="hud-part-meta">Drag any screw lug one-by-one • Right-click for Copy / Paste / Rotate / Ungroup</div>
+          </div>
+          <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <button type="button" id="btn-hud-copy" title="Copy selected part (Ctrl+C)">Copy</button>
+            <button type="button" id="btn-hud-paste" title="Paste copied part (Ctrl+V)">Paste</button>
+            <button type="button" id="btn-hud-rotate" title="Rotate selected part 90° (R)">↻ 90°</button>
+            <button type="button" id="btn-part-smaller" title="Make selected part smaller">− Smaller</button>
+            <button type="button" id="btn-part-larger" title="Make selected part larger">+ Larger</button>
+            <select id="wheel-axis-select" title="Which dimension the mouse wheel resizes" style="width:auto; padding:4px 6px; font-size:11px;">
+              <option value="all" selected>Wheel: Uniform</option>
+              <option value="w">Wheel: Width (X)</option>
+              <option value="d">Wheel: Depth/Reach (Z)</option>
+              <option value="h">Wheel: Height/Thick (Y)</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div id="canvas-container"></div>
       <div id="blueprint-container"></div>
 
-      <div class="legend-overlay">
-        <div class="legend-item"><span class="dot" style="background:#38bdf8"></span>Part 1: Mac mini M4 + Acasis M001 Upper Shell</div>
-        <div class="legend-item"><span class="dot" style="background:#818cf8"></span>Part 2: Hagibis MC25 Pro Lower Base Shell</div>
-        <div class="legend-item"><span class="dot" style="background:#34d399"></span>Side Pockets (Individual Movable &amp; Copyable Bays)</div>
-        <div class="legend-item"><span class="dot" style="background:#fbbf24"></span>Screw-Holed Mounting Lugs (Ungrouped — Drag 1-by-1!)</div>
-        <div class="legend-item"><span class="dot" style="background:#fb7185"></span>Coaxial Fastener Alignment Axis</div>
-      </div>
+      <div class="viewport-bottom-stack">
+        <div class="legend-overlay">
+          <div class="legend-item"><span class="dot" style="background:#38bdf8"></span>Part 1: Mac mini M4 + Acasis M001 Upper Shell</div>
+          <div class="legend-item"><span class="dot" style="background:#818cf8"></span>Part 2: Hagibis MC25 Pro Lower Base Shell</div>
+          <div class="legend-item"><span class="dot" style="background:#34d399"></span>Side Pockets (Individual Movable &amp; Copyable Bays)</div>
+          <div class="legend-item"><span class="dot" style="background:#fbbf24"></span>Screw-Holed Mounting Lugs (Ungrouped — Drag 1-by-1!)</div>
+          <div class="legend-item"><span class="dot" style="background:#fb7185"></span>Coaxial Fastener Alignment Axis</div>
+        </div>
 
-      <div class="explode-bar">
-        <span>Exploded View</span>
-        <input type="range" id="explodeRange" min="0" max="100" value="18" />
-        <span id="explodeVal" style="font-family: var(--font-mono); color: var(--accent)">18%</span>
+        <div class="explode-bar">
+          <span>Exploded View</span>
+          <input type="range" id="explodeRange" min="0" max="100" value="18" />
+          <span id="explodeVal" style="font-family: var(--font-mono); color: var(--accent)">18%</span>
+        </div>
       </div>
     </main>
 
     <!-- RIGHT PANEL: SELECTED PART TRANSFORM, BOM, MOUNTING POINT COORDINATES & EXPORT -->
-    <aside class="panel panel-right">
+    <aside class="panel panel-right" id="panel-right">
       <!-- Selected Part Inspector (Move, Rotate & Scale Sliders) -->
       <div class="card selected-card">
         <div class="card-header">
@@ -1219,22 +1453,57 @@
 
     // --- Three.js Scene Setup ---
     const container = document.getElementById('canvas-container');
+    const viewportArea = document.getElementById('viewport-area');
+    const workspaceEl = document.getElementById('workspace');
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 1, 4000);
-    camera.position.set(270, 220, 290);
+    const camera = new THREE.PerspectiveCamera(42, (container.clientWidth || 1) / (container.clientHeight || 1), 1, 4000);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
     container.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.enableZoom = false;
+    // Keep OrbitControls zoom enabled so 2-finger pinch-zoom works natively on touch screens;
+    // desktop wheel is intercepted in capture phase below to support smart part resize.
+    controls.enableZoom = true;
+    controls.minDistance = 45;
+    controls.maxDistance = 1800;
     controls.target.set(0, 45, 0);
+
+    function getCameraDistScale() {
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || 360;
+      const aspect = Math.max(0.5, w / Math.max(1, h));
+      return aspect < 1.25 ? Math.min(1.8, 1.25 / aspect) : 1.0;
+    }
+
+    function setCameraPreset(x, y, z, tx = 0, ty = 45, tz = 0) {
+      const s = getCameraDistScale();
+      controls.target.set(tx, ty, tz);
+      camera.position.set(tx + (x - tx) * s, ty + (y - ty) * s, tz + (z - tz) * s);
+      controls.update();
+    }
+
+    function syncViewportSize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(w, h, false);
+      }
+    }
+
+    syncViewportSize();
+    setCameraPreset(270, 220, 290, 0, 45, 0);
 
     const transformControl = new TransformControls(camera, renderer.domElement);
     transformControl.setSize(0.8);
@@ -2370,8 +2639,21 @@
       ctxMenu.classList.remove('open');
     }
 
+    const activeTouchPointers = new Set();
+
     renderer.domElement.addEventListener('pointerdown', (e) => {
       closeContextMenu();
+      if (e.pointerType === 'touch') {
+        activeTouchPointers.add(e.pointerId);
+        if (activeTouchPointers.size > 1) {
+          // Cancel single-part drag so 2-finger pinch-zoom / pan takes precedence
+          isDraggingPart = false;
+          draggedPartKey = null;
+          controls.enabled = true;
+          container.classList.remove('dragging-part');
+          return;
+        }
+      }
       if (e.button === 2) {
         rightDownPos.set(e.clientX, e.clientY);
         return;
@@ -2402,7 +2684,7 @@
           dragStartOffset.copy(grp.position).sub(dragIntersect);
         }
       }
-    });
+    }, { capture: true });
 
     // Right-Click Context Menu Handler
     renderer.domElement.addEventListener('contextmenu', (e) => {
@@ -2430,10 +2712,10 @@
       document.getElementById('ctx-delete').disabled = !(meta && meta.canDelete);
       document.getElementById('ctx-snap-wall').disabled = !(selectedPartKey && selectedPartKey.startsWith('lug:'));
 
-      const menuW = 255;
-      const menuH = 340;
-      const left = Math.min(e.clientX, window.innerWidth - menuW - 10);
-      const top = Math.min(e.clientY, window.innerHeight - menuH - 10);
+      const menuW = Math.min(255, window.innerWidth - 16);
+      const menuH = Math.min(340, window.innerHeight - 16);
+      const left = Math.max(8, Math.min(e.clientX, window.innerWidth - menuW - 8));
+      const top = Math.max(8, Math.min(e.clientY, window.innerHeight - menuH - 8));
       ctxMenu.style.left = `${left}px`;
       ctxMenu.style.top = `${top}px`;
       ctxMenu.classList.add('open');
@@ -2446,6 +2728,7 @@
     });
 
     window.addEventListener('pointermove', (e) => {
+      if (activeTouchPointers.size > 1) return;
       if (isDraggingPart && draggedPartKey) {
         updatePointerNDC(e);
         raycaster.setFromCamera(pointerNDC, camera);
@@ -2479,14 +2762,20 @@
       }
     });
 
-    window.addEventListener('pointerup', () => {
+    function handlePointerEnd(e) {
+      if (e.pointerType === 'touch') {
+        activeTouchPointers.delete(e.pointerId);
+      }
       if (isDraggingPart) {
         isDraggingPart = false;
         draggedPartKey = null;
         controls.enabled = true;
         container.classList.remove('dragging-part');
       }
-    });
+    }
+
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
 
     transformControl.addEventListener('objectChange', () => {
       if (!selectedPartKey) return;
@@ -2584,7 +2873,7 @@
 
     container.addEventListener('wheel', (e) => {
       e.preventDefault();
-      e.stopPropagation();
+      e.stopImmediatePropagation();
 
       const direction = e.deltaY < 0 ? 1 : -1;
       const hit = pickPartUnderMouse(e);
@@ -2605,7 +2894,7 @@
       } else {
         zoomCameraByFactor(direction > 0 ? 0.9 : 1.11);
       }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
     // --- Table & Code Updates ---
     function updateTablesAndCode(p) {
@@ -2709,8 +2998,8 @@ translate([0, 0, unit2_outer[2] + unit1_outer[2]/2])
 
       bp.innerHTML = `
         <div style="max-width: 920px; margin: 0 auto; display:flex; flex-direction:column; gap:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="min-width:0;">
               <h2 style="font-size:15px;">1:1 Orthographic Top View &amp; Live Screw-Hole Drill Template</h2>
               <p style="font-size:12px; color:var(--text-2);">Updates automatically as you drag, rotate, or copy-paste individual screw lugs.</p>
             </div>
@@ -2924,35 +3213,48 @@ translate([0, 0, unit2_outer[2] + unit1_outer[2]/2])
     btn3d.addEventListener('click', () => {
       btn3d.classList.add('active');
       btn2d.classList.remove('active');
+      viewportArea.classList.remove('is-2d-mode');
       container.style.display = 'block';
       selHud.style.display = 'flex';
       bpContainer.style.display = 'none';
+      requestAnimationFrame(syncViewportSize);
     });
 
     btn2d.addEventListener('click', () => {
       btn2d.classList.add('active');
       btn3d.classList.remove('active');
+      viewportArea.classList.add('is-2d-mode');
       container.style.display = 'none';
       selHud.style.display = 'none';
       bpContainer.style.display = 'block';
     });
 
+    // Mobile Panel Tabs (Dimensions & Parts <-> Inspector & Export)
+    document.querySelectorAll('.mobile-tab-btn').forEach(tabBtn => {
+      tabBtn.addEventListener('click', () => {
+        const panel = tabBtn.dataset.panel;
+        workspaceEl.dataset.mobileTab = panel;
+        document.querySelectorAll('.mobile-tab-btn').forEach(b => {
+          const isActive = b === tabBtn;
+          b.classList.toggle('active', isActive);
+          b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        requestAnimationFrame(syncViewportSize);
+      });
+    });
+
     // Camera Presets
     document.getElementById('cam-iso').addEventListener('click', () => {
-      camera.position.set(270, 220, 290);
-      controls.target.set(0, 45, 0);
+      setCameraPreset(270, 220, 290, 0, 45, 0);
     });
     document.getElementById('cam-top').addEventListener('click', () => {
-      camera.position.set(0, 390, 0.1);
-      controls.target.set(0, 0, 0);
+      setCameraPreset(0, 390, 0.1, 0, 0, 0);
     });
     document.getElementById('cam-front').addEventListener('click', () => {
-      camera.position.set(0, 55, 360);
-      controls.target.set(0, 45, 0);
+      setCameraPreset(0, 55, 360, 0, 45, 0);
     });
     document.getElementById('cam-side').addEventListener('click', () => {
-      camera.position.set(360, 55, 0);
-      controls.target.set(0, 45, 0);
+      setCameraPreset(360, 55, 0, 0, 45, 0);
     });
 
     document.getElementById('toggle-ghost').addEventListener('click', (e) => {
@@ -2993,13 +3295,12 @@ translate([0, 0, unit2_outer[2] + unit1_outer[2]/2])
       });
     });
 
-    window.addEventListener('resize', () => {
-      if (container.clientWidth > 0 && container.clientHeight > 0) {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-      }
-    });
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => syncViewportSize());
+      ro.observe(container);
+    }
+    window.addEventListener('resize', syncViewportSize);
+    window.addEventListener('orientationchange', () => setTimeout(syncViewportSize, 120));
 
     rebuildModel();
     selectPart('lug:BASE-L1');
