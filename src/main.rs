@@ -33,6 +33,7 @@ const RAINMETER_STUDIO_HTML: &str = include_str!("../static/rainmeter_studio.htm
 const GOOGLEBOOK_OS_HTML: &str = include_str!("../static/googlebook_os.html");
 const ORNATA_LIGHT_HTML: &str = include_str!("../static/ornata_light.html");
 const CINESCOUT_HTML: &str = include_str!("../static/cinescout.html");
+const TERCIH_ROBOTU_HTML: &str = include_str!("../static/tercih_robotu.html");
 
 #[derive(Clone)]
 struct AppState {
@@ -141,6 +142,10 @@ async fn main() {
         .route("/googlebook-os/", get(serve_googlebook_os))
         .route("/ornata-light", get(serve_ornata_light))
         .route("/ornata-light/", get(serve_ornata_light))
+        .route("/tercih-robotu", get(serve_tercih_robotu))
+        .route("/tercih-robotu/", get(serve_tercih_robotu))
+        .route("/tercihlab", get(redirect_tercihlab))
+        .route("/tercihlab/", get(redirect_tercihlab))
         .route("/api/search", post(api_search))
         .route("/api/similar", post(api_similar))
         .route("/api/movies/search", post(api_movie_search))
@@ -169,6 +174,7 @@ async fn main() {
     println!("  🎨 Rainmeter:      http://{}/rainmeter-studio/", addr);
     println!("  💻 Googlebook OS:  http://{}/googlebook-os/", addr);
     println!("  ⌨️ OrnataLight:    http://{}/ornata-light/", addr);
+    println!("  🎓 Tercih Robotu:  http://{}/tercih-robotu/", addr);
     println!("====================================================");
 
     let listener = tokio::net::TcpListener::bind(addr)
@@ -246,6 +252,14 @@ async fn api_movie_detail(
 
 async fn serve_ornata_light() -> Html<&'static str> {
     Html(ORNATA_LIGHT_HTML)
+}
+
+async fn serve_tercih_robotu() -> Html<&'static str> {
+    Html(TERCIH_ROBOTU_HTML)
+}
+
+async fn redirect_tercihlab() -> Redirect {
+    Redirect::permanent("/tercih-robotu/")
 }
 
 async fn api_outside_lens(

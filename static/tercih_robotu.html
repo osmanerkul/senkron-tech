@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tercih Robotu (TercihLab) — YKS Tercih Çalışma Masası | senkron.tech</title>
+<meta name="description" content="YKS sonrası tercih dönemi için tasarım modeli: puan hesaplama, eğilim testi, meslek keşfi, 24 tercihlik liste kurucu ve tercih koçu.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23d94f30'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' fill='%23fff' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
+
+
+
+<style>
+
+/* ---------------------------------------------------------------
+   TercihLab — tasarım sistemi
+   Renk: kâğıt + mürekkep + tek vurgu (mercan) + doğrulama yeşili
+   --------------------------------------------------------------- */
+:root{
+  --paper:#f6f2ea;
+  --paper-2:#fffdf8;
+  --ink:#15181d;
+  --ink-2:#3b424d;
+  --muted:#6d7580;
+  --line:#e2dbcd;
+  --line-2:#cfc6b4;
+  --accent:#d94f30;
+  --accent-ink:#a8331b;
+  --accent-soft:#fbe7e0;
+  --ok:#0f7b5f;
+  --ok-soft:#e2f1ec;
+  --warn:#a86a00;
+  --warn-soft:#fbf0d8;
+  --blue:#2f5fd0;
+  --blue-soft:#e6ecfb;
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 1px 2px rgba(21,24,29,.05), 0 12px 28px -18px rgba(21,24,29,.35);
+  --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; overflow-x:hidden}
+body{overflow-x:hidden}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%}
+a{color:var(--accent-ink)}
+button{font:inherit; cursor:pointer}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+.wrap{width:min(1180px, 100% - 40px); margin-inline:auto}
+.skip{position:absolute; left:-999px; top:8px; background:#fff; padding:10px 14px; border-radius:8px; z-index:99}
+.skip:focus{left:16px}
+
+/* --- üst uyarı şeridi --- */
+.demo-bar{
+  background:var(--ink); color:#e9e4d8; font-size:12.5px; letter-spacing:.01em;
+  padding:7px 0; text-align:center;
+}
+.demo-bar b{color:#fff; font-weight:600}
+.demo-bar .dot{display:inline-block; width:6px; height:6px; border-radius:50%; background:#f0b429; margin:0 8px 2px}
+
+/* --- header --- */
+header.site{
+  position:sticky; top:0; z-index:40;
+  background:rgba(246,242,234,.88); backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--line);
+}
+.nav{display:flex; align-items:center; gap:28px; height:64px}
+.logo{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-weight:700; letter-spacing:-.02em}
+.logo .mark{
+  width:30px;height:30px;border-radius:9px;background:var(--accent); position:relative; flex:none;
+  display:grid; place-items:center; color:#fff; font-family:var(--serif); font-size:20px; line-height:1;
+}
+.logo small{display:block; font-weight:500; font-size:11px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-top:-2px}
+.nav ul{display:flex; gap:4px; list-style:none; margin:0; padding:0; margin-left:auto}
+.nav a.lnk{
+  text-decoration:none; color:var(--ink-2); font-size:14px; font-weight:500;
+  padding:8px 12px; border-radius:999px; transition:.15s;
+}
+.nav a.lnk:hover{background:#ebe5d8; color:var(--ink)}
+.nav .cta{margin-left:8px}
+.nav-toggle{display:none; margin-left:auto; background:none; border:1px solid var(--line-2); border-radius:9px; padding:7px 10px}
+
+/* --- butonlar --- */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; justify-content:center;
+  border:1px solid transparent; border-radius:999px; padding:11px 20px;
+  font-size:14.5px; font-weight:600; text-decoration:none; transition:.16s;
+  background:var(--ink); color:#fff;
+}
+.btn:hover{transform:translateY(-1px); box-shadow:0 8px 18px -12px rgba(21,24,29,.8)}
+.btn.accent{background:var(--accent)}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--line-2)}
+.btn.ghost:hover{background:#fff}
+.btn.sm{padding:8px 14px; font-size:13px}
+.btn[disabled]{opacity:.5; cursor:not-allowed; transform:none; box-shadow:none}
+
+/* --- hero --- */
+.hero{padding:64px 0 40px; position:relative; overflow:hidden}
+.hero-grid{display:grid; grid-template-columns:1.15fr .85fr; gap:56px; align-items:start}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:9px; font-size:12px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink);
+  background:var(--accent-soft); border:1px solid #f3cec2; padding:6px 12px; border-radius:999px;
+}
+h1{
+  font-family:var(--serif); font-weight:400; letter-spacing:-.02em;
+  font-size:clamp(38px, 5.4vw, 66px); line-height:1.02; margin:20px 0 18px;
+}
+h1 em{font-style:italic; color:var(--accent)}
+.lead{font-size:18.5px; line-height:1.6; color:var(--ink-2); max-width:56ch; margin:0 0 26px}
+.hero-actions{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:26px}
+.hero-meta{display:flex; flex-wrap:wrap; gap:8px 22px; font-size:13px; color:var(--muted)}
+.hero-meta span{display:inline-flex; align-items:center; gap:6px}
+.tick{color:var(--ok); font-weight:700}
+
+/* --- "bugün" kartı --- */
+.now-card{
+  background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:22px; position:relative;
+}
+.now-card .lbl{font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600}
+.now-card h3{font-family:var(--serif); font-weight:400; font-size:25px; margin:6px 0 14px; letter-spacing:-.01em}
+.steps{list-style:none; margin:0; padding:0; display:grid; gap:2px}
+.steps li{display:flex; gap:12px; padding:11px 10px; border-radius:10px; transition:.15s; cursor:pointer; align-items:flex-start}
+.steps li:hover{background:#f4efe4}
+.steps .n{
+  flex:none; width:26px; height:26px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--mono); font-size:12px; font-weight:500;
+  background:#eee7d9; color:var(--ink-2); border:1px solid var(--line-2);
+}
+.steps li.done .n{background:var(--ok-soft); color:var(--ok); border-color:#bcdcd1}
+.steps li.done .n::after{content:"✓"}
+.steps li.done .n span{display:none}
+.steps b{display:block; font-size:14px; font-weight:600}
+.steps small{color:var(--muted); font-size:12.5px; display:block; margin-top:1px}
+.progress{height:5px; border-radius:99px; background:#eee7d9; overflow:hidden; margin:16px 0 8px}
+.progress i{display:block; height:100%; background:var(--accent); width:0; transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.progress-txt{font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between}
+
+/* --- bölüm başlığı --- */
+section.block{padding:56px 0; border-top:1px solid var(--line)}
+.block-head{display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:26px}
+.block-head .kicker{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink); font-weight:600}
+h2{font-family:var(--serif); font-weight:400; font-size:clamp(28px,3.4vw,42px); line-height:1.08; letter-spacing:-.02em; margin:8px 0 0}
+h2 + p.sub{margin:10px 0 0; color:var(--muted); font-size:15.5px; max-width:62ch}
+.tag{
+  font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  padding:3px 8px; border-radius:5px; background:var(--warn-soft); color:var(--warn);
+  border:1px solid #efdcae; white-space:nowrap;
+}
+.tag.ok{background:var(--ok-soft); color:var(--ok); border-color:#c3e0d5}
+.tag.blue{background:var(--blue-soft); color:var(--blue); border-color:#c9d6f6}
+
+/* --- sekmeler --- */
+.tabs{display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:24px}
+.tab{
+  background:none; border:0; border-bottom:2px solid transparent; padding:11px 14px;
+  font-size:14px; font-weight:600; color:var(--muted); margin-bottom:-1px; border-radius:8px 8px 0 0;
+}
+.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink); background:#efe9dc}
+.panel[hidden]{display:none}
+
+/* --- kartlar --- */
+.card{background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow)}
+.card h4{margin:0 0 4px; font-size:15px; font-weight:600}
+.card .hint{color:var(--muted); font-size:13px; margin:0 0 16px}
+.grid{display:grid; gap:14px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.split{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start}
+
+/* --- form öğeleri --- */
+label.f{display:block; font-size:12.5px; font-weight:600; color:var(--ink-2); margin-bottom:5px}
+input[type=number], input[type=text], select{
+  width:100%; padding:9px 11px; border:1px solid var(--line-2); border-radius:var(--radius-sm);
+  background:#fff; font:inherit; font-size:14px; color:var(--ink); transition:.15s;
+}
+input:focus, select:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 3px var(--accent-soft)}
+.net-row{display:grid; grid-template-columns:1fr 74px 74px 62px; gap:8px; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line)}
+.net-row:last-child{border-bottom:0}
+.net-row .ad{font-size:13.5px}
+.net-row .ad small{display:block; color:var(--muted); font-size:11.5px}
+.net-row .out{font-family:var(--mono); font-size:13px; text-align:right; color:var(--ink)}
+.seg{display:inline-flex; background:#ece5d7; padding:3px; border-radius:999px; gap:2px; flex-wrap:wrap}
+.seg button{border:0; background:none; padding:7px 13px; border-radius:999px; font-size:13px; font-weight:600; color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* --- sonuç paneli --- */
+.result{background:var(--ink); color:#f3efe6; border-radius:var(--radius); padding:22px; position:sticky; top:84px}
+.result .lbl{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#a9a294; font-weight:600}
+.big{font-family:var(--mono); font-size:46px; line-height:1; letter-spacing:-.03em; margin:8px 0 2px; color:#fff}
+.big small{font-size:14px; font-family:var(--sans); color:#a9a294; letter-spacing:0; margin-left:4px}
+.result .sub{font-size:13px; color:#bdb6a7}
+.res-grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#2c313a; border-radius:10px; overflow:hidden; margin:16px 0}
+.res-grid div{background:#1d2127; padding:11px 13px}
+.res-grid b{display:block; font-family:var(--mono); font-size:16px; color:#fff}
+.res-grid span{font-size:11.5px; color:#a9a294; text-transform:uppercase; letter-spacing:.08em}
+.alerts{list-style:none; margin:12px 0 0; padding:0; display:grid; gap:7px}
+.alerts li{font-size:12.5px; padding:8px 10px; border-radius:8px; background:#3a2118; border:1px solid #6b3324; color:#ffd9cd}
+.alerts li.ok{background:#152a24; border-color:#255343; color:#b9e6d7}
+
+/* --- öneri listesi --- */
+.rec-group{margin-bottom:16px}
+.rec-group h5{display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
+.rec{display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; margin-bottom:6px}
+.rec .who{flex:1; min-width:0}
+.rec .who b{display:block; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rec .who span{font-size:12px; color:var(--muted)}
+.rec .sira{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); white-space:nowrap}
+.rec .add{border:1px solid var(--line-2); background:#fff; border-radius:8px; width:30px; height:30px; display:grid; place-items:center; font-size:16px; color:var(--ink); flex:none}
+.rec .add:hover{background:var(--accent); color:#fff; border-color:var(--accent)}
+
+/* --- meslek kartları --- */
+.meslek-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:14px}
+.meslek{
+  background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px; display:flex; flex-direction:column; gap:10px; transition:.18s; position:relative;
+}
+.meslek:hover{transform:translateY(-2px); box-shadow:var(--shadow); border-color:var(--line-2)}
+.meslek .top{display:flex; justify-content:space-between; align-items:start; gap:10px}
+.meslek h4{margin:0; font-size:16px; letter-spacing:-.01em}
+.meslek .alan{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600}
+.meslek p{margin:0; font-size:13.5px; color:var(--ink-2); line-height:1.5}
+.meslek .meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:10px; border-top:1px dashed var(--line)}
+.chip{font-size:11.5px; padding:3px 8px; border-radius:6px; background:#f1ece0; color:var(--ink-2); font-weight:500}
+.chip.say{background:var(--blue-soft); color:var(--blue)}
+.chip.ea{background:var(--ok-soft); color:var(--ok)}
+.chip.soz{background:var(--warn-soft); color:var(--warn)}
+.chip.dil{background:#efe7fb; color:#6b3fc4}
+.chip.tyt{background:#eceff3; color:#48515e}
+.bar{height:6px; border-radius:99px; background:#ece5d7; overflow:hidden}
+.bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),#f0913f)}
+.filters{display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:18px}
+.filters > div{min-width:170px}
+.filters .search{flex:1; min-width:220px}
+
+/* --- liste kurucu --- */
+.liste-item{display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:#fff; margin-bottom:6px}
+.liste-item .no{font-family:var(--mono); font-size:12px; width:24px; height:24px; border-radius:6px; background:#f1ece0; display:grid; place-items:center; flex:none}
+.liste-item .who{flex:1; min-width:0}
+.liste-item .who b{display:block; font-size:13.5px}
+.liste-item .who span{font-size:12px; color:var(--muted)}
+.icon-btn{border:1px solid var(--line); background:#fff; border-radius:7px; width:28px; height:28px; display:grid; place-items:center; color:var(--ink-2); flex:none; font-size:13px}
+.icon-btn:hover{background:#f1ece0}
+.empty{padding:26px; text-align:center; color:var(--muted); font-size:13.5px; border:1px dashed var(--line-2); border-radius:var(--radius); background:#fbf8f1}
+
+/* --- zaman çizelgesi --- */
+.timeline{list-style:none; margin:0; padding:0; display:grid; gap:0}
+.timeline li{display:grid; grid-template-columns:170px 1fr; gap:18px; padding:14px 0; border-bottom:1px solid var(--line)}
+.timeline li:last-child{border-bottom:0}
+.timeline .when{font-family:var(--mono); font-size:12.5px; color:var(--accent-ink); font-weight:500}
+.timeline b{display:block; font-size:14.5px}
+.timeline span{font-size:13px; color:var(--muted)}
+
+/* --- yol haritası --- */
+.yol{display:grid; grid-template-columns:repeat(5,1fr); gap:0; counter-reset:s}
+.yol article{position:relative; padding:22px 18px; border-left:1px solid var(--line); background:var(--paper-2)}
+.yol article:first-child{border-left:0; border-radius:var(--radius) 0 0 var(--radius)}
+.yol article:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.yol .k{font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600}
+.yol h4{margin:6px 0 6px; font-size:15.5px}
+.yol p{margin:0; font-size:13px; color:var(--ink-2); line-height:1.5}
+.yol button{margin-top:12px; font-size:12.5px; background:none; border:0; color:var(--accent-ink); font-weight:600; padding:0; text-decoration:underline; text-underline-offset:3px}
+
+/* --- SSS --- */
+details.sss{border:1px solid var(--line); border-radius:12px; background:var(--paper-2); margin-bottom:8px; overflow:hidden}
+details.sss summary{padding:15px 18px; font-weight:600; font-size:14.5px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:14px; align-items:center}
+details.sss summary::-webkit-details-marker{display:none}
+details.sss summary::after{content:"+"; font-size:20px; color:var(--muted); line-height:1}
+details.sss[open] summary::after{content:"–"}
+details.sss p{margin:0; padding:0 18px 16px; font-size:14px; color:var(--ink-2); max-width:80ch}
+
+/* --- koç --- */
+.koc{background:var(--ink); color:#f3efe6; border-radius:var(--radius); padding:26px; display:grid; grid-template-columns:1fr 1.1fr; gap:26px}
+.koc h3{font-family:var(--serif); font-weight:400; font-size:30px; margin:0 0 8px; letter-spacing:-.01em}
+.koc p{color:#bdb6a7; font-size:14px; margin:0 0 14px}
+.chat{background:#1d2127; border:1px solid #2c313a; border-radius:12px; padding:14px; max-height:330px; overflow-y:auto; display:flex; flex-direction:column; gap:10px}
+.msg{max-width:88%; padding:9px 12px; border-radius:12px; font-size:13.5px; line-height:1.5}
+.msg.bot{background:#262b33; color:#ece7db; border-bottom-left-radius:4px}
+.msg.me{background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px}
+.chat-form{display:flex; gap:8px; margin-top:10px}
+.chat-form input{background:#1d2127; border-color:#2c313a; color:#fff}
+.chat-form input::placeholder{color:#7f8794}
+.suggestions{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.suggestions button{background:#262b33; border:1px solid #333a44; color:#cfc8b9; font-size:12px; padding:6px 10px; border-radius:999px}
+.suggestions button:hover{border-color:var(--accent); color:#fff}
+
+/* --- kaynaklar --- */
+.kaynak-list{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+.kaynak-list a{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 16px; background:var(--paper-2); border:1px solid var(--line); border-radius:11px; text-decoration:none; color:var(--ink); font-size:14px; font-weight:500}
+.kaynak-list a:hover{border-color:var(--accent); background:#fff}
+.kaynak-list span{color:var(--muted); font-size:12px}
+
+/* --- footer --- */
+footer.site{border-top:1px solid var(--line); padding:36px 0 48px; margin-top:20px; background:#f1ece1}
+.foot{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:30px}
+.foot p{font-size:13px; color:var(--muted); margin:8px 0 0; max-width:42ch}
+.foot h5{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-2); margin:0 0 10px}
+.foot ul{list-style:none; margin:0; padding:0; display:grid; gap:7px}
+.foot a{color:var(--ink-2); text-decoration:none; font-size:13.5px}
+.foot a:hover{color:var(--accent-ink)}
+.legal{margin-top:26px; padding-top:18px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+
+/* --- duyarlı --- */
+@media (max-width:980px){
+  .hero-grid, .split, .koc{grid-template-columns:1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .yol{grid-template-columns:1fr 1fr}
+  .yol article:nth-child(3){border-left:0}
+  .yol article{border-radius:0!important; border-bottom:1px solid var(--line)}
+  .result{position:static}
+  .nav ul{display:none; position:absolute; top:64px; left:0; right:0; background:var(--paper); border-bottom:1px solid var(--line); border-radius:0 0 14px 14px; box-shadow:0 18px 28px -22px rgba(21,24,29,.5); flex-direction:column; padding:10px 20px 16px; gap:2px}
+  .nav ul.open{display:flex}
+  .nav-toggle{display:block}
+  .nav .cta{display:none}
+}
+@media (max-width:640px){
+  .wrap{width:calc(100% - 28px)}
+  .g3, .g2{grid-template-columns:1fr}
+  .hero{padding:36px 0 24px}
+  section.block{padding:38px 0}
+  .net-row{grid-template-columns:1fr 64px 64px 52px; gap:6px}
+  .net-row .seg button{padding:5px 7px !important}
+  .rec{gap:8px}
+  .rec .who b{white-space:normal}
+  .res-grid{grid-template-columns:1fr 1fr}
+  .chat-form{flex-wrap:wrap}
+  .chat-form input{flex:1 1 100%}
+  .big{font-size:34px}
+  .timeline li{grid-template-columns:1fr; gap:2px}
+  .yol{grid-template-columns:1fr}
+  .foot{grid-template-columns:1fr}
+  .big{font-size:38px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
+
+<div class="demo-bar"><a href="/" style="color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:700;margin-right:10px;white-space:nowrap">← senkron.tech</a><span class="dot"></span><b>Tasarım modeli</b> — Su Tercih Robotu için öneri. Program taban sıralamaları ve maaşlar <b>örnek veridir</b>; resmî veri için ÖSYM kılavuzu ve YÖK Atlas kullanılır.</div>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="logo" href="#top" aria-label="TercihLab ana sayfa">
+      <span class="mark" aria-hidden="true">T</span>
+      <span>TercihLab<small>tercih çalışma masası</small></span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="menu">Menü</button>
+    <ul id="menu">
+      <li><a class="lnk" href="#calisma">Puan &amp; Eğilim</a></li>
+      <li><a class="lnk" href="#meslekler">Meslekler</a></li>
+      <li><a class="lnk" href="#liste">Tercih Listesi</a></li>
+      <li><a class="lnk" href="#takvim">Takvim</a></li>
+      <li><a class="lnk" href="#sss">SSS</a></li>
+    </ul>
+    <a class="btn accent cta sm" href="#koc">Tercih koçuna sor</a>
+  </div>
+</header>
+
+<main id="icerik">
+<!-- ============================ HERO ============================ -->
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">2026-YKS · Tercih dönemi</span>
+      <h1>Sınav bitti.<br>Asıl karar <em>şimdi</em> başlıyor.</h1>
+      <p class="lead">Puan bir kapı numarası, tercih ise hangi kapıyı açacağın. TercihLab; netlerini, ilgi alanlarını ve meslek hedeflerini tek bir yerde toplayıp <b>gerekçeli</b> bir tercih listesi kurmana yardım eder.</p>
+      <div class="hero-actions">
+        <a class="btn accent" href="#calisma">Puanımı hesapla</a>
+        <a class="btn ghost" href="#liste">24'lük listemi kur</a>
+      </div>
+      <div class="hero-meta">
+        <span><b class="tick">✓</b> Reklamsız, ücretsiz</span>
+        <span><b class="tick">✓</b> Verin cihazında kalır</span>
+        <span><b class="tick">✓</b> ÖSYM 2026 kurallarına göre</span>
+      </div>
+    </div>
+
+    <aside class="now-card" aria-label="Bugün yapılacaklar">
+      <div class="lbl">Bugünkü durumun</div>
+      <h3 id="nowTitle">Merhaba, nereden başlayalım?</h3>
+      <ol class="steps" id="steps">
+        <li data-go="calisma" data-key="puan"><span class="n"><span>1</span></span><div><b>Netlerini gir</b><small>Puan ve tahmini sıralama</small></div></li>
+        <li data-go="calisma" data-key="egilim"><span class="n"><span>2</span></span><div><b>Eğilim testini çöz</b><small>24 madde, 3 dakika</small></div></li>
+        <li data-go="meslekler" data-key="meslek"><span class="n"><span>3</span></span><div><b>3 meslek kısa listesi</b><small>Eğilimine göre filtrele</small></div></li>
+        <li data-go="liste" data-key="liste"><span class="n"><span>4</span></span><div><b>Tercih listesini kur</b><small>Hayal · hedef · güvenli · emniyet</small></div></li>
+      </ol>
+      <div class="progress" aria-hidden="true"><i id="progBar"></i></div>
+      <div class="progress-txt"><span id="progTxt">0 / 4 adım tamam</span><span id="progPct">%0</span></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================ ÇALIŞMA MASASI ============================ -->
+<section class="block" id="calisma">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Adım 1 &amp; 2</div>
+        <h2>Puanını gör, kendini tanı</h2>
+        <p class="sub">Netlerini doğru–yanlış olarak gir; 4 yanlış 1 doğruyu götürecek şekilde net, puan ve tahmini sıralama anında çıkar. Ardından kısa eğilim testiyle hangi meslek ailelerinin sana yakın olduğunu gör.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Çalışma masası araçları">
+      <button class="tab" role="tab" id="tab-puan" aria-controls="panel-puan" aria-selected="true">Puan hesaplama</button>
+      <button class="tab" role="tab" id="tab-egilim" aria-controls="panel-egilim" aria-selected="false">Eğilim testi</button>
+      <button class="tab" role="tab" id="tab-sss-arac" aria-controls="panel-sss-arac" aria-selected="false">Kural özeti</button>
+    </div>
+
+    <!-- PUAN -->
+    <div class="panel" id="panel-puan" role="tabpanel" aria-labelledby="tab-puan">
+      <div class="split">
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <h4>Puan türü</h4>
+            <p class="hint">Hangi alanı hedefliyorsan onu seç. Emin değilsen “Eğilim testi” sekmesine bak.</p>
+            <div class="seg" id="segPuan" role="group" aria-label="Puan türü"></div>
+          </div>
+
+          <div class="card" style="margin-bottom:14px">
+            <h4>TYT netleri <span class="tag blue">120 soru</span></h4>
+            <p class="hint">Herkesin girdiği oturum; puan türü ne olursa olsun dört testin tamamı sayılır.</p>
+            <div id="tytRows"></div>
+          </div>
+
+          <div class="card" id="aytCard" style="margin-bottom:14px">
+            <h4 id="aytTitle">AYT netleri <span class="tag blue">80 soru</span></h4>
+            <p class="hint" id="aytHint">Seçtiğin puan türünde sayılan testler.</p>
+            <div id="aytRows"></div>
+          </div>
+
+          <div class="card">
+            <h4>Diploma ve durum</h4>
+            <p class="hint">OBP = diploma notu × 5; yerleştirme puanına ×0,12 ile eklenir.</p>
+            <div class="grid g2">
+              <div>
+                <label class="f" for="diploma">Diploma notu (50–100)</label>
+                <input id="diploma" type="number" min="50" max="100" step="0.01" value="80" inputmode="decimal">
+              </div>
+              <div>
+                <label class="f" for="durum">Durumun</label>
+                <select id="durum">
+                  <option value="ilk">İlk kez tercih yapıyorum</option>
+                  <option value="yerlesmis">Daha önce bir programa yerleştim</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="result" aria-live="polite">
+            <div class="lbl">Yerleştirme puanı (yaklaşık)</div>
+            <div class="big" id="outPuan">—<small>/ 500</small></div>
+            <div class="sub" id="outSub">Netlerini girdikçe güncellenir.</div>
+            <div class="res-grid">
+              <div><span>TYT puanı</span><b id="outTyt">—</b></div>
+              <div><span id="outAytLbl">AYT puanı</span><b id="outAyt">—</b></div>
+              <div><span>TYT net</span><b id="outTytNet">—</b></div>
+              <div><span>AYT / YDT net</span><b id="outAytNet">—</b></div>
+              <div><span>OBP katkısı</span><b id="outObp">—</b></div>
+              <div><span>Tahmini sıra</span><b id="outSira">—</b></div>
+            </div>
+            <ul class="alerts" id="outAlerts"></ul>
+            <button class="btn ghost sm" id="btnOrnek" style="margin-top:14px; color:#fff; border-color:#3b424d">Örnek netlerle dene</button>
+          </div>
+          <p style="font-size:12px; color:var(--muted); margin-top:10px">Puanlar ÖSYM katsayı mantığıyla <b>yaklaşık</b> hesaplanır; sıralama tahmini yalnızca yön göstermek içindir. Resmî sonuç için ÖSYM sonuç belgesi esastır.</p>
+        </div>
+      </div>
+
+      <div id="oneriler" style="margin-top:22px"></div>
+    </div>
+
+    <!-- EĞİLİM -->
+    <div class="panel" id="panel-egilim" role="tabpanel" aria-labelledby="tab-egilim" hidden>
+      <div class="split">
+        <div class="card">
+          <h4>Eğilim testi <span class="tag">24 madde · 3 dk</span></h4>
+          <p class="hint">“Bu işi yapmak bana ne kadar uygun?” Her madde için 1 (hiç) – 5 (çok) arasında puan ver. Doğru cevap yok.</p>
+          <div id="egilimRows"></div>
+          <div style="display:flex; gap:8px; margin-top:14px">
+            <button class="btn accent" id="btnEgilim">Sonucu gör</button>
+            <button class="btn ghost" id="btnEgilimSifirla">Sıfırla</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" id="egilimSonuc" aria-live="polite">
+            <h4>Sonuç</h4>
+            <p class="hint">Testi doldurduktan sonra en güçlü üç eğilim kodun burada görünecek.</p>
+            <div class="empty" id="egilimEmpty">Henüz sonuç yok.</div>
+            <div id="egilimDetail" hidden></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KURAL ÖZETİ -->
+    <div class="panel" id="panel-sss-arac" role="tabpanel" aria-labelledby="tab-sss-arac" hidden>
+      <div class="grid g3">
+        <div class="card">
+          <h4>Net</h4>
+          <p class="hint" style="margin-bottom:0">Net = Doğru − (Yanlış ÷ 4). Boş sorular hesaba katılmaz.</p>
+        </div>
+        <div class="card">
+          <h4>Yerleştirme puanı</h4>
+          <p class="hint" style="margin-bottom:0">TYT × 0,40 + AYT × 0,60 (DİL için YDT). OBP × 0,12 eklenir.</p>
+        </div>
+        <div class="card">
+          <h4>Tercih sayısı</h4>
+          <p class="hint" style="margin-bottom:0">2026-YKS'de 24 tercih hakkı. Tamamını doldurmak zorunlu değil.</p>
+        </div>
+        <div class="card">
+          <h4>Barajlar</h4>
+          <p class="hint" style="margin-bottom:0">Lisans tercihi için TYT 150, AYT/YDT 180 puan.</p>
+        </div>
+        <div class="card">
+          <h4>Tercih nerede yapılır?</h4>
+          <p class="hint" style="margin-bottom:0">Yalnızca ais.osym.gov.tr veya ÖSYM mobil uygulaması. Posta/elden tercih geçersiz.</p>
+        </div>
+        <div class="card">
+          <h4>En kritik cümle</h4>
+          <p class="hint" style="margin-bottom:0">Tercih sırası şansı değiştirmez; yerleşeceğin programı belirler. En çok istediğin en üste.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MESLEKLER ============================ -->
+<section class="block" id="meslekler">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Adım 3</div>
+        <h2>Meslekler: gelecek + gerçeklik</h2>
+        <p class="sub">Sadece “sevdiğim iş” değil: istihdam görünümü, yapay zekânın etkisi, alternatif yollar (2 yıllık, DGS, sertifika) ve gerçekçi gelir aralığı aynı kartta.</p>
+      </div>
+      <span class="tag">Maaşlar örnek aralıktır</span>
+    </div>
+    <div class="filters">
+      <div class="search">
+        <label class="f" for="meslekAra">Ara</label>
+        <input id="meslekAra" type="text" placeholder="örn. yazılım, sağlık, hukuk…" autocomplete="off">
+      </div>
+      <div>
+        <label class="f" for="meslekAlan">Alan</label>
+        <select id="meslekAlan"><option value="">Tüm alanlar</option></select>
+      </div>
+      <div>
+        <label class="f" for="meslekPuan">Puan türü</label>
+        <select id="meslekPuan">
+          <option value="">Tümü</option>
+          <option>SAY</option><option>EA</option><option>SÖZ</option><option>DİL</option><option>TYT</option>
+        </select>
+      </div>
+      <div>
+        <label class="f" for="meslekKod">Eğilim kodun</label>
+        <select id="meslekKod">
+          <option value="">Tümü</option>
+          <option value="R">R · Yapıcı</option><option value="I">I · Araştırmacı</option>
+          <option value="A">A · Sanatsal</option><option value="S">S · Sosyal</option>
+          <option value="E">E · Girişimci</option><option value="C">C · Düzenli</option>
+        </select>
+      </div>
+    </div>
+    <div class="meslek-grid" id="meslekGrid"></div>
+    <p style="font-size:12px; color:var(--muted); margin-top:14px">Gelir aralıkları haber ve sektör raporlarından derlenmiş <b>örnek</b> aralıklardır; il, deneyim ve sektöre göre büyük fark gösterir. Bağlayıcı veri değildir.</p>
+  </div>
+</section>
+
+<!-- ============================ LİSTE ============================ -->
+<section class="block" id="liste">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Adım 4</div>
+        <h2>24'lük tercih listesi</h2>
+        <p class="sub">Hayal · hedef · güvenli · emniyet dengesiyle liste kur. Sistem sıralamanı kontrol eder ve ters sıralama gibi klasik hataları anında gösterir.</p>
+      </div>
+      <span class="tag">Örnek program verisi</span>
+    </div>
+    <div class="split">
+      <div class="card">
+        <h4>Program ekle</h4>
+        <p class="hint">Puan türünü seç, programları sıralamana göre filtrele.</p>
+        <div class="grid g2" style="margin-bottom:12px">
+          <div>
+            <label class="f" for="listePuan">Puan türü</label>
+            <select id="listePuan">
+              <option>SAY</option><option>EA</option><option>SÖZ</option><option>DİL</option><option>TYT</option>
+            </select>
+          </div>
+          <div>
+            <label class="f" for="listeAra">Program / üniversite ara</label>
+            <input id="listeAra" type="text" placeholder="örn. hukuk, ODTÜ" autocomplete="off">
+          </div>
+        </div>
+        <div id="listeHavuz" style="max-height:420px; overflow-y:auto"></div>
+      </div>
+      <div>
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px">
+            <h4 style="margin:0">Listem <span id="listeSayi" class="tag blue">0 / 24</span></h4>
+            <div style="display:flex; gap:6px">
+              <button class="btn ghost sm" id="btnListeKopyala">Kopyala</button>
+              <button class="btn ghost sm" id="btnListeTemizle">Temizle</button>
+            </div>
+          </div>
+          <p class="hint">En çok istediğin en üstte olmalı. Sıralamayı oklarla değiştir.</p>
+          <div id="listeBox"><div class="empty">Liste boş. Soldan program ekleyerek başla.</div></div>
+          <div id="listeUyari" style="margin-top:12px"></div>
+        </div>
+        <div class="card" style="margin-top:14px; background:#fbf8f1">
+          <h4>Denge kontrolü</h4>
+          <p class="hint" style="margin-bottom:12px">Önerilen dağılım: 6 hayal, 10 hedef, 6 güvenli, 2 emniyet.</p>
+          <div id="denge"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ YOL HARİTASI ============================ -->
+<section class="block" id="yol">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Yeni yaklaşım</div>
+        <h2>Tercihi bir haftaya sığdırma</h2>
+        <p class="sub">Eski alışkanlık: sonuç açıklanınca 3 günde liste yapmak. Yeni yaklaşım: kararı küçük adımlara bölmek, gerekçesini yazmak ve kararı aile + okul rehberiyle birlikte doğrulamak.</p>
+      </div>
+    </div>
+    <div class="yol" id="yolGrid"></div>
+  </div>
+</section>
+
+<!-- ============================ TAKVİM ============================ -->
+<section class="block" id="takvim">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">2026-YKS</div>
+        <h2>Resmî takvim</h2>
+        <p class="sub">Tarihler ÖSYM duyurularına dayanır. Kesin bilgi ve olası güncellemeler için osym.gov.tr esas alınmalıdır.</p>
+      </div>
+      <span class="tag ok">ÖSYM duyurusu</span>
+    </div>
+    <div class="card">
+      <ul class="timeline" id="timeline"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ KOÇ ============================ -->
+<section class="block" id="koc">
+  <div class="wrap">
+    <div class="koc">
+      <div>
+        <div class="kicker" style="color:#f0913f">Adım 5</div>
+        <h3>Tercih koçu</h3>
+        <p>Sık takıldığın soruları sor. Bu model, siteye eklenebilecek bir “karar asistanı” fikrinin prototipidir: hazır cevap kutusu, yerel bilgi tabanından yanıtlar üretir.</p>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:8px; font-size:13.5px; color:#cfc8b9">
+          <li>• “Puanım 390, tıp olur mu?”</li>
+          <li>• “Vakıf burslusu ile devlet arasında neye bakmalıyım?”</li>
+          <li>• “Sözelde iş bulur muyum?”</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Tercih koçu sohbeti">
+          <div class="msg bot">Merhaba! Ben TercihLab koçu. Puan türün, sıralaman ya da aklındaki mesleği yaz; birlikte bakalım.</div>
+        </div>
+        <div class="suggestions" id="suggestions"></div>
+        <form class="chat-form" id="chatForm">
+          <label class="skip" for="chatInput">Mesajın</label>
+          <input id="chatInput" type="text" placeholder="Sorunu yaz…" autocomplete="off">
+          <button class="btn accent sm" type="submit">Gönder</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SSS ============================ -->
+<section class="block" id="sss">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Net cevaplar</div>
+        <h2>Sık sorulan sorular</h2>
+      </div>
+    </div>
+    <div id="sssList"></div>
+  </div>
+</section>
+
+<!-- ============================ KAYNAKLAR ============================ -->
+<section class="block" id="kaynaklar">
+  <div class="wrap">
+    <div class="block-head">
+      <div>
+        <div class="kicker">Güvenilir kaynak</div>
+        <h2>Doğrulama köşesi</h2>
+        <p class="sub">Hiçbir tercih listesi tek bir siteden doğrulanmaz. Aşağıdaki resmî kaynaklarla çapraz kontrol yap.</p>
+      </div>
+    </div>
+    <ul class="kaynak-list" id="kaynakList"></ul>
+  </div>
+</section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#top"><span class="mark" aria-hidden="true">T</span><span>TercihLab<small>tasarım modeli</small></span></a>
+        <p>Su Tercih Robotu için hazırlanmış bir yeniden tasarım önerisi. Reklam yok, takip kodu yok, veri sunucuya gönderilmez.</p>
+      </div>
+      <div>
+        <h5>Araçlar</h5>
+        <ul>
+          <li><a href="#calisma">Puan hesaplama</a></li>
+          <li><a href="#calisma">Eğilim testi</a></li>
+          <li><a href="#meslekler">Meslek keşfi</a></li>
+          <li><a href="#liste">Tercih listesi</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Resmî kaynaklar</h5>
+        <ul>
+          <li><a href="https://www.osym.gov.tr/" target="_blank" rel="noopener">ÖSYM</a></li>
+          <li><a href="https://yokatlas.yok.gov.tr/" target="_blank" rel="noopener">YÖK Atlas</a></li>
+          <li><a href="https://ais.osym.gov.tr" target="_blank" rel="noopener">Tercih sistemi (AİS)</a></li>
+          <li><a href="https://www.meb.gov.tr/" target="_blank" rel="noopener">MEB</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 TercihLab — tasarım önerisi. Ticari bir hizmet değildir.</span>
+      <span>Örnek veri uyarısı: program taban sıralamaları ve gelir aralıkları temsilîdir.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+/* ==========================================================================
+   TercihLab — veri katmanı
+   ÖNEMLİ: PROGRAMLAR ve meslek maaşları ÖRNEK (demo) veridir.
+   Gerçek taban puan / sıralama / kontenjan için YÖK Atlas kullanılmalıdır.
+   Uygulama bunu arayüzde açıkça yazar (bkz. "veri" etiketi).
+   ========================================================================== */
+
+var DATA = {};
+
+/* --- 2026-YKS resmi takvim (ÖSYM duyuruları) ------------------------------ */
+DATA.takvim = [
+  { t: "2026-YKS başvuru", d: "6 Şubat – 2 Mart 2026", not: "Geç başvuru: 10–12 Mart" },
+  { t: "TYT", d: "20 Haziran 2026, 10.15", not: "120 soru / 165 dk" },
+  { t: "AYT", d: "21 Haziran 2026, 10.15", not: "80 soru / 180 dk" },
+  { t: "YDT", d: "21 Haziran 2026, 15.45", not: "80 soru / 120 dk" },
+  { t: "Sonuçların açıklanması", d: "22 Temmuz 2026", not: "sonuc.osym.gov.tr" },
+  { t: "Tercih dönemi", d: "29 Temmuz – 10 Ağustos 2026", not: "Yalnızca ais.osym.gov.tr üzerinden" },
+  { t: "Yerleştirme sonuçları", d: "Ağustos ortası", not: "Kayıt tarihleri ayrıca duyurulur" }
+];
+
+/* --- Puan türleri --------------------------------------------------------- */
+DATA.puanTurleri = [
+  { k: "SAY", ad: "Sayısal", aciklama: "Matematik + Fen ağırlıklı; tıp, mühendislik, mimarlık, temel bilimler.", renk: "#2f6bff" },
+  { k: "EA", ad: "Eşit Ağırlık", aciklama: "Matematik + Edebiyat ağırlıklı; hukuk, işletme, psikoloji, öğretmenlik.", renk: "#0f9d76" },
+  { k: "SÖZ", ad: "Sözel", aciklama: "Edebiyat, tarih, coğrafya, felsefe; matematik yok.", renk: "#b4690e" },
+  { k: "DİL", ad: "Yabancı Dil", aciklama: "YDT ağırlıklı; mütercim-tercümanlık, dil öğretmenliği, filoloji.", renk: "#7b4bd6" },
+  { k: "TYT", ad: "Sadece TYT", aciklama: "2 yıllık önlisans (MYO) programları için yeterli.", renk: "#59657a" }
+];
+
+/* --- Testler ve soru sayıları (2026-YKS) --------------------------------- */
+DATA.testler = {
+  TYT: [
+    { id: "tyt_turkce", ad: "Türkçe", soru: 40 },
+    { id: "tyt_sosyal", ad: "Sosyal Bilimler", soru: 20 },
+    { id: "tyt_mat", ad: "Temel Matematik", soru: 40 },
+    { id: "tyt_fen", ad: "Fen Bilimleri", soru: 20 }
+  ],
+  AYT: {
+    SAY: [
+      { id: "mat", ad: "Matematik", soru: 40 },
+      { id: "fizik", ad: "Fizik", soru: 14 },
+      { id: "kimya", ad: "Kimya", soru: 13 },
+      { id: "bio", ad: "Biyoloji", soru: 13 }
+    ],
+    EA: [
+      { id: "mat", ad: "Matematik", soru: 40 },
+      { id: "edebiyat", ad: "Türk Dili ve Edebiyatı", soru: 24 },
+      { id: "tarih1", ad: "Tarih-1", soru: 10 },
+      { id: "cografya1", ad: "Coğrafya-1", soru: 6 }
+    ],
+    SÖZ: [
+      { id: "edebiyat", ad: "Türk Dili ve Edebiyatı", soru: 24 },
+      { id: "tarih1", ad: "Tarih-1", soru: 10 },
+      { id: "cografya1", ad: "Coğrafya-1", soru: 6 },
+      { id: "tarih2", ad: "Tarih-2", soru: 11 },
+      { id: "cografya2", ad: "Coğrafya-2", soru: 11 },
+      { id: "felsefe", ad: "Felsefe Grubu", soru: 12 },
+      { id: "din", ad: "Din Kültürü", soru: 6 }
+    ],
+    DİL: [{ id: "ydt", ad: "YDT", soru: 80 }]
+  }
+};
+
+/* --- Puan formülü (ÖSYM) -------------------------------------------------- */
+DATA.formul = {
+  netDuzeltme: 4,          // Net = D - Y/4
+  tytAgirlik: 0.40,
+  aytAgirlik: 0.60,
+  obbKatsayi: 0.12,        // OBP = diploma*5; katkı OBP*0.12 (max ~60)
+  obbKatsayiYerlesmis: 0.06,
+  baraj: { TYT: 150, AYT: 180, DIL: 180 },
+  not: "Puanlar ÖSYM katsayı mantığıyla yaklaşık hesaplanır; resmî puan için ÖSYM sonuç belgesi esastır."
+};
+
+/* --- Eğilim testi (kısa, 24 madde, RIASEC + değerler) -------------------- */
+DATA.egilim = [
+  { m: "Bir makineyi söküp nasıl çalıştığını anlamak", k: "R" },
+  { m: "Açık havada, elle ve bedenle çalışmak", k: "R" },
+  { m: "Bilgisayarda bir şeyler tasarlamak, denemek", k: "I" },
+  { m: "Bir hastalığın nedenini araştırmak", k: "I" },
+  { m: "Grafik, poster ya da video hazırlamak", k: "A" },
+  { m: "Bir hikâye, şiir ya da senaryo yazmak", k: "A" },
+  { m: "İnsanlara bir konuyu anlatmak, öğretmek", k: "S" },
+  { m: "Bir arkadaşının sorununu dinleyip çözüm aramak", k: "S" },
+  { m: "Bir ekibi yönetmek, iş bölümü yapmak", k: "E" },
+  { m: "Bir ürünü satmak, pazarlık etmek", k: "E" },
+  { m: "Düzenli kayıt tutmak, tablo doldurmak", k: "C" },
+  { m: "Belgeleri kontrol edip hata aramak", k: "C" },
+  { m: "Yeni bir şey icat etmek", k: "I" },
+  { m: "Kalabalık önünde konuşmak", k: "E" },
+  { m: "Hayvanlarla, bitkilerle uğraşmak", k: "R" },
+  { m: "Sayılarla, hesaplarla çalışmak", k: "C" },
+  { m: "Tartışmada haklı olanı savunmak", k: "E" },
+  { m: "Yardıma ihtiyacı olan birine destek olmak", k: "S" },
+  { m: "Müzik, tiyatro, sahne işleri", k: "A" },
+  { m: "Deney yapmak, ölçüm almak", k: "I" },
+  { m: "Bir yeri gezmek, kültürleri öğrenmek", k: "S" },
+  { m: "Bir işi en kısa yoldan bitirmek", k: "C" },
+  { m: "Kendi işini kurmak", k: "E" },
+  { m: "Elle bir şeyler tamir etmek", k: "R" }
+];
+
+DATA.egilimTipleri = {
+  R: { ad: "Realistik (Yapıcı)", metin: "Elle, araçla, makineyle çalışmaktan; somut sonuç üretmekten keyif alırsın. Laboratuvar, üretim, saha, mühendislik ve sağlık teknikerliği gibi alanlar doğal." },
+  I: { ad: "Araştırmacı (Analitik)", metin: "Neden–sonuç, veri ve kanıt peşindesin. Bilim, yazılım, tıp, veri analizi, mühendislik araştırma alanları uygun." },
+  A: { ad: "Sanatsal (Yaratıcı)", metin: "Özgün ifade ve estetik öncelikli. Tasarım, mimarlık, iletişim, medya, görsel sanatlar, edebiyat." },
+  S: { ad: "Sosyal (Yardım odaklı)", metin: "İnsanlarla ve insanlar için çalışmak seni besler. Öğretmenlik, psikoloji, sosyal hizmet, sağlık, rehberlik." },
+  E: { ad: "Girişimci (İkna edici)", metin: "Yönetmek, ikna etmek, risk almak sende. İşletme, hukuk, pazarlama, siyaset bilimi, girişimcilik." },
+  C: { ad: "Geleneksel (Düzenli)", metin: "Düzen, kayıt ve netlikten hoşlanırsın. Muhasebe, finans, hukuk büroları, veri yönetimi, lojistik." }
+};
+
+/* --- Meslekler ----------------------------------------------------------- */
+DATA.meslekler = [
+  {
+    ad: "Yazılım Mühendisliği", alan: "Teknoloji", puan: ["SAY"], riasec: ["I", "C", "R"],
+    maas: "Örnek aralık: 60–140 bin TL (deneyime göre, brüt)", maasDusuk: 60, maasYuksek: 140,
+    gelecek: "Çok yüksek", aciklama: "Yapay zekâ, bulut ve oyun sektörü talebi sürüyor; portfolyo ve staj, diplomadan çok konuşuluyor.",
+    yollar: ["4 yıllık mühendislik", "2 yıllık bilgisayar programcılığı + DGS", "Sertifikalı bootcamp + staj"]
+  },
+  {
+    ad: "Veri Bilimi / Yapay Zekâ", alan: "Teknoloji", puan: ["SAY", "EA"], riasec: ["I", "C"],
+    maas: "Örnek aralık: 55–150 bin TL", maasDusuk: 55, maasYuksek: 150,
+    gelecek: "Çok yüksek", aciklama: "İstatistik + programlama + alan bilgisi üçlüsü. Türkiye'de bankacılık ve e-ticaret en çok talep eden sektörler.",
+    yollar: ["Bilgisayar/Endüstri/İstatistik lisansı", "İş analitiği yüksek lisansı"]
+  },
+  {
+    ad: "Tıp", alan: "Sağlık", puan: ["SAY"], riasec: ["I", "S", "R"],
+    maas: "Örnek aralık: 90–200 bin TL (uzmanlıkla artar)", maasDusuk: 90, maasYuksek: 200,
+    gelecek: "Yüksek (ama uzun)", aciklama: "6 yıl + uzmanlık; sabır ve insan ilişkisi ister. Hekim göçü tartışması devam ediyor.",
+    yollar: ["Tıp fakültesi (6 yıl)", "TUS ile uzmanlık"]
+  },
+  {
+    ad: "Hemşirelik / Sağlık Teknikerliği", alan: "Sağlık", puan: ["SAY", "TYT"], riasec: ["S", "R"],
+    maas: "Örnek aralık: 35–70 bin TL", maasDusuk: 35, maasYuksek: 70,
+    gelecek: "Yüksek", aciklama: "İstihdamı en istikrarlı mesleklerden; 2 yıllık programlarla hızlı işe giriş mümkün.",
+    yollar: ["4 yıllık hemşirelik", "2 yıllık ilk ve acil yardım / anestezi / radyoterapi"]
+  },
+  {
+    ad: "Hukuk", alan: "Sosyal & Hukuk", puan: ["EA", "SÖZ"], riasec: ["E", "S", "C"],
+    maas: "Örnek aralık: 40–120 bin TL", maasDusuk: 40, maasYuksek: 120,
+    gelecek: "Orta", aciklama: "Puanı yüksek, mezun sayısı fazla. KPSS ve baro aşamaları belirleyici; staj çok önemli.",
+    yollar: ["Hukuk fakültesi + avukatlık stajı", "Hâkimlik/savcılık için KPSS"]
+  },
+  {
+    ad: "Psikoloji", alan: "Sosyal & Hukuk", puan: ["EA", "SÖZ"], riasec: ["S", "I"],
+    maas: "Örnek aralık: 35–90 bin TL", maasDusuk: 35, maasYuksek: 90,
+    gelecek: "Orta-yüksek", aciklama: "Lisans tek başına yetmiyor; klinik için yüksek lisans + süpervizyon gerekir.",
+    yollar: ["Psikoloji lisansı", "Klinik psikoloji yüksek lisansı"]
+  },
+  {
+    ad: "Öğretmenlik (Matematik / Sınıf / İngilizce)", alan: "Eğitim", puan: ["EA", "SAY", "DİL"], riasec: ["S", "E"],
+    maas: "Örnek aralık: 38–60 bin TL", maasDusuk: 38, maasYuksek: 60,
+    gelecek: "Orta", aciklama: "Atama puanı ve branş kontenjanı belirleyici. Özel okul + online eğitim ikinci yol.",
+    yollar: ["Eğitim fakültesi", "Formasyon (ilgili lisansla)", "Özel ders / edtech"]
+  },
+  {
+    ad: "Makine / Endüstri Mühendisliği", alan: "Teknoloji", puan: ["SAY"], riasec: ["R", "I", "E"],
+    maas: "Örnek aralık: 45–110 bin TL", maasDusuk: 45, maasYuksek: 110,
+    gelecek: "Yüksek", aciklama: "Savunma sanayi, otomotiv ve üretim yatırımları istihdamı destekliyor.",
+    yollar: ["Mühendislik lisansı", "Sektörel staj + yüksek lisans"]
+  },
+  {
+    ad: "Mimarlık / İç Mimarlık", alan: "Tasarım", puan: ["SAY", "EA"], riasec: ["A", "I", "R"],
+    maas: "Örnek aralık: 35–90 bin TL", maasDusuk: 35, maasYuksek: 90,
+    gelecek: "Orta", aciklama: "Portfolyo ve staj belirleyici; yetenek sınavı süreçleri değişebiliyor.",
+    yollar: ["Mimarlık lisansı (5 yıl)", "İç mimarlık + sertifikalar"]
+  },
+  {
+    ad: "İletişim / Dijital Medya", alan: "İletişim & Sanat", puan: ["SÖZ", "EA"], riasec: ["A", "E", "S"],
+    maas: "Örnek aralık: 30–75 bin TL", maasDusuk: 30, maasYuksek: 75,
+    gelecek: "Orta", aciklama: "Sektör portfolyo odaklı; sosyal medya, içerik ve reklam ajansları ana işveren.",
+    yollar: ["İletişim fakültesi", "Yeni medya / dijital pazarlama sertifikaları"]
+  },
+  {
+    ad: "Mütercim-Tercümanlık", alan: "Dil", puan: ["DİL"], riasec: ["A", "I", "S"],
+    maas: "Örnek aralık: 30–80 bin TL", maasDusuk: 30, maasYuksek: 80,
+    gelecek: "Orta (yapay zekâ etkisi)", aciklama: "Makine çevirisi rutin işi alıyor; uzmanlık, editörlük ve yerelleştirme öne çıkıyor.",
+    yollar: ["Mütercim-tercümanlık lisansı", "Çift anadal / sektörel uzmanlaşma"]
+  },
+  {
+    ad: "Elektrik-Elektronik Teknikerliği", alan: "Teknoloji", puan: ["TYT", "SAY"], riasec: ["R", "C", "I"],
+    maas: "Örnek aralık: 30–60 bin TL", maasDusuk: 30, maasYuksek: 60,
+    gelecek: "Yüksek", aciklama: "2 yıllık MYO ile hızlı istihdam; enerji, otomasyon ve bakım alanlarında açık çok.",
+    yollar: ["MYO + DGS ile lisans", "Teknik sertifika (otomasyon, PLC)"]
+  },
+  {
+    ad: "İşletme / İktisat", alan: "İş & Ekonomi", puan: ["EA"], riasec: ["E", "C"],
+    maas: "Örnek aralık: 32–100 bin TL", maasDusuk: 32, maasYuksek: 100,
+    gelecek: "Orta", aciklama: "Genel bir lisans; farkı staj, yabancı dil ve ikinci uzmanlık yaratır.",
+    yollar: ["Lisans", "CFA / muhasebe / veri analitiği sertifikaları"]
+  },
+  {
+    ad: "Lojistik ve Tedarik Zinciri", alan: "İş & Ekonomi", puan: ["EA", "TYT"], riasec: ["C", "E", "R"],
+    maas: "Örnek aralık: 32–80 bin TL", maasDusuk: 32, maasYuksek: 80,
+    gelecek: "Yüksek", aciklama: "E-ticaretin büyümesiyle depo, planlama ve gümrük operasyonlarında talep artıyor.",
+    yollar: ["Lojistik lisansı", "MYO dış ticaret + sektör sertifikaları"]
+  },
+  {
+    ad: "Grafik Tasarım / Görsel İletişim", alan: "Tasarım", puan: ["EA", "SÖZ", "TYT"], riasec: ["A", "R"],
+    maas: "Örnek aralık: 28–70 bin TL", maasDusuk: 28, maasYuksek: 70,
+    gelecek: "Orta", aciklama: "Serbest çalışma yaygın; portfolyo ve üretkenlik gelir belirleyici.",
+    yollar: ["Güzel sanatlar / görsel iletişim", "MYO grafik tasarım", "Online portfolyo"]
+  },
+  {
+    ad: "Sosyal Hizmet", alan: "Sosyal & Hukuk", puan: ["EA", "SÖZ"], riasec: ["S", "E"],
+    maas: "Örnek aralık: 34–60 bin TL", maasDusuk: 34, maasYuksek: 60,
+    gelecek: "Orta-yüksek", aciklama: "Kamu istihdamı ağırlıklı; KPSS puanı kritik, sivil toplum ikinci alan.",
+    yollar: ["Sosyal hizmet lisansı", "KPSS / sivil toplum"]
+  }
+];
+
+/* --- Örnek program tablosu -----------------------------------------------
+   alan = AYT puan türü. sira = örnek taban sıralama (düşük = daha yüksek puan).
+   burs = "devlet" | "vakıf burslu" | "vakıf ücretli"
+   ------------------------------------------------------------------------ */
+DATA.programlar = [
+  { u: "Boğaziçi Üniversitesi", p: "Bilgisayar Mühendisliği", s: "İstanbul", alan: "SAY", sira: 1500, kont: 60, burs: "devlet", dil: "İngilizce" },
+  { u: "ODTÜ", p: "Bilgisayar Mühendisliği", s: "Ankara", alan: "SAY", sira: 2100, kont: 70, burs: "devlet", dil: "İngilizce" },
+  { u: "İTÜ", p: "Bilgisayar Mühendisliği", s: "İstanbul", alan: "SAY", sira: 3800, kont: 80, burs: "devlet", dil: "İngilizce" },
+  { u: "Hacettepe Üniversitesi", p: "Tıp Fakültesi", s: "Ankara", alan: "SAY", sira: 2600, kont: 250, burs: "devlet", dil: "Türkçe" },
+  { u: "İstanbul Üniversitesi", p: "Tıp Fakültesi", s: "İstanbul", alan: "SAY", sira: 3900, kont: 300, burs: "devlet", dil: "Türkçe" },
+  { u: "Ege Üniversitesi", p: "Tıp Fakültesi", s: "İzmir", alan: "SAY", sira: 8800, kont: 220, burs: "devlet", dil: "Türkçe" },
+  { u: "ODTÜ", p: "Elektrik-Elektronik Mühendisliği", s: "Ankara", alan: "SAY", sira: 6100, kont: 90, burs: "devlet", dil: "İngilizce" },
+  { u: "İTÜ", p: "Makine Mühendisliği", s: "İstanbul", alan: "SAY", sira: 15500, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "ODTÜ", p: "Endüstri Mühendisliği", s: "Ankara", alan: "SAY", sira: 7400, kont: 80, burs: "devlet", dil: "İngilizce" },
+  { u: "İstanbul Teknik Üniversitesi", p: "Mimarlık", s: "İstanbul", alan: "SAY", sira: 24000, kont: 110, burs: "devlet", dil: "Türkçe" },
+  { u: "Hacettepe Üniversitesi", p: "Hemşirelik", s: "Ankara", alan: "SAY", sira: 95000, kont: 180, burs: "devlet", dil: "Türkçe" },
+  { u: "Dokuz Eylül Üniversitesi", p: "Fizyoterapi ve Rehabilitasyon", s: "İzmir", alan: "SAY", sira: 130000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Eskişehir Teknik Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Eskişehir", alan: "SAY", sira: 45000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Karabük Üniversitesi", p: "Elektrik-Elektronik Mühendisliği", s: "Karabük", alan: "SAY", sira: 185000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Konya Teknik Üniversitesi", p: "Makine Mühendisliği", s: "Konya", alan: "SAY", sira: 260000, kont: 100, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi A", p: "Bilgisayar Mühendisliği (burslu)", s: "İstanbul", alan: "SAY", sira: 28000, kont: 40, burs: "vakıf burslu", dil: "İngilizce" },
+  { u: "Vakıf Üniversitesi B", p: "Tıp (burslu)", s: "Ankara", alan: "SAY", sira: 5200, kont: 25, burs: "vakıf burslu", dil: "İngilizce" },
+  { u: "Vakıf Üniversitesi C", p: "Psikoloji (ücretli)", s: "İzmir", alan: "EA", sira: 420000, kont: 60, burs: "vakıf ücretli", dil: "İngilizce" },
+
+  { u: "Boğaziçi Üniversitesi", p: "Endüstri Mühendisliği", s: "İstanbul", alan: "SAY", sira: 5200, kont: 60, burs: "devlet", dil: "İngilizce" },
+  { u: "Bilkent Üniversitesi", p: "Bilgisayar Mühendisliği (burslu)", s: "Ankara", alan: "SAY", sira: 7000, kont: 35, burs: "vakıf burslu", dil: "İngilizce" },
+  { u: "Hacettepe Üniversitesi", p: "Eczacılık", s: "Ankara", alan: "SAY", sira: 34000, kont: 130, burs: "devlet", dil: "Türkçe" },
+  { u: "Akdeniz Üniversitesi", p: "Tıp Fakültesi", s: "Antalya", alan: "SAY", sira: 21000, kont: 200, burs: "devlet", dil: "Türkçe" },
+  { u: "Atatürk Üniversitesi", p: "Tıp Fakültesi", s: "Erzurum", alan: "SAY", sira: 52000, kont: 260, burs: "devlet", dil: "Türkçe" },
+  { u: "Bursa Uludağ Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Bursa", alan: "SAY", sira: 62000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Kocaeli Üniversitesi", p: "Elektrik-Elektronik Mühendisliği", s: "Kocaeli", alan: "SAY", sira: 145000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Sakarya Üniversitesi", p: "Endüstri Mühendisliği", s: "Sakarya", alan: "SAY", sira: 175000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Mersin Üniversitesi", p: "Hemşirelik", s: "Mersin", alan: "SAY", sira: 215000, kont: 150, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi D", p: "Mimarlık (ücretli)", s: "İstanbul", alan: "SAY", sira: 340000, kont: 50, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Ankara Üniversitesi", p: "Hukuk", s: "Ankara", alan: "EA", sira: 5200, kont: 350, burs: "devlet", dil: "Türkçe" },
+  { u: "İstanbul Üniversitesi", p: "Hukuk", s: "İstanbul", alan: "EA", sira: 6400, kont: 400, burs: "devlet", dil: "Türkçe" },
+  { u: "Marmara Üniversitesi", p: "Hukuk", s: "İstanbul", alan: "EA", sira: 12500, kont: 300, burs: "devlet", dil: "Türkçe" },
+  { u: "Boğaziçi Üniversitesi", p: "İşletme", s: "İstanbul", alan: "EA", sira: 9300, kont: 90, burs: "devlet", dil: "İngilizce" },
+  { u: "ODTÜ", p: "İktisat", s: "Ankara", alan: "EA", sira: 14200, kont: 110, burs: "devlet", dil: "İngilizce" },
+  { u: "Boğaziçi Üniversitesi", p: "Psikoloji", s: "İstanbul", alan: "EA", sira: 6900, kont: 70, burs: "devlet", dil: "İngilizce" },
+  { u: "Ege Üniversitesi", p: "Psikoloji", s: "İzmir", alan: "EA", sira: 38000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Gazi Üniversitesi", p: "Sınıf Öğretmenliği", s: "Ankara", alan: "EA", sira: 78000, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "Anadolu Üniversitesi", p: "İşletme", s: "Eskişehir", alan: "EA", sira: 210000, kont: 250, burs: "devlet", dil: "Türkçe" },
+  { u: "Pamukkale Üniversitesi", p: "Hukuk", s: "Denizli", alan: "EA", sira: 105000, kont: 200, burs: "devlet", dil: "Türkçe" },
+  { u: "Selçuk Üniversitesi", p: "Sosyal Hizmet", s: "Konya", alan: "EA", sira: 285000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Dokuz Eylül Üniversitesi", p: "Lojistik ve Tedarik Zinciri", s: "İzmir", alan: "EA", sira: 175000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi A", p: "Hukuk (burslu)", s: "İstanbul", alan: "EA", sira: 58000, kont: 30, burs: "vakıf burslu", dil: "Türkçe" },
+
+  { u: "Ankara Üniversitesi", p: "Türk Dili ve Edebiyatı", s: "Ankara", alan: "SÖZ", sira: 26000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "İstanbul Üniversitesi", p: "Tarih", s: "İstanbul", alan: "SÖZ", sira: 39000, kont: 100, burs: "devlet", dil: "Türkçe" },
+  { u: "Gazi Üniversitesi", p: "Türkçe Öğretmenliği", s: "Ankara", alan: "SÖZ", sira: 57000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Ege Üniversitesi", p: "Sosyoloji", s: "İzmir", alan: "SÖZ", sira: 96000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Anadolu Üniversitesi", p: "İletişim Tasarımı ve Yönetimi", s: "Eskişehir", alan: "SÖZ", sira: 148000, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "Selçuk Üniversitesi", p: "İlahiyat", s: "Konya", alan: "SÖZ", sira: 200000, kont: 200, burs: "devlet", dil: "Türkçe" },
+
+  { u: "Hacettepe Üniversitesi", p: "İngiliz Dili ve Edebiyatı", s: "Ankara", alan: "DİL", sira: 9500, kont: 80, burs: "devlet", dil: "İngilizce" },
+  { u: "Boğaziçi Üniversitesi", p: "Mütercim-Tercümanlık (İngilizce)", s: "İstanbul", alan: "DİL", sira: 4100, kont: 40, burs: "devlet", dil: "İngilizce" },
+  { u: "Hacettepe Üniversitesi", p: "İngilizce Öğretmenliği", s: "Ankara", alan: "DİL", sira: 8600, kont: 70, burs: "devlet", dil: "İngilizce" },
+  { u: "Ege Üniversitesi", p: "Alman Dili ve Edebiyatı", s: "İzmir", alan: "DİL", sira: 46000, kont: 60, burs: "devlet", dil: "Almanca" },
+
+  // --- düşük/orta sıralama bandı (örnek veri) ---
+  { u: "Ağrı İbrahim Çeçen Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Ağrı", alan: "SAY", sira: 520000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Kafkas Üniversitesi", p: "Elektrik-Elektronik Mühendisliği", s: "Kars", alan: "SAY", sira: 680000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Bingöl Üniversitesi", p: "Makine Mühendisliği", s: "Bingöl", alan: "SAY", sira: 790000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Muş Alparslan Üniversitesi", p: "Hemşirelik", s: "Muş", alan: "SAY", sira: 610000, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi E", p: "Bilgisayar Mühendisliği (ücretli)", s: "İstanbul", alan: "SAY", sira: 900000, kont: 80, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Vakıf Üniversitesi F", p: "Mimarlık (burslu)", s: "Ankara", alan: "SAY", sira: 480000, kont: 25, burs: "vakıf burslu", dil: "Türkçe" },
+  { u: "Şırnak Üniversitesi", p: "Fizyoterapi ve Rehabilitasyon", s: "Şırnak", alan: "SAY", sira: 950000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Batman Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Batman", alan: "SAY", sira: 620000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Gümüşhane Üniversitesi", p: "Endüstri Mühendisliği", s: "Gümüşhane", alan: "SAY", sira: 880000, kont: 50, burs: "devlet", dil: "Türkçe" },
+  { u: "Trakya Üniversitesi", p: "Tıp Fakültesi", s: "Edirne", alan: "SAY", sira: 96000, kont: 150, burs: "devlet", dil: "Türkçe" },
+  { u: "Çukurova Üniversitesi", p: "Eczacılık", s: "Adana", alan: "SAY", sira: 148000, kont: 110, burs: "devlet", dil: "Türkçe" },
+  { u: "Ondokuz Mayıs Üniversitesi", p: "Hemşirelik", s: "Samsun", alan: "SAY", sira: 175000, kont: 160, burs: "devlet", dil: "Türkçe" },
+  { u: "Erciyes Üniversitesi", p: "Mimarlık", s: "Kayseri", alan: "SAY", sira: 205000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Eskişehir Osmangazi Üniversitesi", p: "Makine Mühendisliği", s: "Eskişehir", alan: "SAY", sira: 310000, kont: 100, burs: "devlet", dil: "Türkçe" },
+  { u: "Süleyman Demirel Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Isparta", alan: "SAY", sira: 390000, kont: 80, burs: "devlet", dil: "Türkçe" },
+
+  { u: "Kırıkkale Üniversitesi", p: "Hukuk", s: "Kırıkkale", alan: "EA", sira: 320000, kont: 150, burs: "devlet", dil: "Türkçe" },
+  { u: "Aksaray Üniversitesi", p: "İşletme", s: "Aksaray", alan: "EA", sira: 560000, kont: 140, burs: "devlet", dil: "Türkçe" },
+  { u: "Necmettin Erbakan Üniversitesi", p: "Psikoloji", s: "Konya", alan: "EA", sira: 240000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Bolu Abant İzzet Baysal Üniversitesi", p: "Sınıf Öğretmenliği", s: "Bolu", alan: "EA", sira: 290000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi G", p: "İşletme (ücretli)", s: "İstanbul", alan: "EA", sira: 720000, kont: 100, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Gaziantep Üniversitesi", p: "Lojistik ve Tedarik Zinciri", s: "Gaziantep", alan: "EA", sira: 480000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Çanakkale Onsekiz Mart Üniversitesi", p: "Sosyal Hizmet", s: "Çanakkale", alan: "EA", sira: 610000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Dicle Üniversitesi", p: "Hukuk", s: "Diyarbakır", alan: "EA", sira: 210000, kont: 200, burs: "devlet", dil: "Türkçe" },
+
+  { u: "Kırklareli Üniversitesi", p: "Türk Dili ve Edebiyatı", s: "Kırklareli", alan: "SÖZ", sira: 620000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Afyon Kocatepe Üniversitesi", p: "Tarih", s: "Afyonkarahisar", alan: "SÖZ", sira: 780000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Kahramanmaraş Sütçü İmam Üniversitesi", p: "Sosyoloji", s: "Kahramanmaraş", alan: "SÖZ", sira: 890000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Erzincan Binali Yıldırım Üniversitesi", p: "Türkçe Öğretmenliği", s: "Erzincan", alan: "SÖZ", sira: 430000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi H", p: "İletişim (ücretli)", s: "İstanbul", alan: "SÖZ", sira: 1050000, kont: 90, burs: "vakıf ücretli", dil: "Türkçe" },
+  { u: "Hitit Üniversitesi", p: "İlahiyat", s: "Çorum", alan: "SÖZ", sira: 560000, kont: 150, burs: "devlet", dil: "Türkçe" },
+
+  { u: "Vakıf Üniversitesi I", p: "Mütercim-Tercümanlık (burslu)", s: "Ankara", alan: "DİL", sira: 120000, kont: 20, burs: "vakıf burslu", dil: "İngilizce" },
+  { u: "Sakarya Üniversitesi", p: "İngiliz Dili ve Edebiyatı", s: "Sakarya", alan: "DİL", sira: 210000, kont: 80, burs: "devlet", dil: "İngilizce" },
+  { u: "Anadolu Üniversitesi", p: "İngilizce Öğretmenliği", s: "Eskişehir", alan: "DİL", sira: 98000, kont: 60, burs: "devlet", dil: "İngilizce" },
+  { u: "Karabük Üniversitesi", p: "Fransız Dili ve Edebiyatı", s: "Karabük", alan: "DİL", sira: 640000, kont: 50, burs: "devlet", dil: "Fransızca" },
+  { u: "Vakıf Üniversitesi J", p: "İngilizce Öğretmenliği (ücretli)", s: "İstanbul", alan: "DİL", sira: 480000, kont: 60, burs: "vakıf ücretli", dil: "İngilizce" },
+
+  { u: "Muğla Sıtkı Koçman Üniversitesi", p: "Bilgisayar Programcılığı", s: "Muğla", alan: "TYT", sira: 620000, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "Kütahya Dumlupınar Üniversitesi", p: "Elektrik Teknikerliği", s: "Kütahya", alan: "TYT", sira: 780000, kont: 100, burs: "devlet", dil: "Türkçe" },
+  { u: "Nevşehir Hacı Bektaş Veli Üniversitesi", p: "İlk ve Acil Yardım", s: "Nevşehir", alan: "TYT", sira: 720000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Osmaniye Korkut Ata Üniversitesi", p: "Grafik Tasarım", s: "Osmaniye", alan: "TYT", sira: 950000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi K", p: "Turizm ve Otel İşletmeciliği (ücretli)", s: "Antalya", alan: "TYT", sira: 1250000, kont: 80, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Zonguldak Bülent Ecevit Üniversitesi", p: "Dış Ticaret", s: "Zonguldak", alan: "TYT", sira: 880000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Iğdır Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Iğdır", alan: "SAY", sira: 1150000, kont: 50, burs: "devlet", dil: "Türkçe" },
+  { u: "Hakkari Üniversitesi", p: "Makine Mühendisliği", s: "Hakkari", alan: "SAY", sira: 1350000, kont: 45, burs: "devlet", dil: "Türkçe" },
+  { u: "Ardahan Üniversitesi", p: "Hemşirelik", s: "Ardahan", alan: "SAY", sira: 1240000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi L", p: "Bilgisayar Mühendisliği (ücretli)", s: "Ankara", alan: "SAY", sira: 1500000, kont: 70, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Siirt Üniversitesi", p: "Fizyoterapi ve Rehabilitasyon", s: "Siirt", alan: "SAY", sira: 1720000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Bitlis Eren Üniversitesi", p: "Endüstri Mühendisliği", s: "Bitlis", alan: "SAY", sira: 1480000, kont: 50, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi M", p: "Mimarlık (ücretli)", s: "İzmir", alan: "SAY", sira: 1650000, kont: 45, burs: "vakıf ücretli", dil: "Türkçe" },
+
+  { u: "Tunceli Üniversitesi", p: "İşletme", s: "Tunceli", alan: "EA", sira: 1450000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Kilis 7 Aralık Üniversitesi", p: "Hukuk", s: "Kilis", alan: "EA", sira: 980000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi N", p: "Psikoloji (ücretli)", s: "Ankara", alan: "EA", sira: 1680000, kont: 60, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Bartın Üniversitesi", p: "Sınıf Öğretmenliği", s: "Bartın", alan: "EA", sira: 1120000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Sinop Üniversitesi", p: "Sosyal Hizmet", s: "Sinop", alan: "EA", sira: 1320000, kont: 60, burs: "devlet", dil: "Türkçe" },
+
+  { u: "Artvin Çoruh Üniversitesi", p: "Türk Dili ve Edebiyatı", s: "Artvin", alan: "SÖZ", sira: 1420000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Bayburt Üniversitesi", p: "Tarih", s: "Bayburt", alan: "SÖZ", sira: 1650000, kont: 55, burs: "devlet", dil: "Türkçe" },
+  { u: "Vakıf Üniversitesi O", p: "Sosyoloji (ücretli)", s: "İstanbul", alan: "SÖZ", sira: 1850000, kont: 70, burs: "vakıf ücretli", dil: "Türkçe" },
+
+  { u: "Vakıf Üniversitesi P", p: "İngiliz Dili ve Edebiyatı (ücretli)", s: "Ankara", alan: "DİL", sira: 1600000, kont: 50, burs: "vakıf ücretli", dil: "İngilizce" },
+  { u: "Gümüşhane Üniversitesi", p: "İngilizce Öğretmenliği", s: "Gümüşhane", alan: "DİL", sira: 1180000, kont: 45, burs: "devlet", dil: "İngilizce" },
+
+  { u: "Vakıf Üniversitesi R", p: "Bilgisayar Programcılığı (ücretli)", s: "İstanbul", alan: "TYT", sira: 1650000, kont: 80, burs: "vakıf ücretli", dil: "Türkçe" },
+  { u: "Ağrı İbrahim Çeçen Üniversitesi", p: "Elektrik Teknikerliği", s: "Ağrı", alan: "TYT", sira: 1420000, kont: 70, burs: "devlet", dil: "Türkçe" },
+  { u: "Bingöl Üniversitesi", p: "Turizm ve Otel İşletmeciliği", s: "Bingöl", alan: "TYT", sira: 1880000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Anadolu Üniversitesi", p: "Bilgisayar Programcılığı", s: "Eskişehir", alan: "TYT", sira: 190000, kont: 150, burs: "devlet", dil: "Türkçe" },
+  { u: "Gazi Üniversitesi", p: "Elektrik Teknikerliği", s: "Ankara", alan: "TYT", sira: 140000, kont: 120, burs: "devlet", dil: "Türkçe" },
+  { u: "Marmara Üniversitesi", p: "İlk ve Acil Yardım", s: "İstanbul", alan: "TYT", sira: 108000, kont: 80, burs: "devlet", dil: "Türkçe" },
+  { u: "Dokuz Eylül Üniversitesi", p: "Grafik Tasarım", s: "İzmir", alan: "TYT", sira: 260000, kont: 60, burs: "devlet", dil: "Türkçe" },
+  { u: "Pamukkale Üniversitesi", p: "Turizm ve Otel İşletmeciliği", s: "Denizli", alan: "TYT", sira: 470000, kont: 90, burs: "devlet", dil: "Türkçe" },
+  { u: "Anadolu Üniversitesi", p: "Dış Ticaret", s: "Eskişehir", alan: "TYT", sira: 370000, kont: 100, burs: "devlet", dil: "Türkçe" }
+];
+
+/* --- Karar verme aşamaları (yeni yaklaşım) -------------------------------- */
+DATA.asamalar = [
+  { k: "1", ad: "Kendini tanı", metin: "Puan değil, önce 'ne yapmak istiyorum' sorusu. Eğilim testi + ilgi listesi; aile baskısı ile kendi isteğini ayır.", arac: "egilim" },
+  { k: "2", ad: "Alanı daralt", metin: "Puan türünü (SAY/EA/SÖZ/DİL) ve 3–5 meslek ailesini seç. Hepsi aynı puanda olmasın: bir hayal, iki gerçekçi, bir güvenli.", arac: "meslek" },
+  { k: "3", ad: "Gerçekçi puan", metin: "Netlerini gir, yerleştirme puanını ve OBP katkısını gör. Puandan çok sıralamanın konuşulduğunu unutma.", arac: "puan" },
+  { k: "4", ad: "Liste kur", metin: "24 tercih: 6 hayal, 10 hedef, 6 güvenli, 2 emniyet. Sıralama 'en çok istenenden' aşağı doğru olmalı — asla tersi.", arac: "liste" },
+  { k: "5", ad: "Kontrol et", metin: "ÖSYM kılavuzu + YÖK Atlas ile kontenjan, taban sıralama, burs, dil, akreditasyon, kampüs ve şehir maliyetini doğrula.", arac: "kontrol" }
+];
+
+/* --- SSS ---------------------------------------------------------------- */
+DATA.sss = [
+  { s: "Tercih sırası yerleşme şansımı etkiler mi?", c: "Hayır. Sistem, yerleştirilebildiğin ilk tercihine yerleştirir; tercih sırası şansı değiştirmez, sadece hangi programa gideceğini belirler. Bu yüzden en çok istediğin en üste gelmeli." },
+  { s: "Kaç tercih yapabilirim?", c: "2026-YKS'de adayların 24 tercih hakkı vardır; tamamını doldurmak zorunlu değildir. Boş bıraktığın tercih, yerleşme olasılığını azaltır." },
+  { s: "Sadece TYT ile 4 yıllık kazanılır mı?", c: "Hayır. 4 yıllık lisans programları için AYT (DİL için YDT) gerekir. TYT tek başına 2 yıllık önlisans için yeterlidir." },
+  { s: "Puan mı, sıralama mı?", c: "Sıralama. Puanlar yıldan yıla şişer/iner; yerleştirme sıralamaya göre yapılır. Karşılaştırma yaparken hep sıralamayı kullan." },
+  { s: "OBP ne kadar etkiler?", c: "OBP = diploma notu × 5. Yerleştirme puanına ×0,12 ile eklenir (yaklaşık 60 puan). Daha önce bir programa yerleşmiş adaylarda katkı yarıya iner." },
+  { s: "Tercihlerimi nereden yapacağım?", c: "Yalnızca ais.osym.gov.tr veya ÖSYM Aday İşlemleri Mobil Uygulaması üzerinden, TC kimlik numarası ve aday şifresiyle. Başvuru merkezlerinden veya posta ile tercih alınmaz." },
+  { s: "Vakıf üniversitesi seçerken neye bakmalıyım?", c: "Bursun süreklilik koşulları (GNO, sıralama), ücret artış oranı, hazırlık ve yurt maliyeti, programın akreditasyonu ve mezun istihdamı. 'Burslu' kontenjanla 'ücretli' kontenjanın taban sıralamaları çok farklıdır." },
+  { s: "Yapay zekâ meslek seçimimi nasıl etkiler?", c: "Rutin, tekrar eden ve yalnızca bilgi aktarımına dayanan işler daha hızlı dönüşüyor. Yapay zekâyı araç olarak kullanan, alan bilgisi derin ve insan ilişkisi gerektiren meslekler daha dayanıklı. Seçim yaparken 'bu işin hangi kısmını makine yapar?' sorusunu sor." },
+  { s: "Bu sitedeki taban sıralamalar gerçek mi?", c: "Hayır. Bu bir tasarım modelidir; program listesi örnek veridir. Gerçek veri için ÖSYM kılavuzu ve YÖK Atlas (yokatlas.yok.gov.tr) kullanılmalıdır." }
+];
+
+/* --- Kaynaklar ---------------------------------------------------------- */
+DATA.kaynaklar = [
+  { ad: "ÖSYM — 2026-YKS tercih duyurusu", u: "https://www.osym.gov.tr/2026-yks-tercihlerin-alinmasi" },
+  { ad: "ÖSYM Aday İşlemleri Sistemi (tercih)", u: "https://ais.osym.gov.tr" },
+  { ad: "YÖK Atlas — program, taban sıralama, kontenjan", u: "https://yokatlas.yok.gov.tr/" },
+  { ad: "MEB — 2026 YKS tercih süreci bilgilendirme kılavuzu", u: "https://www.meb.gov.tr/meb_iys_dosyalar/2026_07/6a5f4f625200a179515490_YKS_KILAVUZU.pdf" },
+  { ad: "İŞKUR — meslek bilgi dosyaları", u: "https://www.iskur.gov.tr/" },
+  { ad: "Mesleki Yeterlilik Kurumu", u: "https://www.myk.gov.tr/" }
+];
+
+if (typeof module !== "undefined" && module.exports) module.exports = DATA;
+if (typeof window !== "undefined") window.DATA = DATA;
+if (typeof globalThis !== "undefined" && typeof window === "undefined") globalThis.DATA = DATA;
+
+/* TercihLab — hesaplama motoru (tarayıcı + Node) */
+;(function (root) {
+  "use strict";
+
+  var net = (d, y) => Math.max(0, (Number(d) || 0) - (Number(y) || 0) / 4);
+
+  function tytPuan(netler, obp, yerlesmis) {
+    // 4 testin ortalaması (eşit ağırlık) → 100..500 bandına yaklaşık ölçekleme
+    const toplamSoru = 120;
+    const toplamNet = Object.values(netler).reduce((a, b) => a + b, 0);
+    const ham = 100 + (toplamNet / toplamSoru) * 400;
+    const k = yerlesmis ? 0.06 : 0.12;
+    return clamp(ham + (Number(obp) || 0) * k * 0.25, 100, 500);
+  }
+
+  function aytPuan(netler, obp, yerlesmis) {
+    const soru = Object.keys(netler).length ? null : null;
+    const toplamNet = Object.values(netler).reduce((a, b) => a + b, 0);
+    const ham = 100 + (toplamNet / 80) * 400;
+    const k = yerlesmis ? 0.06 : 0.12;
+    return clamp(ham + (Number(obp) || 0) * k * 0.25, 100, 500);
+  }
+
+  function hesapla(girdi) {
+    const { puanTuru, tyt = {}, ayt = {}, diploma = 0, yerlesmis = false } = girdi;
+    var obp = clamp((Number(diploma) || 0) * 5, 0, 500);
+    var tytNet = {};
+    Object.keys(tyt).forEach((k) => (tytNet[k] = net(tyt[k].d, tyt[k].y)));
+    var aytNet = {};
+    Object.keys(ayt).forEach((k) => (aytNet[k] = net(ayt[k].d, ayt[k].y)));
+
+    var tytToplam = round1(sum(tytNet));
+    var aytToplam = round1(sum(aytNet));
+    var tPuan = round1(tytPuan(tytNet, obp, yerlesmis));
+    var aPuan = puanTuru === "TYT" ? null : round1(aytPuan(aytNet, obp, yerlesmis));
+
+    var yerlestirme;
+    if (puanTuru === "TYT") yerlestirme = tPuan;
+    else yerlestirme = round1(tPuan * 0.4 + aPuan * 0.6);
+
+    var barajlar = [];
+    if (tPuan < 150) barajlar.push("TYT 150 barajı altında — lisans tercihi yapılamaz.");
+    if (puanTuru !== "TYT" && aPuan < 180)
+      barajlar.push(puanTuru === "DİL" ? "YDT 180 barajı altında." : "AYT 180 barajı altında — lisans tercihi yapılamaz.");
+
+    return {
+      obp,
+      tytNet, aytNet,
+      tytToplam, aytToplam,
+      tytPuan: tPuan, aytPuan: aPuan,
+      yerlestirme,
+      tahminiSira: tahminiSira(yerlestirme, puanTuru),
+      barajlar
+    };
+  }
+
+  // Kaba sıralama tahmini — 2026-YKS örnek dağılımına yaklaşık eşleme.
+  // NOT: Temsilîdir; gerçek sıralama ÖSYM sonuç belgesinden okunur.
+  function tahminiSira(puan, puanTuru) {
+    if (puan == null) return null;
+    if (puan < 180) return null;
+    // ÖSYM 2026 sonuç dağılımındaki yaklaşık kırılma noktaları (SAY/EA/DİL/SÖZ benzer ölçek)
+    var tablo = [
+      [500, 150], [495, 800], [490, 2500], [485, 5500], [480, 9000],
+      [475, 15000], [470, 24000], [465, 35000], [460, 48000], [455, 62000],
+      [450, 80000], [445, 98000], [440, 118000], [435, 140000], [430, 165000],
+      [425, 190000], [420, 220000], [415, 250000], [410, 285000], [405, 320000],
+      [400, 355000], [390, 435000], [380, 520000], [370, 610000], [360, 700000],
+      [350, 790000], [340, 880000], [330, 965000], [320, 1050000], [300, 1190000],
+      [280, 1330000], [260, 1450000], [240, 1570000], [220, 1700000], [200, 1850000],
+      [180, 2050000]
+    ];
+    var katsayi = { SAY: 1, EA: 1.15, SOZ: 1.45, DIL: 1.05, TYT: 1.2 }[puanTuru] || 1;
+    for (let i = 0; i < tablo.length - 1; i++) {
+      const [p1, s1] = tablo[i], [p2, s2] = tablo[i + 1];
+      if (puan <= p1 && puan >= p2) {
+        const oran = (p1 - puan) / (p1 - p2);
+        const s = (s1 + oran * (s2 - s1)) * katsayi;
+        return Math.round(s / 100) * 100;
+      }
+    }
+    return puan > 500 ? 100 : null;
+  }
+
+  /* Eğilim testi: cevaplar {index: 1..5} */
+  function egilimSonuc(cevaplar) {
+    var puanlar = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+    var sayi = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+    Object.keys(cevaplar).forEach((i) => {
+      const madde = root.DATA.egilim[Number(i)];
+      if (!madde) return;
+      puanlar[madde.k] += Number(cevaplar[i]) || 0;
+      sayi[madde.k] += 1;
+    });
+    var sirali = Object.keys(puanlar)
+      .map((k) => ({ k, p: sayi[k] ? round1((puanlar[k] / (sayi[k] * 5)) * 100) : 0 }))
+      .sort((a, b) => b.p - a.p);
+    var kod = sirali.slice(0, 3).map((x) => x.k).join("");
+    return { sirali, kod, en: sirali[0].k };
+  }
+
+  /* Program listesi önerisi: sıralamaya göre hayal/hedef/güvenli/emniyet */
+  function oneri(sira, programlar, puanTuru) {
+    var havuz = programlar.filter((p) => p.alan === puanTuru);
+    var bant = (alt, ust) => (p) => p.sira >= alt * sira && p.sira <= ust * sira;
+    var grupla = (fn) => havuz.filter(fn).sort((a, b) => a.sira - b.sira);
+    return {
+      hayal: grupla(bant(0.25, 0.75)).slice(0, 3),
+      hedef: grupla(bant(0.75, 1.3)).slice(0, 4),
+      guvenli: grupla(bant(1.3, 2.2)).slice(0, 3),
+      emniyet: grupla(bant(2.2, 6)).slice(0, 2)
+    };
+  }
+
+  function tutarlilik(liste) {
+    // liste: [{sira, ad}] — tercih sırası yukarıdan aşağı artan sıralama olmalı
+    var uyarilar = [];
+    for (let i = 1; i < liste.length; i++) {
+      if (liste[i].sira < liste[i - 1].sira) {
+        uyarilar.push(`#${i + 1} tercih, #${i} tercihten daha yüksek puanlı (daha düşük sıralı). Sıralamayı gözden geçir.`);
+      }
+    }
+    if (liste.length < 6) uyarilar.push("Liste çok kısa: en az 8–12 tercih, ideal 24.");
+    return uyarilar;
+  }
+
+  var clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  var sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  var round1 = (v) => Math.round(v * 10) / 10;
+
+  var API = { net, hesapla, egilimSonuc, oneri, tutarlilik, tahminiSira };
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+  root.MOTOR = API;
+  if (typeof globalThis !== "undefined" && typeof window === "undefined") globalThis.MOTOR = API;
+})(typeof globalThis !== "undefined" ? globalThis : this);
+
+/* TercihLab — arayüz (tek dosyaya gömülebilsin diye bağımsız IIFE) */
+;(function () {
+  "use strict";
+  var $ = (s, r = document) => r.querySelector(s);
+  var SELALL = (s, r = document) => Array.from(r.querySelectorAll(s));
+  var D = window.DATA, M = window.MOTOR;
+  var state = {
+    puanTuru: "SAY",
+    tyt: {}, ayt: {},
+    sonuc: null,
+    egilim: {},
+    egilimSonuc: null,
+    liste: [],
+    adimlar: { puan: false, egilim: false, meslek: false, liste: false }
+  };
+  var esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  var fmt = (n) => (n == null ? "—" : new Intl.NumberFormat("tr-TR").format(n));
+
+  /* ---------------- menü ---------------- */
+  $("#navToggle").addEventListener("click", (e) => {
+    const ul = $("#menu");
+    const acik = ul.classList.toggle("open");
+    e.currentTarget.setAttribute("aria-expanded", String(acik));
+  });
+  SELALL("#menu a").forEach((a) => a.addEventListener("click", () => $("#menu").classList.remove("open")));
+
+  /* ---------------- sekmeler ---------------- */
+  var tabs = SELALL(".tab");
+  function sekme(id) {
+    tabs.forEach((t) => {
+      const sec = t.id === "tab-" + id;
+      t.setAttribute("aria-selected", String(sec));
+      const p = $("#" + t.getAttribute("aria-controls"));
+      if (p) p.hidden = !sec;
+    });
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => sekme(t.id.replace("tab-", "")));
+    t.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const n = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      n.focus(); n.click();
+    });
+  });
+
+  /* ---------------- adım göstergesi ---------------- */
+  function adimGuncelle() {
+    const n = Object.values(state.adimlar).filter(Boolean).length;
+    const pct = Math.round((n / 4) * 100);
+    $("#progBar").style.width = pct + "%";
+    $("#progTxt").textContent = n + " / 4 adım tamam";
+    $("#progPct").textContent = "%" + pct;
+    SELALL("#steps li").forEach((li) => li.classList.toggle("done", !!state.adimlar[li.dataset.key]));
+    $("#nowTitle").textContent = n === 0 ? "Merhaba, nereden başlayalım?" :
+      n === 4 ? "Liste hazır — ÖSYM kılavuzuyla doğrula." : "Devam et, " + n + "/4 tamam.";
+  }
+  SELALL("#steps li").forEach((li) => {
+    li.addEventListener("click", () => {
+      const hedef = li.dataset.go;
+      document.getElementById(hedef).scrollIntoView({ behavior: "smooth", block: "start" });
+      if (li.dataset.key === "egilim") sekme("egilim");
+      if (li.dataset.key === "puan") sekme("puan");
+    });
+  });
+
+  /* ---------------- puan hesaplama ---------------- */
+  var seg = $("#segPuan");
+  D.puanTurleri.forEach((t) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = t.k; b.dataset.k = t.k;
+    b.title = t.ad + " — " + t.aciklama;
+    b.setAttribute("aria-pressed", String(t.k === state.puanTuru));
+    b.addEventListener("click", () => {
+      state.puanTuru = t.k;
+      SELALL("button", seg).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.k === t.k)));
+      aytCiz(); hesaplaCiz();
+    });
+    seg.appendChild(b);
+  });
+
+  function netRow(t, grup) {
+    const id = grup + "_" + t.id;
+    return `<div class="net-row">
+      <div class="ad">${esc(t.ad)}<small>${t.soru} soru</small></div>
+      <div><label class="f" for="${id}_d">Doğru</label><input id="${id}_d" data-grup="${grup}" data-test="${t.id}" data-tip="d" type="number" min="0" max="${t.soru}" value="0" inputmode="numeric"></div>
+      <div><label class="f" for="${id}_y">Yanlış</label><input id="${id}_y" data-grup="${grup}" data-test="${t.id}" data-tip="y" type="number" min="0" max="${t.soru}" value="0" inputmode="numeric"></div>
+      <div class="out" id="${id}_net">0</div>
+    </div>`;
+  }
+  function tytCiz() {
+    $("#tytRows").innerHTML = D.testler.TYT.map((t) => netRow(t, "tyt")).join("");
+    tytDinle();
+  }
+  function aytCiz() {
+    const tur = state.puanTuru;
+    if (tur === "TYT") {
+      $("#aytCard").style.display = "none";
+      return;
+    }
+    $("#aytCard").style.display = "";
+    const testler = D.testler.AYT[tur] || [];
+    const baslik = tur === "DİL" ? "YDT netleri" : "AYT netleri";
+    const soru = testler.reduce((a, b) => a + b.soru, 0);
+    $("#aytTitle").innerHTML = `${baslik} <span class="tag blue">${soru} soru</span>`;
+    $("#aytHint").textContent = tur === "DİL"
+      ? "Yabancı dil puanı YDT üzerinden hesaplanır (AYT sayılmaz)."
+      : `${tur} puan türünde sayılan AYT testleri. Diğer testler bu puan türüne eklenmez.`;
+    $("#aytRows").innerHTML = testler.map((t) => netRow(t, "ayt")).join("");
+    aytDinle();
+  }
+  function dinle(kapsam) {
+    SELALL("input[data-grup]", $(kapsam)).forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const max = Number(inp.max);
+        let v = Math.round(Number(inp.value) || 0);
+        if (v < 0) v = 0; if (v > max) v = max;
+        inp.value = v;
+        const grup = inp.dataset.grup;
+        state[grup][inp.dataset.test] = state[grup][inp.dataset.test] || { d: 0, y: 0 };
+        state[grup][inp.dataset.test][inp.dataset.tip] = v;
+        const d = state[grup][inp.dataset.test].d || 0, y = state[grup][inp.dataset.test].y || 0;
+        $("#" + grup + "_" + inp.dataset.test + "_net").textContent = M.net(d, y).toFixed(2).replace(".", ",");
+        hesaplaCiz();
+      });
+    });
+  }
+  var tytDinle = () => dinle("#tytRows");
+  var aytDinle = () => dinle("#aytRows");
+
+  function hesaplaCiz() {
+    const tur = state.puanTuru;
+    const ayt = tur === "TYT" ? {} : state.ayt;
+    const r = M.hesapla({
+      puanTuru: tur,
+      tyt: state.tyt,
+      ayt,
+      diploma: $("#diploma").value,
+      yerlesmis: $("#durum").value === "yerlesmis"
+    });
+    state.sonuc = r;
+    const varMi = r.tytToplam > 0 || r.aytToplam > 0;
+    state.adimlar.puan = varMi;
+    adimGuncelle();
+
+    $("#outPuan").innerHTML = (varMi ? r.yerlestirme.toFixed(1).replace(".", ",") : "—") + "<small>/ 500</small>";
+    $("#outSub").textContent = varMi
+      ? (r.barajlar.length ? "Baraj uyarılarını aşağıda gör." : "Hesaplama hazır — önerilere aşağıdan bak.")
+      : "Netlerini girdikçe güncellenir.";
+    $("#outTyt").textContent = r.tytPuan.toFixed(1).replace(".", ",");
+    $("#outAytLbl").textContent = tur === "DİL" ? "YDT puanı" : "AYT puanı";
+    $("#outAyt").textContent = r.aytPuan == null ? "—" : r.aytPuan.toFixed(1).replace(".", ",");
+    $("#outTytNet").textContent = r.tytToplam.toFixed(1).replace(".", ",");
+    $("#outAytNet").textContent = tur === "TYT" ? "—" : r.aytToplam.toFixed(1).replace(".", ",");
+    $("#outObp").textContent = "+" + (r.obp * ($("#durum").value === "yerlesmis" ? 0.06 : 0.12)).toFixed(1).replace(".", ",");
+    $("#outSira").textContent = r.tahminiSira ? "~" + fmt(r.tahminiSira) : "—";
+
+    const al = $("#outAlerts");
+    al.innerHTML = r.barajlar.map((b) => `<li>${esc(b)}</li>`).join("") +
+      (varMi && !r.barajlar.length ? `<li class="ok">Barajların üzerindesin. Sıralama tahminini yalnızca yön göstergesi olarak kullan.</li>` : "");
+    onerilerCiz(r);
+    dengeCiz();
+  }
+  $("#diploma").addEventListener("input", hesaplaCiz);
+  $("#durum").addEventListener("change", hesaplaCiz);
+
+  $("#btnOrnek").addEventListener("click", () => {
+    const ornek = {
+      SAY: { tyt: { tyt_turkce: [28, 8], tyt_sosyal: [12, 4], tyt_mat: [22, 10], tyt_fen: [9, 6] }, ayt: { mat: [18, 12], fizik: [6, 4], kimya: [7, 3], bio: [8, 2] } },
+      EA: { tyt: { tyt_turkce: [30, 6], tyt_sosyal: [14, 3], tyt_mat: [20, 8], tyt_fen: [6, 7] }, ayt: { mat: [22, 8], edebiyat: [16, 4], tarih1: [7, 2], cografya1: [4, 1] } },
+      SÖZ: { tyt: { tyt_turkce: [32, 5], tyt_sosyal: [16, 2], tyt_mat: [10, 12], tyt_fen: [5, 8] }, ayt: { edebiyat: [19, 3], tarih1: [8, 1], cografya1: [5, 1], tarih2: [8, 2], cografya2: [8, 2], felsefe: [9, 2], din: [5, 1] } },
+      DİL: { tyt: { tyt_turkce: [26, 9], tyt_sosyal: [11, 5], tyt_mat: [16, 12], tyt_fen: [5, 9] }, ayt: { ydt: [58, 14] } },
+      TYT: { tyt: { tyt_turkce: [24, 10], tyt_sosyal: [10, 6], tyt_mat: [14, 12], tyt_fen: [6, 8] }, ayt: {} }
+    }[state.puanTuru];
+    SELALL("input[data-grup]").forEach((inp) => {
+      const g = inp.dataset.grup, t = inp.dataset.test, tip = inp.dataset.tip;
+      const v = ornek[g] && ornek[g][t] ? ornek[g][t][tip === "d" ? 0 : 1] : 0;
+      inp.value = v;
+      inp.dispatchEvent(new Event("input"));
+    });
+    $("#diploma").value = 84;
+    hesaplaCiz();
+  });
+
+  function onerilerCiz(r) {
+    const kutu = $("#oneriler");
+    if (!r || !r.tahminiSira || r.barajlar.length) { kutu.innerHTML = ""; return; }
+    const o = M.oneri(r.tahminiSira, D.programlar, state.puanTuru);
+    const gruplar = [
+      ["hayal", "Hayal", "Sıralamanın bir miktar üstü — ulaşılabilir ama zor"],
+      ["hedef", "Hedef", "Sıralamana denk gelenler"],
+      ["guvenli", "Güvenli", "Rahat yerleşme ihtimali yüksek"],
+      ["emniyet", "Emniyet", "Kesin bir yer için son sığınak"]
+    ];
+    const html = gruplar.filter(([k]) => o[k].length).map(([k, ad, ac]) =>
+      `<div class="rec-group"><h5>${ad} <span style="text-transform:none; letter-spacing:0; font-weight:400">— ${ac}</span></h5>` +
+      o[k].map((p) => `<div class="rec">
+        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · ${esc(p.burs)}</span></div>
+        <div class="sira">${fmt(p.sira)}.</div>
+        <button class="add" title="Listeye ekle" data-ekle="${esc(p.u + "|" + p.p)}" aria-label="Listeye ekle">+</button>
+      </div>`).join("") + "</div>").join("");
+    const toplam = gruplar.reduce((a, [k]) => a + o[k].length, 0);
+    kutu.innerHTML = `<div class="card"><h4>Senin sıralamana göre öneriler <span class="tag">Örnek veri</span></h4>
+      <p class="hint">Tahmini sıralaman ~${fmt(r.tahminiSira)}. Bu liste yalnızca yöntemi gösterir; gerçek taban sıralamalar YÖK Atlas'tan alınmalı.</p>
+      ${toplam ? html : `<div class="empty">Bu bantta örnek program yok. Puan türünü değiştir ya da netlerini artırarak tekrar dene.</div>`}</div>`;
+    SELALL("[data-ekle]", kutu).forEach((b) => b.addEventListener("click", () => {
+      const [u, p] = b.dataset.ekle.split("|");
+      const prog = D.programlar.find((x) => x.u === u && x.p === p);
+      listeyeEkle(prog);
+    }));
+  }
+
+  /* ---------------- eğilim testi ---------------- */
+  var egilimKutu = $("#egilimRows");
+  egilimKutu.innerHTML = D.egilim.map((m, i) => `
+    <div class="net-row" style="grid-template-columns:1fr auto">
+      <div class="ad">${i + 1}. ${esc(m.m)}</div>
+      <div class="seg" role="group" aria-label="${esc(m.m)}">
+        ${[1, 2, 3, 4, 5].map((v) => `<button type="button" data-i="${i}" data-v="${v}" aria-pressed="false" style="padding:5px 10px">${v}</button>`).join("")}
+      </div>
+    </div>`).join("");
+  egilimKutu.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-i]");
+    if (!b) return;
+    const i = b.dataset.i;
+    state.egilim[i] = Number(b.dataset.v);
+    SELALL(`button[data-i="${i}"]`, egilimKutu).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  });
+  $("#btnEgilimSifirla").addEventListener("click", () => {
+    state.egilim = {}; state.egilimSonuc = null; state.adimlar.egilim = false;
+    SELALL("button[data-i]", egilimKutu).forEach((x) => x.setAttribute("aria-pressed", "false"));
+    $("#egilimDetail").hidden = true; $("#egilimEmpty").hidden = false;
+    adimGuncelle();
+  });
+  $("#btnEgilim").addEventListener("click", () => {
+    const sayi = Object.keys(state.egilim).length;
+    if (sayi < 12) {
+      $("#egilimEmpty").hidden = false;
+      $("#egilimEmpty").innerHTML = `<b>${sayi}/24</b> madde işaretlendi. Daha sağlıklı sonuç için en az 18 madde işaretlemelisin.`;
+      $("#egilimDetail").hidden = true;
+      return;
+    }
+    const r = M.egilimSonuc(state.egilim);
+    state.egilimSonuc = r; state.adimlar.egilim = true; adimGuncelle();
+    $("#egilimEmpty").hidden = true;
+    const d = $("#egilimDetail"); d.hidden = false;
+    const yakin = D.meslekler.filter((m) => m.riasec.includes(r.en)).slice(0, 4);
+    d.innerHTML = `
+      <div class="big" style="color:var(--ink); font-size:40px; margin:6px 0 2px">${r.kod}</div>
+      <div class="sub" style="color:var(--muted); font-size:13px; margin-bottom:14px">Holland/RIASEC kodunun ilk üçü</div>
+      ${r.sirali.map((x) => `<div style="margin-bottom:10px">
+        <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:3px"><b>${x.k} · ${esc(D.egilimTipleri[x.k].ad)}</b><span>${x.p}%</span></div>
+        <div class="bar"><i style="width:${x.p}%"></i></div></div>`).join("")}
+      <p style="font-size:13.5px; color:var(--ink-2); margin:12px 0">${esc(D.egilimTipleri[r.en].metin)}</p>
+      <h4 style="margin-top:14px">Sana yakın meslekler</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px">${yakin.map((m) => `<span class="chip">${esc(m.ad)}</span>`).join("")}</div>`;
+    $("#meslekKod").value = r.en;
+    meslekCiz();
+  });
+
+  /* ---------------- meslekler ---------------- */
+  var alanlar = [...new Set(D.meslekler.map((m) => m.alan))].sort((a, b) => a.localeCompare(b, "tr"));
+  alanlar.forEach((a) => $("#meslekAlan").insertAdjacentHTML("beforeend", `<option>${esc(a)}</option>`));
+  function meslekCiz() {
+    const q = $("#meslekAra").value.trim().toLocaleLowerCase("tr");
+    const alan = $("#meslekAlan").value, puan = $("#meslekPuan").value, kod = $("#meslekKod").value;
+    const list = D.meslekler.filter((m) =>
+      (!q || (m.ad + " " + m.alan + " " + m.aciklama).toLocaleLowerCase("tr").includes(q)) &&
+      (!alan || m.alan === alan) && (!puan || m.puan.includes(puan)) && (!kod || m.riasec.includes(kod)));
+    const grid = $("#meslekGrid");
+    if (!list.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Bu filtrelerle meslek bulunamadı.</div>`; return; }
+    grid.innerHTML = list.map((m) => `
+      <article class="meslek">
+        <div class="top">
+          <div><div class="alan">${esc(m.alan)}</div><h4>${esc(m.ad)}</h4></div>
+          <span class="tag ${m.gelecek.startsWith("Çok") || m.gelecek.startsWith("Yüksek") ? "ok" : ""}">${esc(m.gelecek)}</span>
+        </div>
+        <p>${esc(m.aciklama)}</p>
+        <div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-bottom:4px"><span>Gelir aralığı (örnek)</span><span>${fmt(m.maasDusuk)}–${fmt(m.maasYuksek)} bin TL</span></div>
+          <div class="bar"><i style="width:${Math.round((m.maasYuksek / 200) * 100)}%"></i></div></div>
+        <div class="meta">
+          ${m.puan.map((p) => `<span class="chip ${p === "SAY" ? "say" : p === "EA" ? "ea" : p === "SÖZ" ? "soz" : p === "DİL" ? "dil" : "tyt"}">${p}</span>`).join("")}
+          ${m.riasec.map((k) => `<span class="chip" title="Eğilim kodu">${k}</span>`).join("")}
+        </div>
+        <details style="font-size:13px"><summary style="cursor:pointer; color:var(--accent-ink); font-weight:600">Yollar</summary>
+          <ul style="margin:8px 0 0; padding-left:18px; color:var(--ink-2)">${m.yollar.map((y) => `<li>${esc(y)}</li>`).join("")}</ul>
+        </details>
+      </article>`).join("");
+    state.adimlar.meslek = (!!kod || !!alan || !!puan) && list.length > 0;
+    adimGuncelle();
+  }
+  ["#meslekAra", "#meslekAlan", "#meslekPuan", "#meslekKod"].forEach((s) => $(s).addEventListener("input", meslekCiz));
+
+  /* ---------------- liste kurucu ---------------- */
+  function havuzCiz() {
+    const tur = $("#listePuan").value, q = $("#listeAra").value.trim().toLocaleLowerCase("tr");
+    const list = D.programlar.filter((p) => p.alan === tur && (!q || (p.u + " " + p.p + " " + p.s).toLocaleLowerCase("tr").includes(q)))
+      .sort((a, b) => a.sira - b.sira);
+    $("#listeHavuz").innerHTML = list.length ? list.map((p) => {
+      const ekli = state.liste.some((x) => x.u === p.u && x.p === p.p);
+      return `<div class="rec">
+        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · kont. ${p.kont} · ${esc(p.burs)}</span></div>
+        <div class="sira">${fmt(p.sira)}.</div>
+        <button class="add" data-p="${esc(p.u + "|" + p.p)}" ${ekli ? "disabled" : ""} aria-label="Listeye ekle">${ekli ? "✓" : "+"}</button>
+      </div>`;
+    }).join("") : `<div class="empty">Bu puan türünde örnek program yok.</div>`;
+    SELALL("[data-p]", $("#listeHavuz")).forEach((b) => b.addEventListener("click", () => {
+      const [u, p] = b.dataset.p.split("|");
+      listeyeEkle(D.programlar.find((x) => x.u === u && x.p === p));
+    }));
+  }
+  function listeyeEkle(p) {
+    if (!p || state.liste.length >= 24) return;
+    if (state.liste.some((x) => x.u === p.u && x.p === p.p)) return;
+    state.liste.push({ u: p.u, p: p.p, s: p.s, sira: p.sira, burs: p.burs });
+    listeCiz(); havuzCiz();
+  }
+  function listeCiz() {
+    const box = $("#listeBox");
+    $("#listeSayi").textContent = state.liste.length + " / 24";
+    if (!state.liste.length) {
+      box.innerHTML = `<div class="empty">Liste boş. Soldan program ekleyerek başla.</div>`;
+      $("#listeUyari").innerHTML = ""; $("#denge").innerHTML = "";
+      state.adimlar.liste = false; adimGuncelle(); return;
+    }
+    box.innerHTML = state.liste.map((x, i) => `<div class="liste-item">
+      <span class="no">${i + 1}</span>
+      <div class="who"><b>${esc(x.u)}</b><span>${esc(x.p)} · ${esc(x.s)} · ${fmt(x.sira)}.</span></div>
+      <button class="icon-btn" data-up="${i}" aria-label="Yukarı taşı" ${i === 0 ? "disabled" : ""}>↑</button>
+      <button class="icon-btn" data-down="${i}" aria-label="Aşağı taşı" ${i === state.liste.length - 1 ? "disabled" : ""}>↓</button>
+      <button class="icon-btn" data-del="${i}" aria-label="Listeden çıkar">✕</button>
+    </div>`).join("");
+    SELALL("[data-up]", box).forEach((b) => b.addEventListener("click", () => tasi(+b.dataset.up, -1)));
+    SELALL("[data-down]", box).forEach((b) => b.addEventListener("click", () => tasi(+b.dataset.down, 1)));
+    SELALL("[data-del]", box).forEach((b) => b.addEventListener("click", () => {
+      state.liste.splice(+b.dataset.del, 1); listeCiz(); havuzCiz();
+    }));
+    const uy = M.tutarlilik(state.liste);
+    $("#listeUyari").innerHTML = uy.length
+      ? `<ul class="alerts" style="list-style:none; padding:0">${uy.map((u) => `<li style="background:var(--warn-soft); border-color:#efdcae; color:#7a4f00">${esc(u)}</li>`).join("")}</ul>`
+      : `<div class="alerts"><div class="ok" style="font-size:12.5px; padding:9px 11px; border-radius:8px; background:var(--ok-soft); color:var(--ok)">Sıralama tutarlı görünüyor. Yine de her programı ÖSYM kılavuzundan doğrula.</div></div>`;
+    state.adimlar.liste = state.liste.length >= 4; adimGuncelle(); dengeCiz();
+  }
+  function tasi(i, yon) {
+    const j = i + yon;
+    if (j < 0 || j >= state.liste.length) return;
+    [state.liste[i], state.liste[j]] = [state.liste[j], state.liste[i]];
+    listeCiz();
+  }
+  function dengeCiz() {
+    const kutu = $("#denge");
+    if (!kutu) return;
+    const sira = state.sonuc && state.sonuc.tahminiSira;
+    if (!state.liste.length) { kutu.innerHTML = `<div class="empty" style="padding:16px">Liste kurulunca denge burada görünür.</div>`; return; }
+    const hedef = { hayal: 6, hedef: 10, guvenli: 6, emniyet: 2 };
+    const say = { hayal: 0, hedef: 0, guvenli: 0, emniyet: 0 };
+    state.liste.forEach((x) => {
+      if (!sira) { say.hedef++; return; }
+      const o = x.sira / sira;
+      if (o < 0.75) say.hayal++;
+      else if (o <= 1.3) say.hedef++;
+      else if (o <= 2.2) say.guvenli++;
+      else say.emniyet++;
+    });
+    const adlar = { hayal: "Hayal", hedef: "Hedef", guvenli: "Güvenli", emniyet: "Emniyet" };
+    kutu.innerHTML = Object.keys(hedef).map((k) => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:3px"><b>${adlar[k]}</b><span>${say[k]} / ${hedef[k]}</span></div>
+        <div class="bar"><i style="width:${Math.min(100, (say[k] / hedef[k]) * 100)}%; background:${say[k] >= hedef[k] ? "var(--ok)" : "var(--accent)"}"></i></div>
+      </div>`).join("") + (sira ? "" : `<p style="font-size:12px; color:var(--muted); margin:0">Puan hesaplamadan denge kategorileri hesaplanamaz.</p>`);
+  }
+  $("#listePuan").addEventListener("change", havuzCiz);
+  $("#listeAra").addEventListener("input", havuzCiz);
+  $("#btnListeTemizle").addEventListener("click", () => { state.liste = []; listeCiz(); havuzCiz(); });
+  $("#btnListeKopyala").addEventListener("click", () => {
+    const metin = state.liste.map((x, i) => `${i + 1}. ${x.u} — ${x.p} (${x.s})`).join("\n");
+    const b = $("#btnListeKopyala");
+    const bitti = () => { b.textContent = "Kopyalandı ✓"; setTimeout(() => (b.textContent = "Kopyala"), 1600); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(metin).then(bitti).catch(() => fallback());
+    else fallback();
+    function fallback() {
+      const ta = document.createElement("textarea");
+      ta.value = metin; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); bitti(); } catch (e) { alert(metin); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  /* ---------------- yol haritası ---------------- */
+  $("#yolGrid").innerHTML = D.asamalar.map((a) => `<article>
+    <div class="k">${a.k}</div><h4>${esc(a.ad)}</h4><p>${esc(a.metin)}</p>
+    <button data-git="${a.arac}">Aracı aç →</button></article>`).join("");
+  SELALL("[data-git]").forEach((b) => b.addEventListener("click", () => {
+    const a = b.dataset.git;
+    if (a === "egilim" || a === "puan") { sekme(a); document.getElementById("calisma").scrollIntoView({ behavior: "smooth" }); }
+    else if (a === "meslek") document.getElementById("meslekler").scrollIntoView({ behavior: "smooth" });
+    else if (a === "liste") document.getElementById("liste").scrollIntoView({ behavior: "smooth" });
+    else document.getElementById("kaynaklar").scrollIntoView({ behavior: "smooth" });
+  }));
+
+  /* ---------------- takvim, SSS, kaynaklar ---------------- */
+  $("#timeline").innerHTML = D.takvim.map((t) => `<li><div class="when">${esc(t.d)}</div><div><b>${esc(t.t)}</b><span>${esc(t.not)}</span></div></li>`).join("");
+  $("#sssList").innerHTML = D.sss.map((s, i) => `<details class="sss" ${i === 0 ? "open" : ""}><summary>${esc(s.s)}</summary><p>${esc(s.c)}</p></details>`).join("");
+  $("#kaynakList").innerHTML = D.kaynaklar.map((k) => `<li><a href="${esc(k.u)}" target="_blank" rel="noopener"><span>${esc(k.ad)}</span><span>${esc(new URL(k.u).host)} ↗</span></a></li>`).join("");
+
+  /* ---------------- koç (yerel bilgi tabanı) ---------------- */
+  var chat = $("#chat");
+  var bilgi = [
+    { k: ["tıp", "doktor", "hekim"], c: "Tıp SAY puan türünde ve taban sıralamaları çok yüksek (devlet tıplarında genelde ilk 30–50 bin). 390 puan tek başına yeterli olmaz; sıralamanı YÖK Atlas'tan karşılaştır. Alternatif: diş hekimliği, eczacılık, sağlık teknikerliği (2 yıllık) ve DGS ile yükseltme." },
+    { k: ["hukuk", "avukat"], c: "Hukuk EA ve SÖZ'den alıyor; mezun sayısı fazla olduğu için asıl fark staj, baro ve dil ile açılıyor. Kamu istihdamı (hâkim/savcılık, idari yargı) KPSS'ye bağlı." },
+    { k: ["vakıf", "burs", "ücret"], c: "Vakıf üniversitesinde üç şeye bak: (1) bursun süreklilik koşulu (GNO, sıralama şartı), (2) yıllık zam oranı ve hazırlık/yurt maliyeti, (3) programın akreditasyonu ve mezun istihdamı. Burslu kontenjanla ücretli kontenjanın taban sıralaması çok farklıdır." },
+    { k: ["sıra", "sıralama", "puan"], c: "Karşılaştırmayı her zaman sıralama üzerinden yap; puanlar her yıl şişer/iner. Tercih sırası ise şansı değiştirmez, sadece yerleşeceğin programı belirler — en çok istediğin en üste." },
+    { k: ["sözel", "iş bulma", "istihdam", "işsiz"], c: "Sözel alanlarda istihdam, bölümden çok beceriye bağlı: yazılım/görsel üretim araçlarını kullanabilmek, portfolyo, yayın, staj ve KPSS. Sosyal bilimler + veri okuryazarlığı kombinasyonu giderek değer kazanıyor." },
+    { k: ["yapay zekâ", "yapay zeka", "ai"], c: "Rutin ve tekrar eden işler dönüşüyor. Dayanıklı seçim: derin alan bilgisi + araç kullanımı + insan ilişkisi. Seçim yaparken sor: 'Bu işin hangi kısmını bir makine yapar, benim imzam ne olur?'" },
+    { k: ["myo", "2 yıllık", "önlisans", "dgs"], c: "2 yıllık programlar hızlı istihdam sağlar; DGS ile lisansa geçiş mümkün. Teknik alanlar (elektrik, otomasyon, bilişim, sağlık) iş bulma hızında öne çıkıyor. DGS kontenjanı sınırlıdır, hedefi baştan bil." },
+    { k: ["kaç tercih", "24", "tercih sayısı"], c: "2026-YKS'de 24 tercih hakkın var; tamamını doldurmak zorunlu değil ama boş bırakmak şansı azaltır. Önerilen dağılım: 6 hayal, 10 hedef, 6 güvenli, 2 emniyet." },
+    { k: ["nereden", "nasıl tercih", "ais", "osym"], c: "Tercihler yalnızca ais.osym.gov.tr veya ÖSYM Aday İşlemleri mobil uygulamasından yapılır. Başvuru merkezlerinden veya posta ile tercih alınmaz. 2026 tercih dönemi 29 Temmuz – 10 Ağustos." },
+    { k: ["obp", "diploma"], c: "OBP = diploma notu × 5, yerleştirme puanına ×0,12 ile eklenir (yaklaşık 60 puan). Daha önce bir programa yerleştiysen katkı yarıya iner. 10 puanlık diploma farkı sıralamada on binlerce kişi demek olabilir." },
+    { k: ["mühendislik", "mühendis"], c: "Mühendislikte fark; staj, proje/portfolyo ve İngilizce ile açılıyor. Bölüm seçerken mezun istihdam oranına ve sektör bağlantısına bak. Yazılım/elektrik/endüstri Türkiye'de talebi en istikrarlı alanlar arasında." },
+    { k: ["psikoloji"], c: "Psikoloji lisansı tek başına klinik yetki vermez; klinik için yüksek lisans + süpervizyon gerekir. EA ve SÖZ'den girilebilen programların tabanları yıllar içinde çok değişti, güncel Atlas verisine bak." }
+  ];
+  var karsilama = "Bunu tam bilmiyorum ama şu üç soruya odaklanmanı öneririm: (1) Hangi 3 mesleği gerçekten yapmak istiyorsun? (2) Bu mesleklerin güncel taban sıralamaları ne? (3) Alternatif yolu (2 yıllık, DGS, sertifika) var mı? Ayrıntı için: tıp, hukuk, mühendislik, psikoloji, MYO, vakıf bursu, OBP ya da 'kaç tercih' yazabilirsin.";
+  function cevap(metin) {
+    const m = metin.toLocaleLowerCase("tr");
+    const bulunan = bilgi.find((b) => b.k.some((k) => m.includes(k)));
+    return bulunan ? bulunan.c : karsilama;
+  }
+  function mesaj(yazan, metin) {
+    const d = document.createElement("div");
+    d.className = "msg " + yazan;
+    d.textContent = metin;
+    chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  }
+  $("#chatForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("#chatInput").value.trim();
+    if (!v) return;
+    mesaj("me", v); $("#chatInput").value = "";
+    setTimeout(() => mesaj("bot", cevap(v)), 260);
+  });
+  var oneriler = ["Puanım 390, tıp olur mu?", "Vakıf burslusuna bakmalı mıyım?", "Kaç tercih yapmalıyım?", "Sözelde iş bulur muyum?"];
+  $("#suggestions").innerHTML = oneriler.map((s) => `<button type="button">${esc(s)}</button>`).join("");
+  SELALL("#suggestions button").forEach((b) => b.addEventListener("click", () => {
+    $("#chatInput").value = b.textContent; $("#chatForm").dispatchEvent(new Event("submit"));
+  }));
+
+  /* ---------------- ilk çizim ---------------- */
+  tytCiz(); aytCiz(); havuzCiz(); meslekCiz(); listeCiz(); hesaplaCiz(); adimGuncelle();
+})();
+
+})();
+</script>
+</body>
+</html>
