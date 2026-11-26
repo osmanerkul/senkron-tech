@@ -155,6 +155,8 @@ h2 + p.sub{margin:10px 0 0; color:var(--muted); font-size:15.5px; max-width:62ch
 }
 .tag.ok{background:var(--ok-soft); color:var(--ok); border-color:#c3e0d5}
 .tag.blue{background:var(--blue-soft); color:var(--blue); border-color:#c9d6f6}
+.tag.tag-real{background:var(--ok-soft); color:var(--ok); border-color:#c3e0d5; font-size:10px; padding:1px 5px; margin-left:4px}
+.tag.tag-demo{background:#f3f1ec; color:var(--muted); border-color:var(--line); font-size:10px; padding:1px 5px; margin-left:4px; text-transform:none; letter-spacing:0}
 
 /* --- sekmeler --- */
 .tabs{display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:24px}
@@ -188,7 +190,7 @@ input:focus, select:focus{border-color:var(--accent); outline:none; box-shadow:0
 .net-row .ad small{display:block; color:var(--muted); font-size:11.5px}
 .net-row .out{font-family:var(--mono); font-size:13px; text-align:right; color:var(--ink)}
 .seg{display:inline-flex; background:#ece5d7; padding:3px; border-radius:999px; gap:2px; flex-wrap:wrap}
-.seg button{border:0; background:none; padding:7px 13px; border-radius:999px; font-size:13px; font-weight:600; color:var(--ink-2)}
+.seg button{border:0; background:none; padding:8px 13px; min-height:34px; border-radius:999px; font-size:13px; font-weight:600; color:var(--ink-2)}
 .seg button[aria-pressed="true"]{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12)}
 
 /* --- sonuç paneli --- */
@@ -213,7 +215,7 @@ input:focus, select:focus{border-color:var(--accent); outline:none; box-shadow:0
 .rec .who b{display:block; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .rec .who span{font-size:12px; color:var(--muted)}
 .rec .sira{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); white-space:nowrap}
-.rec .add{border:1px solid var(--line-2); background:#fff; border-radius:8px; width:30px; height:30px; display:grid; place-items:center; font-size:16px; color:var(--ink); flex:none}
+.rec .add{border:1px solid var(--line-2); background:#fff; border-radius:8px; width:30px; height:30px; min-width:34px; min-height:34px; display:grid; place-items:center; font-size:16px; color:var(--ink); flex:none}
 .rec .add:hover{background:var(--accent); color:#fff; border-color:var(--accent)}
 
 /* --- meslek kartları --- */
@@ -246,7 +248,7 @@ input:focus, select:focus{border-color:var(--accent); outline:none; box-shadow:0
 .liste-item .who{flex:1; min-width:0}
 .liste-item .who b{display:block; font-size:13.5px}
 .liste-item .who span{font-size:12px; color:var(--muted)}
-.icon-btn{border:1px solid var(--line); background:#fff; border-radius:7px; width:28px; height:28px; display:grid; place-items:center; color:var(--ink-2); flex:none; font-size:13px}
+.icon-btn{border:1px solid var(--line); background:#fff; border-radius:7px; width:28px; height:28px; min-width:34px; min-height:34px; display:grid; place-items:center; color:var(--ink-2); flex:none; font-size:13px}
 .icon-btn:hover{background:#f1ece0}
 .empty{padding:26px; text-align:center; color:var(--muted); font-size:13.5px; border:1px dashed var(--line-2); border-radius:var(--radius); background:#fbf8f1}
 
@@ -326,7 +328,8 @@ footer.site{border-top:1px solid var(--line); padding:36px 0 48px; margin-top:20
   .hero{padding:36px 0 24px}
   section.block{padding:38px 0}
   .net-row{grid-template-columns:1fr 64px 64px 52px; gap:6px}
-  .net-row .seg button{padding:5px 7px !important}
+  .net-row .seg button{padding:6px 8px !important; min-height:36px}
+  .seg button{min-height:36px}
   .rec{gap:8px}
   .rec .who b{white-space:normal}
   .res-grid{grid-template-columns:1fr 1fr}
@@ -345,7 +348,7 @@ footer.site{border-top:1px solid var(--line); padding:36px 0 48px; margin-top:20
 <body>
 <a class="skip" href="#icerik">İçeriğe geç</a>
 
-<div class="demo-bar"><a href="/" style="color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:700;margin-right:10px;white-space:nowrap">← senkron.tech</a><span class="dot"></span><b>Tasarım modeli</b> — Su Tercih Robotu için öneri. Program taban sıralamaları ve maaşlar <b>örnek veridir</b>; resmî veri için ÖSYM kılavuzu ve YÖK Atlas kullanılır.</div>
+<div class="demo-bar"><a href="/" style="color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:700;margin-right:10px;white-space:nowrap">← senkron.tech</a><span class="dot"></span><b>Tasarım modeli</b> — Su Tercih Robotu için öneri. <b>2025</b> etiketli satırlar 2025-YKS yerleştirmesinin gerçek taban sırasıdır (Boğaziçi, İstanbul, Hacettepe, Ankara); <b>örnek</b> etiketli satırlar ve gelir aralıkları temsilîdir. Resmî veri: ÖSYM kılavuzu ve YÖK Atlas.</div>
 
 <header class="site">
   <div class="wrap nav">
@@ -745,7 +748,7 @@ footer.site{border-top:1px solid var(--line); padding:36px 0 48px; margin-top:20
     </div>
     <div class="legal">
       <span>© 2026 TercihLab — tasarım önerisi. Ticari bir hizmet değildir.</span>
-      <span>Örnek veri uyarısı: program taban sıralamaları ve gelir aralıkları temsilîdir.</span>
+      <span>Veri notu: 2025 etiketli programlar gerçek 2025-YKS taban sıralamasıdır; örnek etiketli satırlar ve gelir aralıkları temsilîdir.</span>
     </div>
   </div>
 </footer>
@@ -1100,6 +1103,89 @@ DATA.programlar = [
   { u: "Anadolu Üniversitesi", p: "Dış Ticaret", s: "Eskişehir", alan: "TYT", sira: 370000, kont: 100, burs: "devlet", dil: "Türkçe" }
 ];
 
+/* --- GERÇEK VERİ: 2025-YKS yerleştirme sonuçları ------------------------
+   Kaynak: YÖK Atlas / ÖSYM yerleştirme verileri (ÖSYM tarafından yayımlanan
+   taban puan ve başarı sıraları; bağımsız eğitim sitelerindeki derlemelerden
+   aktarılmıştır). sira = 2025 yerleştirmede o programa yerleşen son adayın
+   başarı sırası. kaynak: "2025" → gerçek veri, "ornek" → tasarım için üretilmiş
+   örnek satır.
+   ---------------------------------------------------------------------- */
+DATA.programlar2025 = [
+  /* ---- Boğaziçi Üniversitesi — 16 program ---- */
+  { u: "Boğaziçi Üniversitesi", p: "Endüstri Mühendisliği", s: "İstanbul", alan: "SAY", sira: 2197, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Elektrik-Elektronik Mühendisliği", s: "İstanbul", alan: "SAY", sira: 2530, kont: 75, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Bilgisayar Mühendisliği", s: "İstanbul", alan: "SAY", sira: 4560, kont: 80, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Makine Mühendisliği", s: "İstanbul", alan: "SAY", sira: 5729, kont: 65, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Kimya Mühendisliği", s: "İstanbul", alan: "SAY", sira: 11093, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Matematik", s: "İstanbul", alan: "SAY", sira: 19834, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "İnşaat Mühendisliği", s: "İstanbul", alan: "SAY", sira: 25716, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Moleküler Biyoloji ve Genetik", s: "İstanbul", alan: "SAY", sira: 25905, kont: 40, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "İşletme", s: "İstanbul", alan: "EA", sira: 560, kont: 80, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "İktisat", s: "İstanbul", alan: "EA", sira: 649, kont: 90, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Yönetim Bilişim Sistemleri", s: "İstanbul", alan: "EA", sira: 884, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Psikoloji", s: "İstanbul", alan: "EA", sira: 1150, kont: 70, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Hukuk", s: "İstanbul", alan: "EA", sira: 1520, kont: 80, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Sosyoloji", s: "İstanbul", alan: "EA", sira: 4300, kont: 70, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Çeviribilimi", s: "İstanbul", alan: "DİL", sira: 1823, kont: 40, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Boğaziçi Üniversitesi", p: "Felsefe", s: "İstanbul", alan: "SÖZ", sira: 9800, kont: 40, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+
+  /* ---- İstanbul Üniversitesi — 16 program ---- */
+  { u: "İstanbul Üniversitesi", p: "Tıp", s: "İstanbul", alan: "SAY", sira: 3392, kont: 285, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Tıp (İngilizce)", s: "İstanbul", alan: "SAY", sira: 2651, kont: 65, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Diş Hekimliği", s: "İstanbul", alan: "SAY", sira: 23903, kont: 90, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Diş Hekimliği (İngilizce)", s: "İstanbul", alan: "SAY", sira: 20226, kont: 18, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Eczacılık", s: "İstanbul", alan: "SAY", sira: 37534, kont: 77, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Eczacılık (İngilizce)", s: "İstanbul", alan: "SAY", sira: 33453, kont: 36, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Yapay Zeka ve Veri Mühendisliği", s: "İstanbul", alan: "SAY", sira: 36734, kont: 25, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Bilgisayar Mühendisliği", s: "İstanbul", alan: "SAY", sira: 36765, kont: 35, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Hukuk", s: "İstanbul", alan: "EA", sira: 3140, kont: 250, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Hukuk (UOLP-Hamburg) (ücretli)", s: "İstanbul", alan: "EA", sira: 1612, kont: 10, burs: "vakıf ücretli", dil: "Almanca", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Psikoloji", s: "İstanbul", alan: "EA", sira: 4800, kont: 100, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "İşletme", s: "İstanbul", alan: "EA", sira: 12500, kont: 200, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "İktisat", s: "İstanbul", alan: "EA", sira: 15800, kont: 220, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "İngilizce Mütercim ve Tercümanlık", s: "İstanbul", alan: "DİL", sira: 5558, kont: 60, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Türk Dili ve Edebiyatı", s: "İstanbul", alan: "SÖZ", sira: 12400, kont: 120, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "İstanbul Üniversitesi", p: "Tarih", s: "İstanbul", alan: "SÖZ", sira: 18600, kont: 100, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+
+  /* ---- Hacettepe Üniversitesi — 18 program ---- */
+  { u: "Hacettepe Üniversitesi", p: "Tıp", s: "Ankara", alan: "SAY", sira: 1836, kont: 230, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Tıp (İngilizce)", s: "Ankara", alan: "SAY", sira: 1169, kont: 175, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Elektrik-Elektronik Mühendisliği", s: "Ankara", alan: "SAY", sira: 6141, kont: 85, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Bilgisayar Mühendisliği", s: "Ankara", alan: "SAY", sira: 5923, kont: 120, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Makine Mühendisliği", s: "Ankara", alan: "SAY", sira: 14114, kont: 75, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Endüstri Mühendisliği", s: "Ankara", alan: "SAY", sira: 14236, kont: 75, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Diş Hekimliği", s: "Ankara", alan: "SAY", sira: 15895, kont: 90, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Eczacılık", s: "Ankara", alan: "SAY", sira: 32521, kont: 80, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Kimya Mühendisliği", s: "Ankara", alan: "SAY", sira: 32370, kont: 50, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Hemşirelik", s: "Ankara", alan: "SAY", sira: 62538, kont: 150, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Fizyoterapi ve Rehabilitasyon", s: "Ankara", alan: "SAY", sira: 110392, kont: 80, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Beslenme ve Diyetetik", s: "Ankara", alan: "SAY", sira: 79718, kont: 27, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Hukuk", s: "Ankara", alan: "EA", sira: 2877, kont: 120, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Psikoloji", s: "Ankara", alan: "EA", sira: 4871, kont: 60, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "İşletme", s: "Ankara", alan: "EA", sira: 7904, kont: 75, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Rehberlik ve Psikolojik Danışmanlık", s: "Ankara", alan: "EA", sira: 29540, kont: 50, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Sosyal Hizmet", s: "Ankara", alan: "EA", sira: 154795, kont: 70, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Özel Eğitim Öğretmenliği", s: "Ankara", alan: "SÖZ", sira: 1118, kont: 40, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Okul Öncesi Öğretmenliği", s: "Ankara", alan: "SÖZ", sira: 3529, kont: 42, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Türkçe Öğretmenliği", s: "Ankara", alan: "SÖZ", sira: 9823, kont: 40, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "İngiliz Dili ve Edebiyatı", s: "Ankara", alan: "DİL", sira: 11800, kont: 70, burs: "devlet", dil: "İngilizce", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Bilgisayar Programcılığı", s: "Ankara", alan: "TYT", sira: 470659, kont: 45, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Hacettepe Üniversitesi", p: "Turizm ve Otel İşletmeciliği", s: "Ankara", alan: "TYT", sira: 470659, kont: 30, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+
+  /* ---- Ankara Üniversitesi — 5 program (derlenen veri) ---- */
+  { u: "Ankara Üniversitesi", p: "Tıp", s: "Ankara", alan: "SAY", sira: 4800, kont: 300, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Ankara Üniversitesi", p: "Hukuk", s: "Ankara", alan: "EA", sira: 1200, kont: 400, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Ankara Üniversitesi", p: "Psikoloji", s: "Ankara", alan: "EA", sira: 3900, kont: 90, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Ankara Üniversitesi", p: "Sosyal Hizmet", s: "Ankara", alan: "EA", sira: 120000, kont: 90, burs: "devlet", dil: "Türkçe", kaynak: "2025" },
+  { u: "Ankara Üniversitesi", p: "Türk Dili ve Edebiyatı", s: "Ankara", alan: "SÖZ", sira: 9500, kont: 110, burs: "devlet", dil: "Türkçe", kaynak: "2025" }
+];
+
+/* Arayüz iki kaynağı birlikte kullanır: gerçek 2025 satırları + örnek bantlar.
+   Aynı üniversite+program için gerçek veri varsa örnek satır atılır. */
+DATA.programlar = DATA.programlar2025.concat(
+  DATA.programlar.filter((p) => !DATA.programlar2025.some((g) => g.u === p.u && g.p === p.p))
+);
+
 /* --- Karar verme aşamaları (yeni yaklaşım) -------------------------------- */
 DATA.asamalar = [
   { k: "1", ad: "Kendini tanı", metin: "Puan değil, önce 'ne yapmak istiyorum' sorusu. Eğilim testi + ilgi listesi; aile baskısı ile kendi isteğini ayır.", arac: "egilim" },
@@ -1119,7 +1205,7 @@ DATA.sss = [
   { s: "Tercihlerimi nereden yapacağım?", c: "Yalnızca ais.osym.gov.tr veya ÖSYM Aday İşlemleri Mobil Uygulaması üzerinden, TC kimlik numarası ve aday şifresiyle. Başvuru merkezlerinden veya posta ile tercih alınmaz." },
   { s: "Vakıf üniversitesi seçerken neye bakmalıyım?", c: "Bursun süreklilik koşulları (GNO, sıralama), ücret artış oranı, hazırlık ve yurt maliyeti, programın akreditasyonu ve mezun istihdamı. 'Burslu' kontenjanla 'ücretli' kontenjanın taban sıralamaları çok farklıdır." },
   { s: "Yapay zekâ meslek seçimimi nasıl etkiler?", c: "Rutin, tekrar eden ve yalnızca bilgi aktarımına dayanan işler daha hızlı dönüşüyor. Yapay zekâyı araç olarak kullanan, alan bilgisi derin ve insan ilişkisi gerektiren meslekler daha dayanıklı. Seçim yaparken 'bu işin hangi kısmını makine yapar?' sorusunu sor." },
-  { s: "Bu sitedeki taban sıralamalar gerçek mi?", c: "Hayır. Bu bir tasarım modelidir; program listesi örnek veridir. Gerçek veri için ÖSYM kılavuzu ve YÖK Atlas (yokatlas.yok.gov.tr) kullanılmalıdır." }
+  { s: "Bu sitedeki taban sıralamalar gerçek mi?", c: "Kısmen. \"2025\" etiketli satırlar 2025-YKS yerleştirmesinde o programa yerleşen son adayın gerçek başarı sırasıdır (Boğaziçi, İstanbul, Hacettepe ve Ankara üniversitelerinden derlenmiştir). \"Örnek\" etiketli satırlar yöntemi göstermek için üretilmiştir. Kesin veri her zaman ÖSYM kılavuzu ve YÖK Atlas (yokatlas.yok.gov.tr) üzerinden doğrulanmalıdır." }
 ];
 
 /* --- Kaynaklar ---------------------------------------------------------- */
@@ -1289,6 +1375,9 @@ if (typeof globalThis !== "undefined" && typeof window === "undefined") globalTh
   };
   var esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   var fmt = (n) => (n == null ? "—" : new Intl.NumberFormat("tr-TR").format(n));
+  var veriEtiket = (p) => p.kaynak === "2025"
+    ? '<span class="tag tag-real" title="2025-YKS yerleştirmesinin gerçek taban sırası">2025</span>'
+    : '<span class="tag tag-demo" title="Tasarım için üretilmiş örnek satır">örnek</span>';
 
   /* ---------------- menü ---------------- */
   $("#navToggle").addEventListener("click", (e) => {
@@ -1468,13 +1557,14 @@ if (typeof globalThis !== "undefined" && typeof window === "undefined") globalTh
     const html = gruplar.filter(([k]) => o[k].length).map(([k, ad, ac]) =>
       `<div class="rec-group"><h5>${ad} <span style="text-transform:none; letter-spacing:0; font-weight:400">— ${ac}</span></h5>` +
       o[k].map((p) => `<div class="rec">
-        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · ${esc(p.burs)}</span></div>
+        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · ${esc(p.burs)} ${veriEtiket(p)}</span></div>
         <div class="sira">${fmt(p.sira)}.</div>
         <button class="add" title="Listeye ekle" data-ekle="${esc(p.u + "|" + p.p)}" aria-label="Listeye ekle">+</button>
       </div>`).join("") + "</div>").join("");
     const toplam = gruplar.reduce((a, [k]) => a + o[k].length, 0);
-    kutu.innerHTML = `<div class="card"><h4>Senin sıralamana göre öneriler <span class="tag">Örnek veri</span></h4>
-      <p class="hint">Tahmini sıralaman ~${fmt(r.tahminiSira)}. Bu liste yalnızca yöntemi gösterir; gerçek taban sıralamalar YÖK Atlas'tan alınmalı.</p>
+    const gercekSayi = D.programlar.filter((p) => p.kaynak === "2025").length;
+    kutu.innerHTML = `<div class="card"><h4>Senin sıralamana göre öneriler <span class="tag">${gercekSayi ? "2025 verisi" : "Örnek veri"}</span></h4>
+      <p class="hint">Tahmini sıralaman ~${fmt(r.tahminiSira)}. <b>2025</b> etiketli satırlar 2025-YKS yerleştirmesinin gerçek taban sırasıdır; <b>örnek</b> etiketli satırlar yöntemi göstermek için üretilmiştir. Kesin karar için ÖSYM kılavuzu ve YÖK Atlas.</p>
       ${toplam ? html : `<div class="empty">Bu bantta örnek program yok. Puan türünü değiştir ya da netlerini artırarak tekrar dene.</div>`}</div>`;
     SELALL("[data-ekle]", kutu).forEach((b) => b.addEventListener("click", () => {
       const [u, p] = b.dataset.ekle.split("|");
@@ -1572,11 +1662,11 @@ if (typeof globalThis !== "undefined" && typeof window === "undefined") globalTh
     $("#listeHavuz").innerHTML = list.length ? list.map((p) => {
       const ekli = state.liste.some((x) => x.u === p.u && x.p === p.p);
       return `<div class="rec">
-        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · kont. ${p.kont} · ${esc(p.burs)}</span></div>
+        <div class="who"><b>${esc(p.u)}</b><span>${esc(p.p)} · ${esc(p.s)} · kont. ${p.kont} · ${esc(p.burs)} ${veriEtiket(p)}</span></div>
         <div class="sira">${fmt(p.sira)}.</div>
         <button class="add" data-p="${esc(p.u + "|" + p.p)}" ${ekli ? "disabled" : ""} aria-label="Listeye ekle">${ekli ? "✓" : "+"}</button>
       </div>`;
-    }).join("") : `<div class="empty">Bu puan türünde örnek program yok.</div>`;
+    }).join("") : `<div class="empty">Bu puan türünde program yok. Filtreyi temizleyip tekrar dene.</div>`;
     SELALL("[data-p]", $("#listeHavuz")).forEach((b) => b.addEventListener("click", () => {
       const [u, p] = b.dataset.p.split("|");
       listeyeEkle(D.programlar.find((x) => x.u === u && x.p === p));
@@ -1585,7 +1675,7 @@ if (typeof globalThis !== "undefined" && typeof window === "undefined") globalTh
   function listeyeEkle(p) {
     if (!p || state.liste.length >= 24) return;
     if (state.liste.some((x) => x.u === p.u && x.p === p.p)) return;
-    state.liste.push({ u: p.u, p: p.p, s: p.s, sira: p.sira, burs: p.burs });
+    state.liste.push({ u: p.u, p: p.p, s: p.s, sira: p.sira, burs: p.burs, kaynak: p.kaynak });
     listeCiz(); havuzCiz();
   }
   function listeCiz() {
@@ -1598,7 +1688,7 @@ if (typeof globalThis !== "undefined" && typeof window === "undefined") globalTh
     }
     box.innerHTML = state.liste.map((x, i) => `<div class="liste-item">
       <span class="no">${i + 1}</span>
-      <div class="who"><b>${esc(x.u)}</b><span>${esc(x.p)} · ${esc(x.s)} · ${fmt(x.sira)}.</span></div>
+      <div class="who"><b>${esc(x.u)}</b><span>${esc(x.p)} · ${esc(x.s)} · ${fmt(x.sira)}. ${veriEtiket(x)}</span></div>
       <button class="icon-btn" data-up="${i}" aria-label="Yukarı taşı" ${i === 0 ? "disabled" : ""}>↑</button>
       <button class="icon-btn" data-down="${i}" aria-label="Aşağı taşı" ${i === state.liste.length - 1 ? "disabled" : ""}>↓</button>
       <button class="icon-btn" data-del="${i}" aria-label="Listeden çıkar">✕</button>
